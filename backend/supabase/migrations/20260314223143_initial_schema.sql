@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 1. ACCOUNTS TABLE
 CREATE TABLE accounts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) NOT NULL,
     name TEXT NOT NULL,
     current_balance NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
@@ -18,7 +18,7 @@ USING (auth.uid() = user_id);
 
 -- 2. CATEGORIES TABLE
 CREATE TABLE categories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) NOT NULL,
     name TEXT NOT NULL,
     monthly_limit NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
@@ -33,7 +33,7 @@ USING (auth.uid() = user_id);
 
 -- 3. GOALS TABLE
 CREATE TABLE goals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) NOT NULL,
     name TEXT NOT NULL,
     target_amount NUMERIC(12, 2) NOT NULL,
@@ -51,7 +51,7 @@ USING (auth.uid() = user_id);
 
 -- 4. TRANSACTIONS TABLE
 CREATE TABLE transactions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) NOT NULL,
     account_id UUID REFERENCES accounts(id) NOT NULL,
     category_id UUID REFERENCES categories(id), -- Nullable because income might not have a budget category
