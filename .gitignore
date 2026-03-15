@@ -6,7 +6,11 @@
 *.swp
 .buildlog/
 .history
-
+.DS_Store
+.atom/
+.build/
+.svn/
+.swiftpm/
 
 
 # Flutter repo-specific
@@ -40,6 +44,7 @@ analysis_benchmark.json
 .packages
 .pub-preload-cache/
 .pub/
+.pub-cache/
 build/
 flutter_*.png
 linked_*.ds
@@ -109,6 +114,30 @@ coverage/
 
 # Symbols
 app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Frontend specific
+frontend/migrate_working_dir/
+frontend/android/app/debug
+frontend/android/app/profile
+frontend/android/app/release
+
+# Supabase (Backend)
+backend/supabase/.branches
+backend/supabase/.temp
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3
