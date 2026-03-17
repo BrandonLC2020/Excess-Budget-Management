@@ -9,6 +9,8 @@ import 'features/auth/bloc/auth_bloc.dart';
 import 'features/auth/bloc/auth_event.dart';
 import 'features/accounts/bloc/account_bloc.dart';
 import 'features/accounts/repositories/account_repository.dart';
+import 'features/budget/bloc/budget_bloc.dart';
+import 'features/budget/repositories/budget_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,13 +28,18 @@ class BudgetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final supabaseClient = Supabase.instance.client;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(supabase: Supabase.instance.client)..add(AuthCheckRequested()),
+          create: (context) => AuthBloc(supabase: supabaseClient)..add(AuthCheckRequested()),
         ),
         BlocProvider<AccountBloc>(
-          create: (context) => AccountBloc(repository: AccountRepository(supabase: Supabase.instance.client)),
+          create: (context) => AccountBloc(repository: AccountRepository(supabase: supabaseClient)),
+        ),
+        BlocProvider<BudgetBloc>(
+          create: (context) => BudgetBloc(repository: BudgetRepository(supabase: supabaseClient)),
         ),
       ],
       child: MaterialApp.router(

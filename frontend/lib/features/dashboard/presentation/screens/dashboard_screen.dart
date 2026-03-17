@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../accounts/presentation/screens/accounts_screen.dart';
+import '../../../budget/presentation/screens/budget_categories_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,8 +14,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _screens = [
     const _OverviewTab(),
-    const AccountsScreen(), // We will build this next
-    const Center(child: Text('Income & Budget (WIP)')),
+    const AccountsScreen(),
+    const BudgetCategoriesScreen(),
     const Center(child: Text('Goals (WIP)')),
   ];
 
