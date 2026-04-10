@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../bloc/budget_bloc.dart';
-import '../../models/budget_category.dart';
+import '../widgets/budget_category_form_sheet.dart';
 
 class BudgetCategoriesScreen extends StatefulWidget {
   const BudgetCategoriesScreen({super.key});
@@ -18,10 +17,42 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
     context.read<BudgetBloc>().add(LoadBudgets());
   }
 
+  void _showCategoryForm([budgetCategory]) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: BudgetCategoryFormSheet(category: budgetCategory),
+      ),
+    );
+  }
+
+  // Helper for dynamic icons based on name
+  IconData _getIconForCategory(String name) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('food') || lowerName.contains('grocer') || lowerName.contains('din')) return Icons.restaurant;
+    if (lowerName.contains('rent') || lowerName.contains('hous') || lowerName.contains('mortgage')) return Icons.home;
+    if (lowerName.contains('transport') || lowerName.contains('gas') || lowerName.contains('car')) return Icons.directions_car;
+    if (lowerName.contains('util')) return Icons.bolt;
+    if (lowerName.contains('entert') || lowerName.contains('fun')) return Icons.movie;
+    if (lowerName.contains('health') || lowerName.contains('medic')) return Icons.medical_services;
+    if (lowerName.contains('shop') || lowerName.contains('cloth')) return Icons.shopping_bag;
+    return Icons.category;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Budget Categories')),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Budget Categories'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: BlocBuilder<BudgetBloc, BudgetState>(
         builder: (context, state) {
           if (state is BudgetLoading) {
@@ -29,48 +60,190 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
           } else if (state is BudgetError) {
             return Center(child: Text('Error: ${state.message}'));
           } else if (state is BudgetLoaded) {
-            if (state.categories.isEmpty) {
-              return const Center(child: Text('No categories found. Add one!'));
+            
+            // Calculate totals
+            double totalBudget = 0;
+            double totalSpent = 0;
+            for (var cat in state.categories) {
+              totalBudget += cat.limitAmount;
+              totalSpent += cat.spentAmount;
             }
-            return ListView.builder(
-              itemCount: state.categories.length,
-              itemBuilder: (context, index) {
-                final category = state.categories[index];
-                final percent = category.limitAmount > 0 
-                    ? (category.spentAmount / category.limitAmount).clamp(0.0, 1.0)
-                    : 0.0;
-                
-                return ListTile(
-                  title: Text(category.name),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('\$${category.spentAmount.toStringAsFixed(2)} / \$${category.limitAmount.toStringAsFixed(2)}'),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: percent,
-                        backgroundColor: Colors.grey[200],
-                        color: percent >= 1.0 ? Colors.red : Colors.green,
+            final overallPercent = totalBudget > 0 ? (totalSpent / totalBudget).clamp(0.0, 1.0) : 0.0;
+
+            return CustomScrollView(
+              slivers: [
+                // Summary Header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primaryContainer,
+                            Theme.of(context).colorScheme.secondaryContainer,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                    ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Total Budget Allocation',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.8),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                '\$${totalSpent.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                              Text(
+                                ' / \$${totalBudget.toStringAsFixed(0)}',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: overallPercent,
+                              minHeight: 8,
+                              backgroundColor: Colors.white.withOpacity(0.3),
+                              color: overallPercent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      context.read<BudgetBloc>().add(DeleteBudgetCategory(category.id));
-                    },
+                ),
+                
+                // Content
+                if (state.categories.isEmpty)
+                  SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.account_balance_wallet_outlined, size: 64, color: Theme.of(context).colorScheme.outline),
+                          const SizedBox(height: 16),
+                          Text('No categories yet', style: Theme.of(context).textTheme.titleLarge),
+                          const SizedBox(height: 8),
+                          Text('Tap + to create your first budget category.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final category = state.categories[index];
+                          final percent = category.limitAmount > 0 
+                              ? (category.spentAmount / category.limitAmount).clamp(0.0, 1.0)
+                              : 0.0;
+                          
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            elevation: 0,
+                            color: Theme.of(context).colorScheme.surfaceContainer,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () => _showCategoryForm(category),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.primaryContainer,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            _getIconForCategory(category.name),
+                                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                category.name,
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '\$${category.spentAmount.toStringAsFixed(2)} / \$${category.limitAmount.toStringAsFixed(2)}',
+                                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                                          onPressed: () {
+                                            context.read<BudgetBloc>().add(DeleteBudgetCategory(category.id));
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: percent,
+                                        minHeight: 6,
+                                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                        color: percent >= 1.0 ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        childCount: state.categories.length,
+                      ),
+                    ),
                   ),
-                  onTap: () => context.push('/budget/edit', extra: category),
-                );
-              },
+                  
+                // Bottom padding for FAB
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
             );
           }
           return const Center(child: Text('Failed to load budget categories.'));
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/budget/add'),
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showCategoryForm(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Category'),
       ),
     );
   }
