@@ -7,8 +7,37 @@ class GoalRepository {
   GoalRepository({required this.supabase});
 
   Future<List<Goal>> getGoals() async {
-    final response = await supabase.from('goals').select().order('created_at', ascending: true);
+    final response = await supabase
+        .from('goals')
+        .select('*, sub_goals(*)')
+        .order('created_at', ascending: true);
     return (response as List).map((e) => Goal.fromJson(e)).toList();
+  }
+
+  Future<void> addSubGoal(
+    String goalId,
+    String name,
+    double targetAmount,
+  ) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('User not logged in');
+
+    await supabase.from('sub_goals').insert({
+      'user_id': userId,
+      'goal_id': goalId,
+      'name': name,
+      'target_amount': targetAmount,
+    });
+  }
+
+  Future<void> updateSubGoalAmount(String subGoalId, double currentAmount) async {
+    await supabase.from('sub_goals').update({
+      'current_amount': currentAmount,
+    }).eq('id', subGoalId);
+  }
+
+  Future<void> deleteSubGoal(String subGoalId) async {
+    await supabase.from('sub_goals').delete().eq('id', subGoalId);
   }
 
   Future<Goal> addGoal(

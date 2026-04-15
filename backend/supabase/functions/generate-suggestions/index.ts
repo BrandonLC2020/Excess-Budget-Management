@@ -23,22 +23,25 @@ Deno.serve(async (req: Request) => {
     const { totalSavings, totalPurchases } = recentAllocations || { totalSavings: 0, totalPurchases: 0 };
 
     const promptText = `
-You are a financial advisor. The user has an excess budget of $${excessFunds} this month.
-They want to distribute this money into their accounts and towards their savings goals.
-Prioritize short term goals and near target dates.
+    You are a financial advisor. The user has an excess budget of $${excessFunds} this month.
+    They want to distribute this money into their accounts and towards their savings goals.
+    Prioritize short term goals and near target dates.
 
-The user values a balance between 'savings' goals (responsible future planning) and 'purchase' goals (immediate treats). 
-Every goal provided now includes a 'category' field indicating its type.
+    The user values a balance between 'savings' goals (responsible future planning) and 'purchase' goals (immediate treats). 
+    Every goal provided now includes a 'category' field indicating its type.
 
-In the last 30 days, the user allocated $${totalSavings} to savings and $${totalPurchases} to purchases.
-Your suggestions must actively balance these categories. 
-- If recent history heavily favors savings, bias this $${excessFunds} allocation toward active 'purchase' goals to reward the user. 
-- If history heavily favors purchases, bias toward 'savings' goals. 
-- If recent history is $0 for both (new user), use the user's preferred default savings ratio of ${defaultSavingsRatio * 100}% savings to balance the allocation.
-- If a goal category has no active goals, allocate according to the available goals.
+    Goals may now contain 'sub_goals'. The parent goal's target amount is the sum of these subgoals. 
+    You may suggest allocations to the parent goal as a whole, or call out specific subgoals in your reasoning (e.g., 'Allocating $129 specifically to finish funding the Apple Pencil subgoal within your iPad fund').
 
-Provide a brief explanation of this balance in the 'reason' field.
+    In the last 30 days, the user allocated $${totalSavings} to savings and $${totalPurchases} to purchases.
+    Your suggestions must actively balance these categories. 
+    - If recent history heavily favors savings, bias this $${excessFunds} allocation toward active 'purchase' goals to reward the user. 
+    - If history heavily favors purchases, bias toward 'savings' goals. 
+    - If recent history is $0 for both (new user), use the user's preferred default savings ratio of ${defaultSavingsRatio * 100}% savings to balance the allocation.
+    - If a goal category has no active goals, allocate according to the available goals.
 
+    Provide a brief explanation of this balance and any specific subgoals targeted in the 'reason' field.
+    `
 Here are their active goals:
 ${JSON.stringify(goals, null, 2)}
 

@@ -41,7 +41,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         defaultSavingsRatio: defaultRatio,
       );
 
-      emit(DashboardSuggestionsLoaded(result));
+      emit(DashboardSuggestionsLoaded(result, goals));
     } catch (e) {
       emit(DashboardError(e.toString()));
     }
@@ -56,10 +56,23 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         final goals = await goalRepository.getGoals();
         final goal = goals.firstWhere((g) => g.id == allocation.id);
         
-        await goalRepository.updateGoalCurrentAmount(
-          allocation.id, 
-          goal.currentAmount + allocation.amount,
-        );
+        if (event.subGoalDistribution != null && event.subGoalDistribution!.isNotEmpty) {
+          // Update each subgoal
+          for (var entry in event.subGoalDistribution!.entries) {
+            final subGoal = goal.subGoals.firstWhere((sg) => sg.id == entry.key);
+            await goalRepository.updateSubGoalAmount(
+              subGoal.id, 
+              subGoal.currentAmount + entry.value,
+            );
+          }
+          // The parent goal's current_amount is automatically updated by the DB trigger
+        } else {
+          // Fallback if no distribution was provided (e.g., flat goal)
+          await goalRepository.updateGoalCurrentAmount(
+            allocation.id, 
+            goal.currentAmount + allocation.amount,
+          );
+        }
         
         await goalRepository.insertAllocation(allocation.id, allocation.amount);
       } else {
@@ -72,9 +85,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         );
       }
       
-      // Optionally re-fetch or remove suggestion from state
-      // For now, we just stay in Loaded state. In a real app, 
-      // you'd probably remove the accepted allocation from the list.
+      // Optionally re-fetch suggestions or refresh state
+      // For now, let's trigger a refresh of the suggestions to show updated progress
+      // (This requires another GenerateSuggestionsRequested dispatch or similar)
     } catch (e) {
       emit(DashboardError(e.toString()));
     }

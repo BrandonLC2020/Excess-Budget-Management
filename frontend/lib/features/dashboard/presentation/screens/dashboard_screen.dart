@@ -11,6 +11,8 @@ import '../../bloc/dashboard_bloc.dart';
 import '../../bloc/dashboard_event.dart';
 import '../../bloc/dashboard_state.dart';
 import '../../models/allocation.dart';
+import '../widgets/sub_goal_distribution_sheet.dart';
+import '../../../goals/models/goal.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -184,6 +186,7 @@ class _OverviewTabState extends State<_OverviewTab> {
                               padding: const EdgeInsets.only(bottom: 16.0),
                               child: _AllocationCard(
                                 allocation: allocations[index],
+                                goals: state.goals,
                                 index: index,
                               ),
                             );
@@ -284,9 +287,49 @@ class _OverviewTabState extends State<_OverviewTab> {
 
 class _AllocationCard extends StatelessWidget {
   final Allocation allocation;
+  final List<Goal> goals;
   final int index;
 
-  const _AllocationCard({required this.allocation, required this.index});
+  const _AllocationCard({
+    required this.allocation,
+    required this.goals,
+    required this.index,
+  });
+
+  void _handleAccept(BuildContext context) {
+    if (allocation.type == 'goal') {
+      final goal = goals.firstWhere((g) => g.id == allocation.id);
+      if (goal.subGoals.isNotEmpty) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => SubGoalDistributionSheet(
+            goal: goal,
+            amount: allocation.amount,
+            onConfirm: (distribution) {
+              Navigator.pop(context);
+              context.read<DashboardBloc>().add(
+                    AcceptSuggestionRequested(
+                      allocation,
+                      subGoalDistribution: distribution,
+                    ),
+                  );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Distributed and accepted allocation for ${allocation.name}')),
+              );
+            },
+          ),
+        );
+        return;
+      }
+    }
+
+    // Default fallback for accounts or flat goals
+    context.read<DashboardBloc>().add(AcceptSuggestionRequested(allocation));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Accepted allocation for ${allocation.name}')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -378,12 +421,7 @@ class _AllocationCard extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          context.read<DashboardBloc>().add(AcceptSuggestionRequested(allocation));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Accepted allocation for ${allocation.name}')),
-                          );
-                        },
+                        onPressed: () => _handleAccept(context),
                         icon: const Icon(Icons.check_circle_outline, size: 18),
                         label: const Text('Accept Suggestion'),
                         style: OutlinedButton.styleFrom(

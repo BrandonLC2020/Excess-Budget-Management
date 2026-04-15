@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/goal.dart';
 import '../../repositories/goal_repository.dart';
 import '../widgets/goal_form_sheet.dart';
+import 'goal_detail_screen.dart';
 
 class GoalListScreen extends StatefulWidget {
   const GoalListScreen({super.key});
@@ -63,10 +64,21 @@ class _GoalListScreenState extends State<GoalListScreen> {
                   itemCount: _goals.length,
                   itemBuilder: (context, index) {
                     final goal = _goals[index];
-                    final progress = goal.currentAmount / goal.targetAmount;
+                    final progress = goal.targetAmount > 0 
+                        ? goal.currentAmount / goal.targetAmount 
+                        : 0.0;
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16),
                       child: ListTile(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GoalDetailScreen(goal: goal),
+                            ),
+                          );
+                          _loadGoals();
+                        },
                         title: Text(goal.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

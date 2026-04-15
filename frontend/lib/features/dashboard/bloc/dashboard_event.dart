@@ -10,8 +10,9 @@ class GenerateSuggestionsRequested extends DashboardEvent {
 
 class AcceptSuggestionRequested extends DashboardEvent {
   final Allocation allocation;
+  final Map<String, double>? subGoalDistribution;
 
-  AcceptSuggestionRequested(this.allocation);
+  AcceptSuggestionRequested(this.allocation, {this.subGoalDistribution});
 }
 
 class DashboardResetRequested extends DashboardEvent {}

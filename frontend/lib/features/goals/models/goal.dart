@@ -1,3 +1,5 @@
+import 'sub_goal.dart';
+
 class Goal {
   final String id;
   final String userId;
@@ -8,6 +10,7 @@ class Goal {
   final String type;
   final String category;
   final DateTime createdAt;
+  final List<SubGoal> subGoals;
 
   Goal({
     required this.id,
@@ -19,6 +22,7 @@ class Goal {
     required this.type,
     required this.category,
     required this.createdAt,
+    this.subGoals = const [],
   });
 
   factory Goal.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,10 @@ class Goal {
       type: json['type'] as String,
       category: json['category'] as String? ?? 'savings',
       createdAt: DateTime.parse(json['created_at'] as String),
+      subGoals: (json['sub_goals'] as List<dynamic>?)
+              ?.map((e) => SubGoal.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
   }
 
@@ -44,6 +52,7 @@ class Goal {
       'target_date': targetDate?.toIso8601String(),
       'type': type,
       'category': category,
+      'sub_goals': subGoals.map((e) => e.toJson()).toList(),
     };
   }
 }
