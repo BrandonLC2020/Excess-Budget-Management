@@ -24,10 +24,6 @@ class Account {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'balance': balance,
-    };
+    return {'id': id, 'name': name, 'balance': balance};
   }
 }

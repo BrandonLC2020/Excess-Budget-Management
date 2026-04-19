@@ -30,10 +30,14 @@ class GoalRepository {
     });
   }
 
-  Future<void> updateSubGoalAmount(String subGoalId, double currentAmount) async {
-    await supabase.from('sub_goals').update({
-      'current_amount': currentAmount,
-    }).eq('id', subGoalId);
+  Future<void> updateSubGoalAmount(
+    String subGoalId,
+    double currentAmount,
+  ) async {
+    await supabase
+        .from('sub_goals')
+        .update({'current_amount': currentAmount})
+        .eq('id', subGoalId);
   }
 
   Future<void> deleteSubGoal(String subGoalId) async {
@@ -50,14 +54,18 @@ class GoalRepository {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
 
-    final response = await supabase.from('goals').insert({
-      'user_id': userId,
-      'name': name,
-      'target_amount': targetAmount,
-      'type': type,
-      'category': category,
-      if (targetDate != null) 'target_date': targetDate.toIso8601String(),
-    }).select().single();
+    final response = await supabase
+        .from('goals')
+        .insert({
+          'user_id': userId,
+          'name': name,
+          'target_amount': targetAmount,
+          'type': type,
+          'category': category,
+          if (targetDate != null) 'target_date': targetDate.toIso8601String(),
+        })
+        .select()
+        .single();
 
     return Goal.fromJson(response);
   }
@@ -87,9 +95,12 @@ class GoalRepository {
   }
 
   Future<Goal> updateGoalCurrentAmount(String id, double currentAmount) async {
-    final response = await supabase.from('goals').update({
-      'current_amount': currentAmount,
-    }).eq('id', id).select().single();
+    final response = await supabase
+        .from('goals')
+        .update({'current_amount': currentAmount})
+        .eq('id', id)
+        .select()
+        .single();
 
     return Goal.fromJson(response);
   }

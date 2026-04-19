@@ -4,12 +4,14 @@ import '../../bloc/budget_bloc.dart';
 import '../../models/budget_category.dart';
 
 class BudgetCategoryFormSheet extends StatefulWidget {
-  final BudgetCategory? category; // If null, we are adding. If provided, we are editing.
+  final BudgetCategory?
+  category; // If null, we are adding. If provided, we are editing.
 
   const BudgetCategoryFormSheet({super.key, this.category});
 
   @override
-  State<BudgetCategoryFormSheet> createState() => _BudgetCategoryFormSheetState();
+  State<BudgetCategoryFormSheet> createState() =>
+      _BudgetCategoryFormSheetState();
 }
 
 class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
@@ -25,7 +27,7 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
     'Utilities',
     'Entertainment',
     'Healthcare',
-    'Shopping'
+    'Shopping',
   ];
 
   @override
@@ -48,13 +50,15 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text.trim();
       final limit = double.tryParse(_limitController.text.trim()) ?? 0.0;
-      
+
       if (widget.category == null) {
         context.read<BudgetBloc>().add(AddBudgetCategory(name, limit));
       } else {
-        context.read<BudgetBloc>().add(UpdateBudgetCategory(widget.category!.id, name, limit));
+        context.read<BudgetBloc>().add(
+          UpdateBudgetCategory(widget.category!.id, name, limit),
+        );
       }
-      
+
       Navigator.of(context).pop();
     }
   }
@@ -88,20 +92,22 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 24),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            
+
             Text(
               widget.category == null ? 'New Budget Category' : 'Edit Category',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
-            
+
             // Presets List (Only show when adding)
             if (widget.category == null) ...[
               SizedBox(
@@ -109,7 +115,8 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _presets.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final preset = _presets[index];
                     return ActionChip(
@@ -119,9 +126,13 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                           _nameController.text = preset;
                         });
                       },
-                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHigh,
                       side: BorderSide.none,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     );
                   },
                 ),
@@ -135,11 +146,14 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
               decoration: InputDecoration(
                 labelText: 'Category Name',
                 prefixIcon: const Icon(Icons.label_outline),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 filled: true,
               ),
-              validator: (value) => 
-                value == null || value.trim().isEmpty ? 'Please enter a name' : null,
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? 'Please enter a name'
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -147,15 +161,23 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
               decoration: InputDecoration(
                 labelText: 'Limit Amount',
                 prefixIcon: const Icon(Icons.attach_money),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 filled: true,
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _save(),
               validator: (value) {
-                if (value == null || value.trim().isEmpty) return 'Please enter a limit';
-                if (double.tryParse(value) == null) return 'Please enter a valid number';
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a limit';
+                }
+                if (double.tryParse(value) == null) {
+                  return 'Please enter a valid number';
+                }
                 return null;
               },
             ),
@@ -172,7 +194,10 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
               ),
               child: Text(
                 widget.category == null ? 'Create Category' : 'Save Changes',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],

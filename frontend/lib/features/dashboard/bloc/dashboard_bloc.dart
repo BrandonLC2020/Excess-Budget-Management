@@ -24,13 +24,17 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   }
 
   Future<void> _onGenerateSuggestionsRequested(
-      GenerateSuggestionsRequested event, Emitter<DashboardState> emit) async {
+    GenerateSuggestionsRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
     emit(DashboardLoading());
 
     try {
       final accounts = await accountRepository.getAccounts();
       final goals = await goalRepository.getGoals();
-      final recentAllocations = await goalRepository.getRecentAllocationSummary(30);
+      final recentAllocations = await goalRepository.getRecentAllocationSummary(
+        30,
+      );
       final defaultRatio = await profileRepository.getDefaultSavingsRatio();
 
       final result = await suggestionRepository.getSuggestions(
@@ -48,20 +52,25 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   }
 
   Future<void> _onAcceptSuggestionRequested(
-      AcceptSuggestionRequested event, Emitter<DashboardState> emit) async {
+    AcceptSuggestionRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
     final allocation = event.allocation;
-    
+
     try {
       if (allocation.type == 'goal') {
         final goals = await goalRepository.getGoals();
         final goal = goals.firstWhere((g) => g.id == allocation.id);
-        
-        if (event.subGoalDistribution != null && event.subGoalDistribution!.isNotEmpty) {
+
+        if (event.subGoalDistribution != null &&
+            event.subGoalDistribution!.isNotEmpty) {
           // Update each subgoal
           for (var entry in event.subGoalDistribution!.entries) {
-            final subGoal = goal.subGoals.firstWhere((sg) => sg.id == entry.key);
+            final subGoal = goal.subGoals.firstWhere(
+              (sg) => sg.id == entry.key,
+            );
             await goalRepository.updateSubGoalAmount(
-              subGoal.id, 
+              subGoal.id,
               subGoal.currentAmount + entry.value,
             );
           }
@@ -69,22 +78,22 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         } else {
           // Fallback if no distribution was provided (e.g., flat goal)
           await goalRepository.updateGoalCurrentAmount(
-            allocation.id, 
+            allocation.id,
             goal.currentAmount + allocation.amount,
           );
         }
-        
+
         await goalRepository.insertAllocation(allocation.id, allocation.amount);
       } else {
         final accounts = await accountRepository.getAccounts();
         final account = accounts.firstWhere((a) => a.id == allocation.id);
-        
+
         await accountRepository.updateAccountBalance(
           allocation.id,
           account.balance + allocation.amount,
         );
       }
-      
+
       // Optionally re-fetch suggestions or refresh state
       // For now, let's trigger a refresh of the suggestions to show updated progress
       // (This requires another GenerateSuggestionsRequested dispatch or similar)
@@ -93,7 +102,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
   }
 
-  void _onDashboardResetRequested(DashboardResetRequested event, Emitter<DashboardState> emit) {
+  void _onDashboardResetRequested(
+    DashboardResetRequested event,
+    Emitter<DashboardState> emit,
+  ) {
     emit(DashboardInitial());
   }
 }

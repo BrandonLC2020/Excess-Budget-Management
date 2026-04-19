@@ -10,7 +10,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final ProfileRepository _profileRepository = ProfileRepository(supabase: Supabase.instance.client);
+  final ProfileRepository _profileRepository = ProfileRepository(
+    supabase: Supabase.instance.client,
+  );
   double _savingsRatio = 0.5;
   bool _isLoading = true;
 
@@ -30,7 +32,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading profile: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading profile: $e')));
     }
   }
 
@@ -39,10 +43,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _profileRepository.updateDefaultSavingsRatio(val);
       if (!mounted) return;
       setState(() => _savingsRatio = val);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings saved')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Settings saved')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error saving: $e')));
     }
   }
 
@@ -90,7 +98,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Spacer(),
                   OutlinedButton(
                     onPressed: () => Supabase.instance.client.auth.signOut(),
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
                     child: const Text('Logout'),
                   ),
                   const SizedBox(height: 24),

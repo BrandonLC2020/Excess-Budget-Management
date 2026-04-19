@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 abstract class AuthState extends Equatable {
   const AuthState();
-  
+
   @override
   List<Object?> get props => [];
 }

@@ -24,9 +24,6 @@ class GoalAllocation {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'goal_id': goalId,
-      'amount': amount,
-    };
+    return {'goal_id': goalId, 'amount': amount};
   }
 }

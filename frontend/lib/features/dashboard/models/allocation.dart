@@ -28,15 +28,14 @@ class SuggestionResult {
   final List<Allocation> allocations;
   final double totalAllocated;
 
-  SuggestionResult({
-    required this.allocations,
-    required this.totalAllocated,
-  });
+  SuggestionResult({required this.allocations, required this.totalAllocated});
 
   factory SuggestionResult.fromJson(Map<String, dynamic> json) {
     var allocList = json['allocations'] as List? ?? [];
-    List<Allocation> allocations = allocList.map((i) => Allocation.fromJson(i)).toList();
-    
+    List<Allocation> allocations = allocList
+        .map((i) => Allocation.fromJson(i))
+        .toList();
+
     return SuggestionResult(
       allocations: allocations,
       totalAllocated: (json['totalAllocated'] as num).toDouble(),

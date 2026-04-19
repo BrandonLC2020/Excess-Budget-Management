@@ -31,9 +31,9 @@ class _SignupScreenState extends State<SignupScreen> {
           if (state is AuthAuthenticated) {
             context.go('/');
           } else if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         child: Padding(
@@ -54,10 +54,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 obscureText: true,
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _signup,
-                child: const Text('Sign Up'),
-              ),
+              ElevatedButton(onPressed: _signup, child: const Text('Sign Up')),
               TextButton(
                 onPressed: () => context.go('/login'),
                 child: const Text('Already have an account? Login'),

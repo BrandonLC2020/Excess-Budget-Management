@@ -11,13 +11,16 @@ abstract class BudgetState extends Equatable {
 }
 
 class BudgetInitial extends BudgetState {}
+
 class BudgetLoading extends BudgetState {}
+
 class BudgetLoaded extends BudgetState {
   final List<BudgetCategory> categories;
   const BudgetLoaded(this.categories);
   @override
   List<Object?> get props => [categories];
 }
+
 class BudgetError extends BudgetState {
   final String message;
   const BudgetError(this.message);
@@ -84,7 +87,11 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
 
     on<UpdateBudgetCategory>((event, emit) async {
       try {
-        await repository.updateBudgetCategory(event.id, event.name, event.limitAmount);
+        await repository.updateBudgetCategory(
+          event.id,
+          event.name,
+          event.limitAmount,
+        );
         add(LoadBudgets());
       } catch (e) {
         emit(BudgetError(e.toString()));

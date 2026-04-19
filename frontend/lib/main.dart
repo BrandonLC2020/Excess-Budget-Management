@@ -18,7 +18,7 @@ import 'features/auth/repositories/profile_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await Supabase.initialize(
     url: Constants.supabaseUrl,
     anonKey: Constants.supabaseAnonKey,
@@ -37,17 +37,24 @@ class BudgetApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(supabase: supabaseClient)..add(AuthCheckRequested()),
+          create: (context) =>
+              AuthBloc(supabase: supabaseClient)..add(AuthCheckRequested()),
         ),
         BlocProvider<AccountBloc>(
-          create: (context) => AccountBloc(repository: AccountRepository(supabase: supabaseClient)),
+          create: (context) => AccountBloc(
+            repository: AccountRepository(supabase: supabaseClient),
+          ),
         ),
         BlocProvider<BudgetBloc>(
-          create: (context) => BudgetBloc(repository: BudgetRepository(supabase: supabaseClient)),
+          create: (context) => BudgetBloc(
+            repository: BudgetRepository(supabase: supabaseClient),
+          ),
         ),
         BlocProvider<DashboardBloc>(
           create: (context) => DashboardBloc(
-            suggestionRepository: SuggestionRepository(supabase: supabaseClient),
+            suggestionRepository: SuggestionRepository(
+              supabase: supabaseClient,
+            ),
             accountRepository: AccountRepository(supabase: supabaseClient),
             goalRepository: GoalRepository(supabase: supabaseClient),
             profileRepository: ProfileRepository(supabase: supabaseClient),
@@ -69,7 +76,9 @@ class BudgetApp extends StatelessWidget {
             seedColor: const Color(0xFF2C5E4B),
             brightness: Brightness.dark,
           ),
-          textTheme: GoogleFonts.outfitTextTheme(ThemeData(brightness: Brightness.dark).textTheme),
+          textTheme: GoogleFonts.outfitTextTheme(
+            ThemeData(brightness: Brightness.dark).textTheme,
+          ),
           useMaterial3: true,
         ),
         routerConfig: goRouter,

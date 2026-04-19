@@ -22,8 +22,9 @@ class ProfileRepository {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
 
-    await supabase.from('profiles').update({
-      'default_savings_ratio': ratio,
-    }).eq('id', userId);
+    await supabase
+        .from('profiles')
+        .update({'default_savings_ratio': ratio})
+        .eq('id', userId);
   }
 }

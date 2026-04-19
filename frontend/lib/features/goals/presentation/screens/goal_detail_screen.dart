@@ -14,7 +14,9 @@ class GoalDetailScreen extends StatefulWidget {
 }
 
 class _GoalDetailScreenState extends State<GoalDetailScreen> {
-  final GoalRepository _goalRepository = GoalRepository(supabase: Supabase.instance.client);
+  final GoalRepository _goalRepository = GoalRepository(
+    supabase: Supabase.instance.client,
+  );
   late Goal _currentGoal;
   bool _isLoading = false;
 
@@ -36,7 +38,9 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error refreshing: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error refreshing: $e')));
       }
     }
   }
@@ -54,7 +58,9 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: 'Subgoal Name (e.g., Apple Pencil)'),
+              decoration: const InputDecoration(
+                labelText: 'Subgoal Name (e.g., Apple Pencil)',
+              ),
             ),
             TextField(
               controller: amountController,
@@ -64,7 +70,10 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () async {
               final name = nameController.text;
@@ -84,10 +93,65 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
     );
   }
 
+  void _showEditSubGoalAmount(SubGoal subGoal) {
+    final amountController = TextEditingController(
+      text: subGoal.currentAmount.toStringAsFixed(2),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Update ${subGoal.name}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Current Progress: \$${subGoal.currentAmount.toStringAsFixed(2)} / \$${subGoal.targetAmount.toStringAsFixed(2)}',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: amountController,
+              decoration: const InputDecoration(
+                labelText: 'New Current Amount',
+                prefixText: '\$',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newAmount = double.tryParse(amountController.text);
+              if (newAmount != null) {
+                await _goalRepository.updateSubGoalAmount(
+                  subGoal.id,
+                  newAmount,
+                );
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  _refreshGoal();
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final progress = _currentGoal.targetAmount > 0 
-        ? _currentGoal.currentAmount / _currentGoal.targetAmount 
+    final progress = _currentGoal.targetAmount > 0
+        ? _currentGoal.currentAmount / _currentGoal.targetAmount
         : 0.0;
 
     return Scaffold(
@@ -127,7 +191,9 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                 children: [
                   Text(
                     'Line Items (Subgoals)',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     onPressed: _showAddSubGoal,
@@ -141,7 +207,9 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32.0),
-                    child: Text('No subgoals yet. Breakdown your goal into line items!'),
+                    child: Text(
+                      'No subgoals yet. Breakdown your goal into line items!',
+                    ),
                   ),
                 )
               else
@@ -184,7 +252,11 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
         children: [
           Text(
             'Overall Progress',
-            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.8)),
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onPrimary.withValues(alpha: 0.8),
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -199,14 +271,18 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
               ),
               Text(
                 'Target: \$${_currentGoal.targetAmount.toStringAsFixed(2)}',
-                style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           LinearProgressIndicator(
             value: progress.clamp(0.0, 1.0),
-            backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.2),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.onPrimary.withValues(alpha: 0.2),
             color: Theme.of(context).colorScheme.onPrimary,
             minHeight: 12,
             borderRadius: BorderRadius.circular(6),
@@ -214,7 +290,10 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
           const SizedBox(height: 8),
           Text(
             '${(progress * 100).toStringAsFixed(0)}% Complete',
-            style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -222,8 +301,8 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
   }
 
   Widget _buildSubGoalItem(SubGoal subGoal) {
-    final subProgress = subGoal.targetAmount > 0 
-        ? subGoal.currentAmount / subGoal.targetAmount 
+    final subProgress = subGoal.targetAmount > 0
+        ? subGoal.currentAmount / subGoal.targetAmount
         : 0.0;
 
     return Card(
@@ -237,13 +316,29 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(subGoal.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  onPressed: () async {
-                    await _goalRepository.deleteSubGoal(subGoal.id);
-                    _refreshGoal();
-                  },
+                Text(
+                  subGoal.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 20),
+                      onPressed: () => _showEditSubGoalAmount(subGoal),
+                      tooltip: 'Edit Amount',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      onPressed: () async {
+                        await _goalRepository.deleteSubGoal(subGoal.id);
+                        _refreshGoal();
+                      },
+                      tooltip: 'Delete Subgoal',
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -251,7 +346,9 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('\$${subGoal.currentAmount.toStringAsFixed(2)} of \$${subGoal.targetAmount.toStringAsFixed(2)}'),
+                Text(
+                  '\$${subGoal.currentAmount.toStringAsFixed(2)} of \$${subGoal.targetAmount.toStringAsFixed(2)}',
+                ),
                 Text('${(subProgress * 100).toStringAsFixed(0)}%'),
               ],
             ),

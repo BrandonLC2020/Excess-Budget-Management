@@ -7,28 +7,40 @@ class BudgetRepository {
   BudgetRepository({required this.supabase});
 
   Future<List<BudgetCategory>> getBudgetCategories() async {
-    final response = await supabase.from('budget_categories').select().order('created_at', ascending: true);
+    final response = await supabase
+        .from('budget_categories')
+        .select()
+        .order('created_at', ascending: true);
     return (response as List).map((e) => BudgetCategory.fromJson(e)).toList();
   }
 
-  Future<BudgetCategory> addBudgetCategory(String name, double limitAmount) async {
+  Future<BudgetCategory> addBudgetCategory(
+    String name,
+    double limitAmount,
+  ) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
 
-    final response = await supabase.from('budget_categories').insert({
-      'user_id': userId,
-      'name': name,
-      'limit_amount': limitAmount,
-    }).select().single();
+    final response = await supabase
+        .from('budget_categories')
+        .insert({'user_id': userId, 'name': name, 'limit_amount': limitAmount})
+        .select()
+        .single();
 
     return BudgetCategory.fromJson(response);
   }
 
-  Future<BudgetCategory> updateBudgetCategory(String id, String name, double limitAmount) async {
-    final response = await supabase.from('budget_categories').update({
-      'name': name,
-      'limit_amount': limitAmount,
-    }).eq('id', id).select().single();
+  Future<BudgetCategory> updateBudgetCategory(
+    String id,
+    String name,
+    double limitAmount,
+  ) async {
+    final response = await supabase
+        .from('budget_categories')
+        .update({'name': name, 'limit_amount': limitAmount})
+        .eq('id', id)
+        .select()
+        .single();
 
     return BudgetCategory.fromJson(response);
   }

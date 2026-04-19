@@ -19,7 +19,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
 
   void _showAccountDialog([Account? account]) {
     final nameController = TextEditingController(text: account?.name);
-    final balanceController = TextEditingController(text: account?.balance.toString());
+    final balanceController = TextEditingController(
+      text: account?.balance.toString(),
+    );
 
     showDialog(
       context: context,
@@ -36,7 +38,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
               TextField(
                 controller: balanceController,
                 decoration: const InputDecoration(labelText: 'Balance'),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
             ],
           ),
@@ -48,19 +52,22 @@ class _AccountsScreenState extends State<AccountsScreen> {
             ElevatedButton(
               onPressed: () {
                 final name = nameController.text.trim();
-                final balance = double.tryParse(balanceController.text.trim()) ?? 0.0;
-                
+                final balance =
+                    double.tryParse(balanceController.text.trim()) ?? 0.0;
+
                 if (name.isNotEmpty) {
                   if (account == null) {
                     context.read<AccountBloc>().add(AddAccount(name, balance));
                   } else {
-                    context.read<AccountBloc>().add(UpdateAccount(account.id, name, balance));
+                    context.read<AccountBloc>().add(
+                      UpdateAccount(account.id, name, balance),
+                    );
                   }
                   Navigator.pop(context);
                 }
               },
               child: const Text('Save'),
-            )
+            ),
           ],
         );
       },
@@ -91,7 +98,9 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () {
-                      context.read<AccountBloc>().add(DeleteAccount(account.id));
+                      context.read<AccountBloc>().add(
+                        DeleteAccount(account.id),
+                      );
                     },
                   ),
                   onTap: () => _showAccountDialog(account),

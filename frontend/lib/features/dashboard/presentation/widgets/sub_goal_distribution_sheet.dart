@@ -14,7 +14,8 @@ class SubGoalDistributionSheet extends StatefulWidget {
   });
 
   @override
-  State<SubGoalDistributionSheet> createState() => _SubGoalDistributionSheetState();
+  State<SubGoalDistributionSheet> createState() =>
+      _SubGoalDistributionSheetState();
 }
 
 class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
@@ -33,7 +34,7 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
   void _quickFill() {
     double toDistribute = widget.amount;
     final Map<String, double> newDist = {};
-    
+
     for (var sg in widget.goal.subGoals) {
       final needed = sg.targetAmount - sg.currentAmount;
       if (needed > 0) {
@@ -69,7 +70,9 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
         children: [
           Text(
             'Distribute Funds',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -79,7 +82,9 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
           ),
           const SizedBox(height: 24),
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.4,
+            ),
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: widget.goal.subGoals.length,
@@ -87,7 +92,9 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
                 final sg = widget.goal.subGoals[index];
                 return ListTile(
                   title: Text(sg.name),
-                  subtitle: Text('Needs \$${(sg.targetAmount - sg.currentAmount).toStringAsFixed(2)}'),
+                  subtitle: Text(
+                    'Needs \$${(sg.targetAmount - sg.currentAmount).toStringAsFixed(2)}',
+                  ),
                   trailing: SizedBox(
                     width: 100,
                     child: TextField(
@@ -96,7 +103,9 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
                       onChanged: (val) {
                         setState(() {
                           _distribution[sg.id] = double.tryParse(val) ?? 0.0;
-                          _remaining = widget.amount - _distribution.values.reduce((a, b) => a + b);
+                          _remaining =
+                              widget.amount -
+                              _distribution.values.reduce((a, b) => a + b);
                         });
                       },
                     ),
@@ -109,18 +118,24 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Remaining: \$${_remaining.toStringAsFixed(2)}', 
+              Text(
+                'Remaining: \$${_remaining.toStringAsFixed(2)}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: _remaining < 0 ? Colors.red : Colors.green,
                 ),
               ),
-              TextButton(onPressed: _quickFill, child: const Text('Quick Fill')),
+              TextButton(
+                onPressed: _quickFill,
+                child: const Text('Quick Fill'),
+              ),
             ],
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _remaining == 0 ? () => widget.onConfirm(_distribution) : null,
+            onPressed: _remaining == 0
+                ? () => widget.onConfirm(_distribution)
+                : null,
             child: const Text('Confirm Distribution'),
           ),
           const SizedBox(height: 16),

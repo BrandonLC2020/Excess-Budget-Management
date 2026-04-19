@@ -13,7 +13,9 @@ class GoalListScreen extends StatefulWidget {
 }
 
 class _GoalListScreenState extends State<GoalListScreen> {
-  final GoalRepository _goalRepository = GoalRepository(supabase: Supabase.instance.client);
+  final GoalRepository _goalRepository = GoalRepository(
+    supabase: Supabase.instance.client,
+  );
   List<Goal> _goals = [];
   bool _isLoading = true;
 
@@ -34,7 +36,9 @@ class _GoalListScreenState extends State<GoalListScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -44,7 +48,13 @@ class _GoalListScreenState extends State<GoalListScreen> {
       isScrollControlled: true,
       builder: (context) => GoalFormSheet(
         onSave: (name, amount, type, category, targetDate) async {
-          await _goalRepository.addGoal(name, amount, type, category: category, targetDate: targetDate);
+          await _goalRepository.addGoal(
+            name,
+            amount,
+            type,
+            category: category,
+            targetDate: targetDate,
+          );
           _loadGoals();
         },
       ),
@@ -58,58 +68,66 @@ class _GoalListScreenState extends State<GoalListScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _goals.isEmpty
-              ? const Center(child: Text('No goals yet. Add one to start saving!'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _goals.length,
-                  itemBuilder: (context, index) {
-                    final goal = _goals[index];
-                    final progress = goal.targetAmount > 0 
-                        ? goal.currentAmount / goal.targetAmount 
-                        : 0.0;
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: ListTile(
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => GoalDetailScreen(goal: goal),
-                            ),
-                          );
-                          _loadGoals();
-                        },
-                        title: Text(goal.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          ? const Center(child: Text('No goals yet. Add one to start saving!'))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _goals.length,
+              itemBuilder: (context, index) {
+                final goal = _goals[index];
+                final progress = goal.targetAmount > 0
+                    ? goal.currentAmount / goal.targetAmount
+                    : 0.0;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: ListTile(
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GoalDetailScreen(goal: goal),
+                        ),
+                      );
+                      _loadGoals();
+                    },
+                    title: Text(
+                      goal.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        LinearProgressIndicator(
+                          value: progress.clamp(0.0, 1.0),
+                          backgroundColor: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const SizedBox(height: 8),
-                            LinearProgressIndicator(
-                              value: progress.clamp(0.0, 1.0),
-                              backgroundColor: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(4),
+                            Text(
+                              '\$${goal.currentAmount.toStringAsFixed(2)} of \$${goal.targetAmount.toStringAsFixed(2)}',
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('\$${goal.currentAmount.toStringAsFixed(2)} of \$${goal.targetAmount.toStringAsFixed(2)}'),
-                                Text(goal.category.toUpperCase(), style: Theme.of(context).textTheme.labelSmall),
-                              ],
+                            Text(
+                              goal.category.toUpperCase(),
+                              style: Theme.of(context).textTheme.labelSmall,
                             ),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () async {
-                            await _goalRepository.deleteGoal(goal.id);
-                            _loadGoals();
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                      ],
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () async {
+                        await _goalRepository.deleteGoal(goal.id);
+                        _loadGoals();
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddGoal,
         child: const Icon(Icons.add),

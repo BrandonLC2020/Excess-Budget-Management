@@ -35,13 +35,31 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
   // Helper for dynamic icons based on name
   IconData _getIconForCategory(String name) {
     final lowerName = name.toLowerCase();
-    if (lowerName.contains('food') || lowerName.contains('grocer') || lowerName.contains('din')) return Icons.restaurant;
-    if (lowerName.contains('rent') || lowerName.contains('hous') || lowerName.contains('mortgage')) return Icons.home;
-    if (lowerName.contains('transport') || lowerName.contains('gas') || lowerName.contains('car')) return Icons.directions_car;
+    if (lowerName.contains('food') ||
+        lowerName.contains('grocer') ||
+        lowerName.contains('din')) {
+      return Icons.restaurant;
+    }
+    if (lowerName.contains('rent') ||
+        lowerName.contains('hous') ||
+        lowerName.contains('mortgage')) {
+      return Icons.home;
+    }
+    if (lowerName.contains('transport') ||
+        lowerName.contains('gas') ||
+        lowerName.contains('car')) {
+      return Icons.directions_car;
+    }
     if (lowerName.contains('util')) return Icons.bolt;
-    if (lowerName.contains('entert') || lowerName.contains('fun')) return Icons.movie;
-    if (lowerName.contains('health') || lowerName.contains('medic')) return Icons.medical_services;
-    if (lowerName.contains('shop') || lowerName.contains('cloth')) return Icons.shopping_bag;
+    if (lowerName.contains('entert') || lowerName.contains('fun')) {
+      return Icons.movie;
+    }
+    if (lowerName.contains('health') || lowerName.contains('medic')) {
+      return Icons.medical_services;
+    }
+    if (lowerName.contains('shop') || lowerName.contains('cloth')) {
+      return Icons.shopping_bag;
+    }
     return Icons.category;
   }
 
@@ -61,7 +79,6 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
           } else if (state is BudgetError) {
             return Center(child: Text('Error: ${state.message}'));
           } else if (state is BudgetLoaded) {
-            
             // Calculate totals
             double totalBudget = 0;
             double totalSpent = 0;
@@ -69,7 +86,9 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
               totalBudget += cat.limitAmount;
               totalSpent += cat.spentAmount;
             }
-            final overallPercent = totalBudget > 0 ? (totalSpent / totalBudget).clamp(0.0, 1.0) : 0.0;
+            final overallPercent = totalBudget > 0
+                ? (totalSpent / totalBudget).clamp(0.0, 1.0)
+                : 0.0;
 
             return CustomScrollView(
               slivers: [
@@ -95,9 +114,13 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                         children: [
                           Text(
                             'Total Budget Allocation',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer
+                                      .withValues(alpha: 0.8),
+                                ),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -106,16 +129,23 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                             children: [
                               Text(
                                 '\$${totalSpent.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                ),
+                                style: Theme.of(context).textTheme.displayMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimaryContainer,
+                                    ),
                               ),
                               Text(
                                 ' / \$${totalBudget.toStringAsFixed(0)}',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.6),
-                                ),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer
+                                          .withValues(alpha: 0.6),
+                                    ),
                               ),
                             ],
                           ),
@@ -125,8 +155,12 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                             child: LinearProgressIndicator(
                               value: overallPercent,
                               minHeight: 8,
-                              backgroundColor: Colors.white.withValues(alpha: 0.3),
-                              color: overallPercent > 0.9 ? Colors.redAccent : Theme.of(context).colorScheme.primary,
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.3,
+                              ),
+                              color: overallPercent > 0.9
+                                  ? Colors.redAccent
+                                  : Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ],
@@ -134,7 +168,7 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Content
                 if (state.categories.isEmpty)
                   SliverFillRemaining(
@@ -142,11 +176,26 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.account_balance_wallet_outlined, size: 64, color: Theme.of(context).colorScheme.outline),
+                          Icon(
+                            Icons.account_balance_wallet_outlined,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
                           const SizedBox(height: 16),
-                          Text('No categories yet', style: Theme.of(context).textTheme.titleLarge),
+                          Text(
+                            'No categories yet',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                           const SizedBox(height: 8),
-                          Text('Tap + to create your first budget category.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          Text(
+                            'Tap + to create your first budget category.',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
                         ],
                       ),
                     ),
@@ -155,84 +204,111 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final category = state.categories[index];
-                          final percent = category.limitAmount > 0 
-                              ? (category.spentAmount / category.limitAmount).clamp(0.0, 1.0)
-                              : 0.0;
-                          
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            elevation: 0,
-                            color: Theme.of(context).colorScheme.surfaceContainer,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () => _showCategoryForm(category),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).colorScheme.primaryContainer,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            _getIconForCategory(category.name),
-                                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                category.name,
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                '\$${category.spentAmount.toStringAsFixed(2)} / \$${category.limitAmount.toStringAsFixed(2)}',
-                                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                                              ),
-                                            ],
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final category = state.categories[index];
+                        final percent = category.limitAmount > 0
+                            ? (category.spentAmount / category.limitAmount)
+                                  .clamp(0.0, 1.0)
+                            : 0.0;
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          elevation: 0,
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () => _showCategoryForm(category),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primaryContainer,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
                                           ),
                                         ),
-                                        IconButton(
-                                          icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
-                                          onPressed: () {
-                                            context.read<BudgetBloc>().add(DeleteBudgetCategory(category.id));
-                                          },
+                                        child: Icon(
+                                          _getIconForCategory(category.name),
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
                                         ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: LinearProgressIndicator(
-                                        value: percent,
-                                        minHeight: 6,
-                                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                        color: percent >= 1.0 ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary,
                                       ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              category.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '\$${category.spentAmount.toStringAsFixed(2)} / \$${category.limitAmount.toStringAsFixed(2)}',
+                                              style: TextStyle(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.delete_outline,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
+                                        ),
+                                        onPressed: () {
+                                          context.read<BudgetBloc>().add(
+                                            DeleteBudgetCategory(category.id),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: percent,
+                                      minHeight: 6,
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerHighest,
+                                      color: percent >= 1.0
+                                          ? Theme.of(context).colorScheme.error
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                        childCount: state.categories.length,
-                      ),
+                          ),
+                        );
+                      }, childCount: state.categories.length),
                     ),
                   ),
-                  
+
                 // Bottom padding for FAB
                 const SliverToBoxAdapter(child: SizedBox(height: 80)),
               ],

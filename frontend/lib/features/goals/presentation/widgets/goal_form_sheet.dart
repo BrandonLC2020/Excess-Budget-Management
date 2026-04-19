@@ -3,7 +3,14 @@ import '../../models/goal.dart';
 
 class GoalFormSheet extends StatefulWidget {
   final Goal? goal;
-  final Function(String name, double targetAmount, String type, String category, DateTime? targetDate) onSave;
+  final Function(
+    String name,
+    double targetAmount,
+    String type,
+    String category,
+    DateTime? targetDate,
+  )
+  onSave;
 
   const GoalFormSheet({super.key, this.goal, required this.onSave});
 
@@ -23,7 +30,9 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.goal?.name ?? '');
-    _targetAmountController = TextEditingController(text: widget.goal?.targetAmount.toString() ?? '');
+    _targetAmountController = TextEditingController(
+      text: widget.goal?.targetAmount.toString() ?? '',
+    );
     _type = widget.goal?.type ?? 'short_term';
     _category = widget.goal?.category ?? 'savings';
     _targetDate = widget.goal?.targetDate;
@@ -46,51 +55,81 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
           children: [
             Text(
               widget.goal == null ? 'Add Goal' : 'Edit Goal',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Goal Name'),
-              validator: (value) => value == null || value.isEmpty ? 'Please enter a name' : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Please enter a name' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _targetAmountController,
-              decoration: const InputDecoration(labelText: 'Target Amount', prefixText: '\$'),
+              decoration: const InputDecoration(
+                labelText: 'Target Amount',
+                prefixText: '\$',
+              ),
               keyboardType: TextInputType.number,
-              validator: (value) => value == null || double.tryParse(value) == null ? 'Please enter a valid amount' : null,
+              validator: (value) =>
+                  value == null || double.tryParse(value) == null
+                  ? 'Please enter a valid amount'
+                  : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _type,
               decoration: const InputDecoration(labelText: 'Goal Horizon'),
               items: const [
-                DropdownMenuItem(value: 'short_term', child: Text('Short Term')),
+                DropdownMenuItem(
+                  value: 'short_term',
+                  child: Text('Short Term'),
+                ),
                 DropdownMenuItem(value: 'long_term', child: Text('Long Term')),
               ],
               onChanged: (val) => setState(() => _type = val!),
             ),
             const SizedBox(height: 16),
-            const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'Category',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<String>(
               segments: const [
-                ButtonSegment(value: 'savings', label: Text('Savings'), icon: Icon(Icons.savings_outlined)),
-                ButtonSegment(value: 'purchase', label: Text('Purchase'), icon: Icon(Icons.shopping_bag_outlined)),
+                ButtonSegment(
+                  value: 'savings',
+                  label: Text('Savings'),
+                  icon: Icon(Icons.savings_outlined),
+                ),
+                ButtonSegment(
+                  value: 'purchase',
+                  label: Text('Purchase'),
+                  icon: Icon(Icons.shopping_bag_outlined),
+                ),
               ],
               selected: {_category},
-              onSelectionChanged: (val) => setState(() => _category = val.first),
+              onSelectionChanged: (val) =>
+                  setState(() => _category = val.first),
             ),
             const SizedBox(height: 16),
             ListTile(
               title: const Text('Target Date (Optional)'),
-              subtitle: Text(_targetDate == null ? 'Not set' : _targetDate!.toLocal().toString().split(' ')[0]),
+              subtitle: Text(
+                _targetDate == null
+                    ? 'Not set'
+                    : _targetDate!.toLocal().toString().split(' ')[0],
+              ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
-                  initialDate: _targetDate ?? DateTime.now().add(const Duration(days: 30)),
+                  initialDate:
+                      _targetDate ??
+                      DateTime.now().add(const Duration(days: 30)),
                   firstDate: DateTime.now(),
                   lastDate: DateTime.now().add(const Duration(days: 3650)),
                 );
