@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:confetti/confetti.dart';
 
 import '../../../../core/breakpoints.dart';
 import '../../bloc/dashboard_bloc.dart';
@@ -19,6 +20,48 @@ class OverviewTab extends StatefulWidget {
 
 class _OverviewTabState extends State<OverviewTab> {
   final TextEditingController _amountController = TextEditingController();
+  late ConfettiController _confettiController;
+  List<Goal> _previousGoals = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  void _checkGoalCompletions(List<Goal> newGoals) {
+    if (_previousGoals.isEmpty) {
+      _previousGoals = newGoals;
+      return;
+    }
+
+    bool transitioned = false;
+    for (final newGoal in newGoals) {
+      final oldGoal = _previousGoals.cast<Goal?>().firstWhere(
+        (g) => g?.id == newGoal.id,
+        orElse: () => null,
+      );
+
+      if (oldGoal != null && !oldGoal.isCompleted && newGoal.isCompleted) {
+        transitioned = true;
+        break;
+      }
+    }
+
+    if (transitioned) {
+      _confettiController.play();
+    }
+    _previousGoals = newGoals;
+  }
 
   void _analyzeFunds() {
     final val = double.tryParse(_amountController.text);
@@ -130,62 +173,86 @@ class _OverviewTabState extends State<OverviewTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<DashboardBloc, DashboardState>(
+    return BlocConsumer<DashboardBloc, DashboardState>(
+      listener: (context, state) {
+        if (state is DashboardSuggestionsLoaded) {
+          _checkGoalCompletions(state.goals);
+        }
+      },
       builder: (context, state) {
-        final List<Goal> goals = state is DashboardSuggestionsLoaded
-            ? state.goals
-            : [];
+        final List<Goal> goals =
+            state is DashboardSuggestionsLoaded ? state.goals : [];
 
         return Scaffold(
-          appBar: context.isCompact
-              ? AppBar(title: const Text('Overview'))
-              : null,
-          body: RefreshIndicator(
-            onRefresh: () async {
-              // Trigger a refresh of current amount if needed,
-              // for now we just reset or re-analyze if we have an amount
-              final val = double.tryParse(_amountController.text);
-              if (val != null && val > 0) {
-                context.read<DashboardBloc>().add(
-                  GenerateSuggestionsRequested(val),
-                );
-              }
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(24.0),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1000),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(context),
-                      const SizedBox(height: 32),
-                      _buildAnalysisInput(context, goals),
-                      const SizedBox(height: 32),
-                      if (state is DashboardLoading)
-                        const Center(child: CircularProgressIndicator())
-                      else if (state is DashboardSuggestionsLoaded)
-                        _buildSuggestionsList(context, state)
-                      else if (state is DashboardError)
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Text(
-                              'Error: ${state.message}',
-                              style: const TextStyle(color: Colors.red),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        )
-                      else
-                        _buildEmptyState(context),
-                    ],
+          appBar:
+              context.isCompact ? AppBar(title: const Text('Overview')) : null,
+          body: Stack(
+            children: [
+              RefreshIndicator(
+                onRefresh: () async {
+                  // Trigger a refresh of current amount if needed,
+                  // for now we just reset or re-analyze if we have an amount
+                  final val = double.tryParse(_amountController.text);
+                  if (val != null && val > 0) {
+                    context.read<DashboardBloc>().add(
+                      GenerateSuggestionsRequested(val),
+                    );
+                  }
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(context),
+                          const SizedBox(height: 32),
+                          _buildAnalysisInput(context, goals),
+                          const SizedBox(height: 32),
+                          if (state is DashboardLoading)
+                            const Center(child: CircularProgressIndicator())
+                          else if (state is DashboardSuggestionsLoaded)
+                            _buildSuggestionsList(context, state)
+                          else if (state is DashboardError)
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 40,
+                                ),
+                                child: Text(
+                                  'Error: ${state.message}',
+                                  style: const TextStyle(color: Colors.red),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          else
+                            _buildEmptyState(context),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  shouldLoop: false,
+                  colors: const [
+                    Colors.green,
+                    Colors.blue,
+                    Colors.pink,
+                    Colors.orange,
+                    Colors.purple,
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -193,24 +260,34 @@ class _OverviewTabState extends State<OverviewTab> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Financial Overview',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Financial Overview',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Analyze your funds and optimize your savings.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Analyze your funds and optimize your savings.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
+        IconButton.filledTonal(
+          onPressed: () => context.push('/history'),
+          icon: const Icon(Icons.history),
+          tooltip: 'Allocation History',
         ),
       ],
     );
