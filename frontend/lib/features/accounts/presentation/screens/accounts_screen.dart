@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/breakpoints.dart';
+import '../../../../core/widgets/master_detail_layout.dart';
 import '../../bloc/account_bloc.dart';
 import '../../models/account.dart';
+import '../widgets/account_detail_view.dart';
 
 class AccountsScreen extends StatefulWidget {
   const AccountsScreen({super.key});
@@ -12,6 +14,8 @@ class AccountsScreen extends StatefulWidget {
 }
 
 class _AccountsScreenState extends State<AccountsScreen> {
+  Account? _selectedAccount;
+
   @override
   void initState() {
     super.initState();
@@ -19,57 +23,18 @@ class _AccountsScreenState extends State<AccountsScreen> {
   }
 
   void _showAccountDialog([Account? account]) {
-    final nameController = TextEditingController(text: account?.name);
-    final balanceController = TextEditingController(
-      text: account?.balance.toString(),
-    );
-
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text(account == null ? 'Add Account' : 'Edit Account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Account Name'),
-              ),
-              TextField(
-                controller: balanceController,
-                decoration: const InputDecoration(labelText: 'Balance'),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-            ],
+          content: SingleChildScrollView(
+            child: AccountForm(
+              account: account,
+              onSaved: () => Navigator.pop(context),
+              onCancel: () => Navigator.pop(context),
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameController.text.trim();
-                final balance =
-                    double.tryParse(balanceController.text.trim()) ?? 0.0;
-
-                if (name.isNotEmpty) {
-                  if (account == null) {
-                    context.read<AccountBloc>().add(AddAccount(name, balance));
-                  } else {
-                    context.read<AccountBloc>().add(
-                      UpdateAccount(account.id, name, balance),
-                    );
-                  }
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
         );
       },
     );
@@ -79,38 +44,88 @@ class _AccountsScreenState extends State<AccountsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: context.isCompact ? AppBar(title: const Text('Accounts')) : null,
-      body: BlocBuilder<AccountBloc, AccountState>(
-        builder: (context, state) {
-          if (state is AccountLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is AccountError) {
-            return Center(child: Text('Error: ${state.message}'));
-          } else if (state is AccountLoaded) {
-            if (state.accounts.isEmpty) {
-              return const Center(child: Text('No accounts found. Add one!'));
-            }
-            return ListView.builder(
-              itemCount: state.accounts.length,
-              itemBuilder: (context, index) {
-                final account = state.accounts[index];
-                return ListTile(
-                  title: Text(account.name),
-                  subtitle: Text('\$${account.balance.toStringAsFixed(2)}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      context.read<AccountBloc>().add(
-                        DeleteAccount(account.id),
-                      );
-                    },
-                  ),
-                  onTap: () => _showAccountDialog(account),
-                );
-              },
-            );
+      body: BlocListener<AccountBloc, AccountState>(
+        listener: (context, state) {
+          if (state is AccountLoaded && _selectedAccount != null) {
+            setState(() {
+              _selectedAccount = state.accounts.firstWhere(
+                (a) => a.id == _selectedAccount!.id,
+                orElse: () => _selectedAccount!,
+              );
+            });
           }
-          return const Center(child: Text('Failed to load accounts.'));
         },
+        child: MasterDetailLayout(
+          master: BlocBuilder<AccountBloc, AccountState>(
+            builder: (context, state) {
+              if (state is AccountLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is AccountError) {
+                return Center(child: Text('Error: ${state.message}'));
+              } else if (state is AccountLoaded) {
+                if (state.accounts.isEmpty) {
+                  return const Center(
+                    child: Text('No accounts found. Add one!'),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: state.accounts.length,
+                  itemBuilder: (context, index) {
+                    final account = state.accounts[index];
+                    final isSelected = _selectedAccount?.id == account.id;
+
+                    return ListTile(
+                      title: Text(
+                        account.name,
+                        style: TextStyle(
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                      subtitle: Text('\$${account.balance.toStringAsFixed(2)}'),
+                      selected: !context.isCompact && isSelected,
+                      selectedTileColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
+                      trailing: context.isCompact
+                          ? IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                context.read<AccountBloc>().add(
+                                  DeleteAccount(account.id),
+                                );
+                              },
+                            )
+                          : null,
+                      onTap: () {
+                        if (context.isCompact) {
+                          _showAccountDialog(account);
+                        } else {
+                          setState(() {
+                            _selectedAccount = account;
+                          });
+                        }
+                      },
+                    );
+                  },
+                );
+              }
+              return const Center(child: Text('Failed to load accounts.'));
+            },
+          ),
+          detail: _selectedAccount != null
+              ? AccountDetailView(
+                  key: ValueKey(_selectedAccount!.id),
+                  account: _selectedAccount!,
+                  onDelete: () {
+                    setState(() {
+                      _selectedAccount = null;
+                    });
+                  },
+                )
+              : null,
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAccountDialog(),
