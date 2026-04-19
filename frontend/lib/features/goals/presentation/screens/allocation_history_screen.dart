@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../bloc/allocation_history_bloc.dart';
 import '../../bloc/allocation_history_event.dart';
 import '../../bloc/allocation_history_state.dart';
-import '../../models/allocation.dart';
 
 class AllocationHistoryScreen extends StatelessWidget {
   const AllocationHistoryScreen({super.key});
