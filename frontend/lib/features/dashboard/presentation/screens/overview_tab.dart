@@ -175,85 +175,166 @@ class _OverviewTabState extends State<OverviewTab> {
           ),
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'AI Allocation Strategy',
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Enter your excess funds the AI will analyze your accounts and goals to find the best distribution.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      _buildInputCard(context),
-                      const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                sliver: BlocBuilder<DashboardBloc, DashboardState>(
-                  builder: (context, state) {
-                    if (state is DashboardInitial) {
-                      return SliverToBoxAdapter(child: const SizedBox.shrink());
-                    } else if (state is DashboardLoading) {
-                      return SliverToBoxAdapter(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                      );
-                    } else if (state is DashboardError) {
-                      return SliverToBoxAdapter(
-                        child: Text(
-                          state.message,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      );
-                    } else if (state is DashboardSuggestionsLoaded) {
-                      final allocations = state.result.allocations;
-                      return SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: AllocationCard(
-                              allocation: allocations[index],
-                              goals: state.goals,
-                              index: index,
-                            ),
-                          );
-                        }, childCount: allocations.length),
-                      );
-                    }
-                    return SliverToBoxAdapter(child: const SizedBox.shrink());
-                  },
-                ),
-              ),
-              SliverToBoxAdapter(child: const SizedBox(height: 48)),
-            ],
+          child: BlocBuilder<DashboardBloc, DashboardState>(
+            builder: (context, state) {
+              if (context.isCompact) {
+                return _buildMobileLayout(context, state);
+              } else {
+                return _buildWideLayout(context, state);
+              }
+            },
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildMobileLayout(BuildContext context, DashboardState state) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 32),
+                _buildInputCard(context),
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          sliver: _buildSuggestionsSliver(context, state),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 48)),
+      ],
+    );
+  }
+
+  Widget _buildWideLayout(BuildContext context, DashboardState state) {
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(40.0),
+            child: Column(
+              children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _buildHeader(context),
+                ),
+                const SizedBox(height: 40),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _buildInputCard(context),
+                ),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+          sliver: _buildSuggestionsSliver(context, state),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 48)),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Column(
+      crossAxisAlignment:
+          context.isCompact
+              ? CrossAxisAlignment.stretch
+              : CrossAxisAlignment.center,
+      children: [
+        Text(
+          'AI Allocation Strategy',
+          textAlign: context.isCompact ? TextAlign.left : TextAlign.center,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Enter your excess funds and the AI will analyze your accounts and goals to find the best distribution.',
+          textAlign: context.isCompact ? TextAlign.left : TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSuggestionsSliver(BuildContext context, DashboardState state) {
+    if (state is DashboardInitial) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    } else if (state is DashboardLoading) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    } else if (state is DashboardError) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32.0),
+          child: Center(
+            child: Text(
+              state.message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      );
+    } else if (state is DashboardSuggestionsLoaded) {
+      final allocations = state.result.allocations;
+      if (context.isCompact) {
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: AllocationCard(
+                allocation: allocations[index],
+                goals: state.goals,
+                index: index,
+              ),
+            );
+          }, childCount: allocations.length),
+        );
+      } else {
+        return SliverGrid(
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 450,
+            mainAxisSpacing: 24,
+            crossAxisSpacing: 24,
+            childAspectRatio: 1.4,
+          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            return AllocationCard(
+              allocation: allocations[index],
+              goals: state.goals,
+              index: index,
+            );
+          }, childCount: allocations.length),
+        );
+      }
+    }
+    return const SliverToBoxAdapter(child: SizedBox.shrink());
   }
 
   Widget _buildInputCard(BuildContext context) {
@@ -507,6 +588,8 @@ class AllocationCard extends StatelessWidget {
                       style: Theme.of(
                         context,
                       ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
