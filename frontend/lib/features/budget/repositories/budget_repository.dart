@@ -48,4 +48,13 @@ class BudgetRepository {
   Future<void> deleteBudgetCategory(String id) async {
     await supabase.from('budget_categories').delete().eq('id', id);
   }
+
+  Future<void> bulkInsertExpenses(List<Map<String, dynamic>> expenses) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('User not logged in');
+
+    final rowsToInsert = expenses.map((e) => {...e, 'user_id': userId}).toList();
+    
+    await supabase.from('expenses').insert(rowsToInsert);
+  }
 }
