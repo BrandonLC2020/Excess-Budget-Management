@@ -148,4 +148,4 @@ backend/supabase/.temp
 !/dev/ci/**/Gemfile.lock
 
 # Terraform
-*.tfvars
+*.tfvars\n.worktrees/
