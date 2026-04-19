@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/goal.dart';
+import '../models/allocation.dart';
 
 class GoalRepository {
   final SupabaseClient supabase;
@@ -79,6 +80,14 @@ class GoalRepository {
       'goal_id': goalId,
       'amount': amount,
     });
+  }
+
+  Future<List<GoalAllocation>> getAllocations() async {
+    final response = await supabase
+        .from('goal_allocations')
+        .select('*, goals(name)')
+        .order('created_at', ascending: false);
+    return (response as List).map((e) => GoalAllocation.fromJson(e)).toList();
   }
 
   Future<Map<String, double>> getRecentAllocationSummary(int days) async {
