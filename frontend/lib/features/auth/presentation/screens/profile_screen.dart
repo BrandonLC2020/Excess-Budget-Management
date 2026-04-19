@@ -103,6 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   OutlinedButton(
                     onPressed: () => Supabase.instance.client.auth.signOut(),
                     style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
                       foregroundColor: Colors.red,
                     ),
                     child: const Text('Logout'),

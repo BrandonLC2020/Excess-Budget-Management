@@ -4,6 +4,7 @@ import '../../../../core/breakpoints.dart';
 import '../../../../core/widgets/master_detail_layout.dart';
 import '../../models/goal.dart';
 import '../../repositories/goal_repository.dart';
+import '../widgets/goal_card.dart';
 import '../widgets/goal_detail_view.dart';
 import '../widgets/goal_form_sheet.dart';
 import 'goal_detail_screen.dart';
@@ -120,71 +121,29 @@ class _GoalListScreenState extends State<GoalListScreen> {
       itemBuilder: (context, index) {
         final goal = _goals[index];
         final isSelected = _selectedGoal?.id == goal.id;
-        final progress = goal.targetAmount > 0
-            ? goal.currentAmount / goal.targetAmount
-            : 0.0;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          color: !context.isCompact && isSelected
-              ? Theme.of(context).colorScheme.primaryContainer
-              : null,
-          child: ListTile(
-            onTap: () async {
-              if (context.isCompact) {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GoalDetailScreen(goal: goal),
-                  ),
-                );
-                _loadGoals();
-              } else {
-                setState(() {
-                  _selectedGoal = goal;
-                });
-              }
-            },
-            title: Text(
-              goal.name,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: progress.clamp(0.0, 1.0),
-                  backgroundColor: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(4),
+        return GoalCard(
+          goal: goal,
+          isSelected: isSelected,
+          onTap: () async {
+            if (context.isCompact) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GoalDetailScreen(goal: goal),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '\$${goal.currentAmount.toStringAsFixed(2)} of \$${goal.targetAmount.toStringAsFixed(2)}',
-                    ),
-                    Text(
-                      goal.category.toUpperCase(),
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            trailing: context.isCompact
-                ? IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () async {
-                      await _goalRepository.deleteGoal(goal.id);
-                      _loadGoals();
-                    },
-                  )
-                : null,
-          ),
+              );
+              _loadGoals();
+            } else {
+              setState(() {
+                _selectedGoal = goal;
+              });
+            }
+          },
+          onDelete: () async {
+            await _goalRepository.deleteGoal(goal.id);
+            _loadGoals();
+          },
         );
       },
     );

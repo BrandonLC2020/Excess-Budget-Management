@@ -8,6 +8,7 @@ import '../../bloc/dashboard_bloc.dart';
 import '../../bloc/dashboard_event.dart';
 import '../../bloc/dashboard_state.dart';
 import '../../models/allocation.dart';
+import '../widgets/allocation_card.dart';
 import '../widgets/sub_goal_distribution_sheet.dart';
 import '../../../goals/models/goal.dart';
 
@@ -48,571 +49,336 @@ class _OverviewTabState extends State<OverviewTab> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Manual Allocation'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<Goal>(
-                decoration: const InputDecoration(labelText: 'Select Goal'),
-                items: goals
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g.name)))
-                    .toList(),
-                onChanged: (val) => setDialogState(() => selectedGoal = val),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Manual Allocation'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<Goal>(
+                    value: selectedGoal,
+                    decoration: const InputDecoration(labelText: 'Select Goal'),
+                    items:
+                        goals.map((g) {
+                          return DropdownMenuItem(value: g, child: Text(g.name));
+                        }).toList(),
+                    onChanged: (val) => setDialogState(() => selectedGoal = val),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: amountController,
+                    decoration: const InputDecoration(
+                      labelText: 'Amount',
+                      prefixText: '$',
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: amountController,
-                decoration: const InputDecoration(
-                  labelText: 'Amount',
-                  prefixText: '\$',
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
                 ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final amount = double.tryParse(amountController.text);
-                if (selectedGoal != null && amount != null && amount > 0) {
-                  Navigator.pop(context);
-                  _handleManualConfirm(selectedGoal!, amount);
-                }
-              },
-              child: const Text('Next'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedGoal != null) {
+                      final amount = double.tryParse(amountController.text);
+                      if (amount != null && amount > 0) {
+                        final allocation = Allocation(
+                          id: selectedGoal!.id,
+                          name: selectedGoal!.name,
+                          amount: amount,
+                          type: 'goal',
+                          reason: 'Manual allocation',
+                        );
 
-  void _handleManualConfirm(Goal goal, double amount) {
-    if (goal.subGoals.isNotEmpty) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) => SubGoalDistributionSheet(
-          goal: goal,
-          amount: amount,
-          onConfirm: (distribution) {
-            Navigator.pop(context);
-            _applyManualAllocation(goal, amount, distribution);
+                        if (selectedGoal!.subGoals.isNotEmpty) {
+                          Navigator.pop(context);
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            builder:
+                                (context) => SubGoalDistributionSheet(
+                                  goal: selectedGoal!,
+                                  amount: amount,
+                                  onConfirm: (distribution) {
+                                    Navigator.pop(context);
+                                    context.read<DashboardBloc>().add(
+                                      AcceptSuggestionRequested(
+                                        allocation,
+                                        subGoalDistribution: distribution,
+                                      ),
+                                    );
+                                  },
+                                ),
+                          );
+                        } else {
+                          context.read<DashboardBloc>().add(
+                            AcceptSuggestionRequested(allocation),
+                          );
+                          Navigator.pop(context);
+                        }
+                      }
+                    }
+                  },
+                  child: const Text('Allocate'),
+                ),
+              ],
+            );
           },
-        ),
-      );
-    } else {
-      _applyManualAllocation(goal, amount, {});
-    }
-  }
-
-  void _applyManualAllocation(
-    Goal goal,
-    double amount,
-    Map<String, double> distribution,
-  ) {
-    final allocation = Allocation(
-      id: goal.id,
-      name: goal.name,
-      amount: amount,
-      reason: 'Manual Allocation',
-      type: 'goal',
+        );
+      },
     );
-
-    context.read<DashboardBloc>().add(
-      AcceptSuggestionRequested(allocation, subGoalDistribution: distribution),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Manually allocated \$${amount.toStringAsFixed(2)} to ${goal.name}',
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _amountController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar:
-          context.isCompact
-              ? AppBar(
-                title: Text(
-                  'Month-End Review',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
-                ),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-              )
-              : null,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(
-                context,
-              ).colorScheme.primaryContainer.withValues(alpha: 0.4),
-              Theme.of(context).colorScheme.surface,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: BlocBuilder<DashboardBloc, DashboardState>(
-            builder: (context, state) {
-              if (context.isCompact) {
-                return _buildMobileLayout(context, state);
-              } else {
-                return _buildWideLayout(context, state);
-              }
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMobileLayout(BuildContext context, DashboardState state) {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        return RefreshIndicator(
+          onRefresh: () async {
+            context.read<DashboardBloc>().add(LoadDashboardData());
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context),
                 const SizedBox(height: 32),
-                _buildInputCard(context),
+                _buildAnalysisInput(context),
                 const SizedBox(height: 32),
+                if (state.isAnalyzing)
+                  const Center(child: CircularProgressIndicator())
+                else if (state.suggestions.isNotEmpty)
+                  _buildSuggestionsList(context, state)
+                else
+                  _buildEmptyState(context),
               ],
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          sliver: _buildSuggestionsSliver(context, state),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 48)),
-      ],
-    );
-  }
-
-  Widget _buildWideLayout(BuildContext context, DashboardState state) {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(40.0),
-            child: Column(
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: _buildHeader(context),
-                ),
-                const SizedBox(height: 40),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: _buildInputCard(context),
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 40.0),
-          sliver: _buildSuggestionsSliver(context, state),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 48)),
-      ],
+        );
+      },
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     return Column(
-      crossAxisAlignment:
-          context.isCompact
-              ? CrossAxisAlignment.stretch
-              : CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'AI Allocation Strategy',
-          textAlign: context.isCompact ? TextAlign.left : TextAlign.center,
+          'Financial Overview',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Enter your excess funds and the AI will analyze your accounts and goals to find the best distribution.',
-          textAlign: context.isCompact ? TextAlign.left : TextAlign.center,
+          'Analyze your funds and optimize your savings.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSuggestionsSliver(BuildContext context, DashboardState state) {
-    if (state is DashboardInitial) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
-    } else if (state is DashboardLoading) {
-      return const SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(32.0),
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
-    } else if (state is DashboardError) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32.0),
-          child: Center(
-            child: Text(
-              state.message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-      );
-    } else if (state is DashboardSuggestionsLoaded) {
-      final allocations = state.result.allocations;
-      if (context.isCompact) {
-        return SliverList(
-          delegate: SliverChildBuilderDelegate((context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: AllocationCard(
-                allocation: allocations[index],
-                goals: state.goals,
-                index: index,
-              ),
-            );
-          }, childCount: allocations.length),
-        );
-      } else {
-        return SliverGrid(
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 450,
-            mainAxisSpacing: 24,
-            crossAxisSpacing: 24,
-            childAspectRatio: 1.4,
-          ),
-          delegate: SliverChildBuilderDelegate((context, index) {
-            return AllocationCard(
-              allocation: allocations[index],
-              goals: state.goals,
-              index: index,
-            );
-          }, childCount: allocations.length),
-        );
-      }
-    }
-    return const SliverToBoxAdapter(child: SizedBox.shrink());
-  }
-
-  Widget _buildInputCard(BuildContext context) {
+  Widget _buildAnalysisInput(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primaryContainer,
+            Theme.of(context).colorScheme.secondaryContainer,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Theme.of(
               context,
-            ).colorScheme.primary.withValues(alpha: 0.05),
+            ).colorScheme.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      Icons.attach_money,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    labelText: 'Excess Funds Amount',
-                    labelStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _analyzeFunds,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
-                    ),
-                    child: Text(
-                      'Analyze with AI',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: _showManualAllocation,
-                    icon: const Icon(Icons.add_circle_outline),
-                    label: const Text('Or Manually Allocate Funds'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class AllocationCard extends StatelessWidget {
-  final Allocation allocation;
-  final List<Goal> goals;
-  final int index;
-
-  const AllocationCard({
-    super.key,
-    required this.allocation,
-    required this.goals,
-    required this.index,
-  });
-
-  void _handleAccept(BuildContext context) {
-    if (allocation.type == 'goal') {
-      final goal = goals.firstWhere((g) => g.id == allocation.id);
-      if (goal.subGoals.isNotEmpty) {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (context) => SubGoalDistributionSheet(
-            goal: goal,
-            amount: allocation.amount,
-            onConfirm: (distribution) {
-              Navigator.pop(context);
-              context.read<DashboardBloc>().add(
-                AcceptSuggestionRequested(
-                  allocation,
-                  subGoalDistribution: distribution,
-                ),
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Distributed and accepted allocation for ${allocation.name}',
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-        return;
-      }
-    }
-
-    // Default fallback for accounts or flat goals
-    context.read<DashboardBloc>().add(AcceptSuggestionRequested(allocation));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Accepted allocation for ${allocation.name}')),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isGoal = allocation.type == 'goal';
-    final icon = isGoal
-        ? Icons.flag_rounded
-        : Icons.account_balance_wallet_rounded;
-    final color = isGoal
-        ? Colors.purpleAccent.shade400
-        : Theme.of(context).colorScheme.primary;
-
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 400 + (index * 150)),
-      curve: Curves.easeOutQuart,
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 30 * (1 - value)),
-          child: Opacity(opacity: value, child: child),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: color, size: 28),
+              Icon(
+                Icons.auto_awesome,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                size: 20,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            allocation.name,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Text(
-                          '\$${allocation.amount.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isGoal ? 'Savings Goal' : 'Account Deposit',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      allocation.reason,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _handleAccept(context),
-                        icon: const Icon(Icons.check_circle_outline, size: 18),
-                        label: const Text('Accept Suggestion'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: color,
-                          side: BorderSide(color: color.withValues(alpha: 0.5)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 8),
+              Text(
+                'AI Analysis',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Text(
+            'How much do you want to allocate?',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _amountController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.attach_money,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    hintText: '0.00',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onPrimaryContainer
+                          .withValues(alpha: 0.5),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.2),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: _analyzeFunds,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  minimumSize: const Size(64, 64),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Icon(Icons.analytics_outlined),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: _showManualAllocation,
+            icon: const Icon(Icons.add_circle_outline, size: 18),
+            label: const Text('Perform Manual Allocation'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsList(BuildContext context, DashboardState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Proposed Allocations',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '${state.suggestions.length} items',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 16),
+        ...state.suggestions.asMap().entries.map((entry) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: AllocationCard(
+              allocation: entry.value,
+              goals: state.goals,
+              index: entry.key,
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 40),
+          Icon(
+            Icons.savings_outlined,
+            size: 80,
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Ready to Grow?',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Enter an amount above to see smart\nallocation suggestions for your goals.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.4),
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

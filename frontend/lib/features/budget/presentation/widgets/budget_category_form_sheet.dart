@@ -111,7 +111,7 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
             // Presets List (Only show when adding)
             if (widget.category == null) ...[
               SizedBox(
-                height: 40,
+                height: 48,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _presets.length,

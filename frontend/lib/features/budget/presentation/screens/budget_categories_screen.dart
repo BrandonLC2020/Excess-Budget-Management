@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/breakpoints.dart';
 import '../../bloc/budget_bloc.dart';
+import '../widgets/budget_category_card.dart';
 import '../widgets/budget_category_form_sheet.dart';
 import '../../models/budget_category.dart';
 
@@ -215,99 +216,16 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                                   .clamp(0.0, 1.0)
                             : 0.0;
 
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          elevation: 0,
-                          color: Theme.of(context).colorScheme.surfaceContainer,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () => _showCategoryForm(category),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primaryContainer,
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          _getIconForCategory(category.name),
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onPrimaryContainer,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              category.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '\$${category.spentAmount.toStringAsFixed(2)} / \$${category.limitAmount.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurfaceVariant,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.delete_outline,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.error,
-                                        ),
-                                        onPressed: () {
-                                          context.read<BudgetBloc>().add(
-                                            DeleteBudgetCategory(category.id),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(
-                                      value: percent,
-                                      minHeight: 6,
-                                      backgroundColor: Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest,
-                                      color: percent >= 1.0
-                                          ? Theme.of(context).colorScheme.error
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        return BudgetCategoryCard(
+                          category: category,
+                          percent: percent,
+                          icon: _getIconForCategory(category.name),
+                          onTap: () => _showCategoryForm(category),
+                          onDelete: () {
+                            context.read<BudgetBloc>().add(
+                                  DeleteBudgetCategory(category.id),
+                                );
+                          },
                         );
                       }, childCount: state.categories.length),
                     ),

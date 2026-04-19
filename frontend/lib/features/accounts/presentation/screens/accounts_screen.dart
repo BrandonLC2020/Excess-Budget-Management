@@ -4,6 +4,7 @@ import '../../../../core/breakpoints.dart';
 import '../../../../core/widgets/master_detail_layout.dart';
 import '../../bloc/account_bloc.dart';
 import '../../models/account.dart';
+import '../widgets/account_card.dart';
 import '../widgets/account_detail_view.dart';
 
 class AccountsScreen extends StatefulWidget {
@@ -69,35 +70,15 @@ class _AccountsScreenState extends State<AccountsScreen> {
                   );
                 }
                 return ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: state.accounts.length,
                   itemBuilder: (context, index) {
                     final account = state.accounts[index];
                     final isSelected = _selectedAccount?.id == account.id;
 
-                    return ListTile(
-                      title: Text(
-                        account.name,
-                        style: TextStyle(
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                      subtitle: Text('\$${account.balance.toStringAsFixed(2)}'),
-                      selected: !context.isCompact && isSelected,
-                      selectedTileColor: Theme.of(
-                        context,
-                      ).colorScheme.primaryContainer,
-                      trailing: context.isCompact
-                          ? IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                context.read<AccountBloc>().add(
-                                  DeleteAccount(account.id),
-                                );
-                              },
-                            )
-                          : null,
+                    return AccountCard(
+                      account: account,
+                      isSelected: isSelected,
                       onTap: () {
                         if (context.isCompact) {
                           _showAccountDialog(account);
@@ -106,6 +87,11 @@ class _AccountsScreenState extends State<AccountsScreen> {
                             _selectedAccount = account;
                           });
                         }
+                      },
+                      onDelete: () {
+                        context.read<AccountBloc>().add(
+                              DeleteAccount(account.id),
+                            );
                       },
                     );
                   },
