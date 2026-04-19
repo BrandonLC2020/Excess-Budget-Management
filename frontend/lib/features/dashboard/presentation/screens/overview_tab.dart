@@ -1,7 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/breakpoints.dart';
 import '../../bloc/dashboard_bloc.dart';
@@ -33,10 +31,7 @@ class _OverviewTabState extends State<OverviewTab> {
     }
   }
 
-  void _showManualAllocation() async {
-    final goals = await context.read<DashboardBloc>().goalRepository.getGoals();
-    if (!mounted) return;
-
+  void _showManualAllocation(List<Goal> goals) {
     if (goals.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No goals found. Create one first!')),
@@ -58,20 +53,20 @@ class _OverviewTabState extends State<OverviewTab> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<Goal>(
-                    value: selectedGoal,
+                    initialValue: selectedGoal,
                     decoration: const InputDecoration(labelText: 'Select Goal'),
-                    items:
-                        goals.map((g) {
-                          return DropdownMenuItem(value: g, child: Text(g.name));
-                        }).toList(),
-                    onChanged: (val) => setDialogState(() => selectedGoal = val),
+                    items: goals.map((g) {
+                      return DropdownMenuItem(value: g, child: Text(g.name));
+                    }).toList(),
+                    onChanged: (val) =>
+                        setDialogState(() => selectedGoal = val),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: amountController,
                     decoration: const InputDecoration(
                       labelText: 'Amount',
-                      prefixText: '$',
+                      prefixText: r'$',
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -100,20 +95,19 @@ class _OverviewTabState extends State<OverviewTab> {
                           showModalBottomSheet(
                             context: context,
                             isScrollControlled: true,
-                            builder:
-                                (context) => SubGoalDistributionSheet(
-                                  goal: selectedGoal!,
-                                  amount: amount,
-                                  onConfirm: (distribution) {
-                                    Navigator.pop(context);
-                                    context.read<DashboardBloc>().add(
-                                      AcceptSuggestionRequested(
-                                        allocation,
-                                        subGoalDistribution: distribution,
-                                      ),
-                                    );
-                                  },
-                                ),
+                            builder: (context) => SubGoalDistributionSheet(
+                              goal: selectedGoal!,
+                              amount: amount,
+                              onConfirm: (distribution) {
+                                Navigator.pop(context);
+                                context.read<DashboardBloc>().add(
+                                  AcceptSuggestionRequested(
+                                    allocation,
+                                    subGoalDistribution: distribution,
+                                  ),
+                                );
+                              },
+                            ),
                           );
                         } else {
                           context.read<DashboardBloc>().add(
@@ -138,27 +132,59 @@ class _OverviewTabState extends State<OverviewTab> {
   Widget build(BuildContext context) {
     return BlocBuilder<DashboardBloc, DashboardState>(
       builder: (context, state) {
-        return RefreshIndicator(
-          onRefresh: () async {
-            context.read<DashboardBloc>().add(LoadDashboardData());
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 32),
-                _buildAnalysisInput(context),
-                const SizedBox(height: 32),
-                if (state.isAnalyzing)
-                  const Center(child: CircularProgressIndicator())
-                else if (state.suggestions.isNotEmpty)
-                  _buildSuggestionsList(context, state)
-                else
-                  _buildEmptyState(context),
-              ],
+        final List<Goal> goals = state is DashboardSuggestionsLoaded
+            ? state.goals
+            : [];
+
+        return Scaffold(
+          appBar: context.isCompact
+              ? AppBar(title: const Text('Overview'))
+              : null,
+          body: RefreshIndicator(
+            onRefresh: () async {
+              // Trigger a refresh of current amount if needed,
+              // for now we just reset or re-analyze if we have an amount
+              final val = double.tryParse(_amountController.text);
+              if (val != null && val > 0) {
+                context.read<DashboardBloc>().add(
+                  GenerateSuggestionsRequested(val),
+                );
+              }
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1000),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(context),
+                      const SizedBox(height: 32),
+                      _buildAnalysisInput(context, goals),
+                      const SizedBox(height: 32),
+                      if (state is DashboardLoading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (state is DashboardSuggestionsLoaded)
+                        _buildSuggestionsList(context, state)
+                      else if (state is DashboardError)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Text(
+                              'Error: ${state.message}',
+                              style: const TextStyle(color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      else
+                        _buildEmptyState(context),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         );
@@ -181,14 +207,16 @@ class _OverviewTabState extends State<OverviewTab> {
         Text(
           'Analyze your funds and optimize your savings.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAnalysisInput(BuildContext context) {
+  Widget _buildAnalysisInput(BuildContext context, List<Goal> goals) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -203,9 +231,7 @@ class _OverviewTabState extends State<OverviewTab> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withValues(alpha: 0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -260,10 +286,9 @@ class _OverviewTabState extends State<OverviewTab> {
                     ),
                     hintText: '0.00',
                     hintStyle: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onPrimaryContainer
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
                     ),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.2),
@@ -296,7 +321,7 @@ class _OverviewTabState extends State<OverviewTab> {
           ),
           const SizedBox(height: 16),
           TextButton.icon(
-            onPressed: _showManualAllocation,
+            onPressed: () => _showManualAllocation(goals),
             icon: const Icon(Icons.add_circle_outline, size: 18),
             label: const Text('Perform Manual Allocation'),
             style: TextButton.styleFrom(
@@ -308,7 +333,12 @@ class _OverviewTabState extends State<OverviewTab> {
     );
   }
 
-  Widget _buildSuggestionsList(BuildContext context, DashboardState state) {
+  Widget _buildSuggestionsList(
+    BuildContext context,
+    DashboardSuggestionsLoaded state,
+  ) {
+    final suggestions = state.result.allocations;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -317,12 +347,12 @@ class _OverviewTabState extends State<OverviewTab> {
           children: [
             Text(
               'Proposed Allocations',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
-              '${state.suggestions.length} items',
+              '${suggestions.length} items',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: Theme.of(
                   context,
@@ -332,16 +362,45 @@ class _OverviewTabState extends State<OverviewTab> {
           ],
         ),
         const SizedBox(height: 16),
-        ...state.suggestions.asMap().entries.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: AllocationCard(
-              allocation: entry.value,
-              goals: state.goals,
-              index: entry.key,
-            ),
-          );
-        }),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (context.isCompact) {
+              return Column(
+                children: suggestions.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final s = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: AllocationCard(
+                      allocation: s,
+                      goals: state.goals,
+                      index: index,
+                    ),
+                  );
+                }).toList(),
+              );
+            }
+
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 450,
+                childAspectRatio: 1.4,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: suggestions.length,
+              itemBuilder: (context, index) {
+                return AllocationCard(
+                  allocation: suggestions[index],
+                  goals: state.goals,
+                  index: index,
+                );
+              },
+            );
+          },
+        ),
       ],
     );
   }
