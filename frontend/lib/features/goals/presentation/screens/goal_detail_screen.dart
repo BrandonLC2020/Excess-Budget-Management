@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/goal.dart';
 import '../../models/sub_goal.dart';
 import '../../repositories/goal_repository.dart';
+import '../../../dashboard/presentation/widgets/sub_goal_distribution_sheet.dart';
 
 class GoalDetailScreen extends StatefulWidget {
   final Goal goal;
@@ -146,6 +147,100 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
         ],
       ),
     );
+  }
+
+  void _showManualFundGoal() {
+    final amountController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Fund ${_currentGoal.name}'),
+        content: TextField(
+          controller: amountController,
+          decoration: const InputDecoration(
+            labelText: 'Amount to Add',
+            prefixText: '\$',
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final amount = double.tryParse(amountController.text);
+              if (amount != null && amount > 0) {
+                Navigator.pop(context);
+                if (_currentGoal.subGoals.isNotEmpty) {
+                  _showSubGoalDistribution(amount);
+                } else {
+                  _applyManualFunding(amount, {});
+                }
+              }
+            },
+            child: const Text('Next'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSubGoalDistribution(double amount) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => SubGoalDistributionSheet(
+        goal: _currentGoal,
+        amount: amount,
+        onConfirm: (distribution) {
+          Navigator.pop(context);
+          _applyManualFunding(amount, distribution);
+        },
+      ),
+    );
+  }
+
+  Future<void> _applyManualFunding(
+    double totalAmount,
+    Map<String, double> distribution,
+  ) async {
+    setState(() => _isLoading = true);
+    try {
+      if (distribution.isNotEmpty) {
+        for (var entry in distribution.entries) {
+          final sg = _currentGoal.subGoals.firstWhere((s) => s.id == entry.key);
+          await _goalRepository.updateSubGoalAmount(
+            sg.id,
+            sg.currentAmount + entry.value,
+          );
+        }
+      } else {
+        await _goalRepository.updateGoalCurrentAmount(
+          _currentGoal.id,
+          _currentGoal.currentAmount + totalAmount,
+        );
+      }
+
+      await _goalRepository.insertAllocation(_currentGoal.id, totalAmount);
+      await _refreshGoal();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Goal successfully funded!')),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error funding goal: $e')));
+      }
+    }
   }
 
   @override
@@ -293,6 +388,22 @@ class _GoalDetailScreenState extends State<GoalDetailScreen> {
             style: TextStyle(
               color: Theme.of(context).colorScheme.onPrimary,
               fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _showManualFundGoal,
+              icon: const Icon(Icons.add_card),
+              label: const Text('Fund Goal'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
           ),
         ],

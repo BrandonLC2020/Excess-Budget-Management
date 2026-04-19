@@ -31,6 +31,114 @@ class _OverviewTabState extends State<OverviewTab> {
     }
   }
 
+  void _showManualAllocation() async {
+    final goals = await context.read<DashboardBloc>().goalRepository.getGoals();
+    if (!mounted) return;
+
+    if (goals.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No goals found. Create one first!')),
+      );
+      return;
+    }
+
+    Goal? selectedGoal;
+    final amountController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Manual Allocation'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<Goal>(
+                decoration: const InputDecoration(labelText: 'Select Goal'),
+                items: goals
+                    .map((g) => DropdownMenuItem(value: g, child: Text(g.name)))
+                    .toList(),
+                onChanged: (val) => setDialogState(() => selectedGoal = val),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: '\$',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final amount = double.tryParse(amountController.text);
+                if (selectedGoal != null && amount != null && amount > 0) {
+                  Navigator.pop(context);
+                  _handleManualConfirm(selectedGoal!, amount);
+                }
+              },
+              child: const Text('Next'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleManualConfirm(Goal goal, double amount) {
+    if (goal.subGoals.isNotEmpty) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => SubGoalDistributionSheet(
+          goal: goal,
+          amount: amount,
+          onConfirm: (distribution) {
+            Navigator.pop(context);
+            _applyManualAllocation(goal, amount, distribution);
+          },
+        ),
+      );
+    } else {
+      _applyManualAllocation(goal, amount, {});
+    }
+  }
+
+  void _applyManualAllocation(
+    Goal goal,
+    double amount,
+    Map<String, double> distribution,
+  ) {
+    final allocation = Allocation(
+      id: goal.id,
+      name: goal.name,
+      amount: amount,
+      reason: 'Manual Allocation',
+      type: 'goal',
+    );
+
+    context.read<DashboardBloc>().add(
+      AcceptSuggestionRequested(allocation, subGoalDistribution: distribution),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Manually allocated \$${amount.toStringAsFixed(2)} to ${goal.name}',
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _amountController.dispose();
@@ -236,6 +344,15 @@ class _OverviewTabState extends State<OverviewTab> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: _showManualAllocation,
+                    icon: const Icon(Icons.add_circle_outline),
+                    label: const Text('Or Manually Allocate Funds'),
                   ),
                 ),
               ],

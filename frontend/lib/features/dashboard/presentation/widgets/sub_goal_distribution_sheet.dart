@@ -20,6 +20,7 @@ class SubGoalDistributionSheet extends StatefulWidget {
 
 class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
   final Map<String, double> _distribution = {};
+  final Map<String, TextEditingController> _controllers = {};
   double _remaining = 0;
 
   @override
@@ -28,7 +29,16 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
     _remaining = widget.amount;
     for (var sg in widget.goal.subGoals) {
       _distribution[sg.id] = 0.0;
+      _controllers[sg.id] = TextEditingController(text: '0.00');
     }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   void _quickFill() {
@@ -47,13 +57,20 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
       if (toDistribute <= 0) break;
     }
 
-    // If there's still money left, put it in the last subgoal or first one
+    // If there's still money left, put it in the last subgoal
     if (toDistribute > 0 && widget.goal.subGoals.isNotEmpty) {
       final lastId = widget.goal.subGoals.last.id;
-      newDist[lastId] = (newDist[lastId] ?? 0) + toDistribute;
+      newDist[lastId] = (newDist[lastId] ?? 0.0) + toDistribute;
     }
 
-    widget.onConfirm(newDist);
+    setState(() {
+      for (var sg in widget.goal.subGoals) {
+        final amount = newDist[sg.id] ?? 0.0;
+        _distribution[sg.id] = amount;
+        _controllers[sg.id]?.text = amount.toStringAsFixed(2);
+      }
+      _remaining = 0;
+    });
   }
 
   @override
@@ -98,14 +115,19 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
                   trailing: SizedBox(
                     width: 100,
                     child: TextField(
-                      keyboardType: TextInputType.number,
+                      controller: _controllers[sg.id],
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: const InputDecoration(prefixText: '\$'),
                       onChanged: (val) {
                         setState(() {
                           _distribution[sg.id] = double.tryParse(val) ?? 0.0;
                           _remaining =
                               widget.amount -
-                              _distribution.values.reduce((a, b) => a + b);
+                              (_distribution.values.isNotEmpty
+                                  ? _distribution.values.reduce((a, b) => a + b)
+                                  : 0.0);
                         });
                       },
                     ),
@@ -133,7 +155,7 @@ class _SubGoalDistributionSheetState extends State<SubGoalDistributionSheet> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _remaining == 0
+            onPressed: _remaining.abs() < 0.001
                 ? () => widget.onConfirm(_distribution)
                 : null,
             child: const Text('Confirm Distribution'),
