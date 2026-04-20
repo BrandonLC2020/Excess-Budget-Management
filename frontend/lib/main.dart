@@ -58,6 +58,7 @@ class BudgetApp extends StatelessWidget {
             accountRepository: AccountRepository(supabase: supabaseClient),
             goalRepository: GoalRepository(supabase: supabaseClient),
             profileRepository: ProfileRepository(supabase: supabaseClient),
+            budgetRepository: BudgetRepository(supabase: supabaseClient),
           ),
         ),
       ],
