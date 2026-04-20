@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:confetti/confetti.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/breakpoints.dart';
 import '../../bloc/dashboard_bloc.dart';
@@ -9,6 +10,7 @@ import '../../bloc/dashboard_event.dart';
 import '../../bloc/dashboard_state.dart';
 import '../../models/allocation.dart';
 import '../widgets/allocation_card.dart';
+import '../widgets/metric_card.dart';
 import '../widgets/sub_goal_distribution_sheet.dart';
 import '../../../goals/models/goal.dart';
 
@@ -181,8 +183,11 @@ class _OverviewTabState extends State<OverviewTab> {
         }
       },
       builder: (context, state) {
-        final List<Goal> goals =
-            state is DashboardSuggestionsLoaded ? state.goals : [];
+        final List<Goal> goals = switch (state) {
+          DashboardSuggestionsLoaded s => s.goals,
+          DashboardDataLoaded d => d.goals,
+          _ => [],
+        };
 
         return Scaffold(
           appBar:
@@ -203,6 +208,10 @@ class _OverviewTabState extends State<OverviewTab> {
                     context.read<DashboardBloc>().add(
                       GenerateSuggestionsRequested(val),
                     );
+                  } else {
+                    context.read<DashboardBloc>().add(
+                      DashboardInitialDataRequested(),
+                    );
                   }
                 },
                 child: SingleChildScrollView(
@@ -220,7 +229,10 @@ class _OverviewTabState extends State<OverviewTab> {
                           const SizedBox(height: 32),
                           if (state is DashboardLoading)
                             const Center(child: CircularProgressIndicator())
-                          else if (state is DashboardSuggestionsLoaded)
+                          else if (state is DashboardDataLoaded) ...[
+                            _buildMetrics(context, state),
+                            const SizedBox(height: 32),
+                          ] else if (state is DashboardSuggestionsLoaded)
                             _buildSuggestionsList(context, state)
                           else if (state is DashboardError)
                             Center(
@@ -526,6 +538,100 @@ class _OverviewTabState extends State<OverviewTab> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetrics(BuildContext context, DashboardDataLoaded state) {
+    final netWorth = state.accounts.fold(0.0, (sum, a) => sum + a.balance);
+
+    final totalSpent = state.budgetCategories.fold(
+      0.0,
+      (sum, b) => sum + b.spentAmount,
+    );
+    final totalLimit = state.budgetCategories.fold(
+      0.0,
+      (sum, b) => sum + b.limitAmount,
+    );
+    final budgetProgress =
+        totalLimit > 0 ? (totalSpent / totalLimit).clamp(0.0, 1.0) : 0.0;
+
+    final totalSaved = state.goals.fold(0.0, (sum, g) => sum + g.currentAmount);
+    final totalTarget = state.goals.fold(0.0, (sum, g) => sum + g.targetAmount);
+    final goalProgress =
+        totalTarget > 0 ? (totalSaved / totalTarget).clamp(0.0, 1.0) : 0.0;
+
+    final currencyFormat = NumberFormat.simpleCurrency(decimalDigits: 0);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount =
+            constraints.maxWidth > 800
+                ? 3
+                : (constraints.maxWidth > 600 ? 2 : 1);
+
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 2.2,
+          children: [
+            MetricCard(
+              title: 'Net Worth',
+              value: currencyFormat.format(netWorth),
+              icon: Icons.account_balance_wallet_outlined,
+              color: Colors.blue,
+            ),
+            MetricCard(
+              title: 'Monthly Budget',
+              value:
+                  '${currencyFormat.format(totalSpent)} / ${currencyFormat.format(totalLimit)}',
+              icon: Icons.pie_chart_outline,
+              color: Colors.orange,
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: budgetProgress,
+                      minHeight: 6,
+                      backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                      valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            MetricCard(
+              title: 'Goal Progress',
+              value: '${(goalProgress * 100).toStringAsFixed(0)}%',
+              icon: Icons.flag_outlined,
+              color: Colors.green,
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: goalProgress,
+                      minHeight: 6,
+                      backgroundColor: Colors.green.withValues(alpha: 0.1),
+                      valueColor: const AlwaysStoppedAnimation(Colors.green),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${currencyFormat.format(totalSaved)} of ${currencyFormat.format(totalTarget)}',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
