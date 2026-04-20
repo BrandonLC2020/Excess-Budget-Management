@@ -94,27 +94,32 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
     try {
       if (allocation.type == 'goal') {
+        final goals = await goalRepository.getGoals();
+        final goal = goals.firstWhere((g) => g.id == allocation.id);
+
         if (event.subGoalDistribution != null &&
             event.subGoalDistribution!.isNotEmpty) {
-          // If we have a distribution, create an allocation for each subgoal
+          // Update each subgoal
           for (var entry in event.subGoalDistribution!.entries) {
-            await goalRepository.insertAllocation(
-              allocation.id,
-              entry.value,
-              accountId: allocation.accountId,
-              subGoalId: entry.key,
+            final subGoal = goal.subGoals.firstWhere(
+              (sg) => sg.id == entry.key,
+            );
+            await goalRepository.updateSubGoalAmount(
+              subGoal.id,
+              subGoal.currentAmount + entry.value,
             );
           }
+          // The parent goal's current_amount is automatically updated by the DB trigger
         } else {
-          // Simple goal allocation
-          await goalRepository.insertAllocation(
+          // Fallback if no distribution was provided (e.g., flat goal)
+          await goalRepository.updateGoalCurrentAmount(
             allocation.id,
-            allocation.amount,
-            accountId: allocation.accountId,
+            goal.currentAmount + allocation.amount,
           );
         }
-      } else if (allocation.type == 'account') {
-        // Direct account balance update (e.g. for non-goal allocations)
+
+        await goalRepository.insertAllocation(allocation.id, allocation.amount);
+      } else {
         final accounts = await accountRepository.getAccounts();
         final account = accounts.firstWhere((a) => a.id == allocation.id);
 
@@ -124,8 +129,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         );
       }
 
-      // Refresh data after allocation
-      add(DashboardInitialDataRequested());
+      // Optionally re-fetch suggestions or refresh state
+      // For now, let's trigger a refresh of the suggestions to show updated progress
+      // (This requires another GenerateSuggestionsRequested dispatch or similar)
     } catch (e) {
       emit(DashboardError(e.toString()));
     }

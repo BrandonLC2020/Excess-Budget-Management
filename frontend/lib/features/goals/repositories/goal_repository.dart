@@ -84,8 +84,8 @@ class GoalRepository {
       'user_id': userId,
       'goal_id': goalId,
       'amount': amount,
-      if (accountId != null) 'account_id': accountId,
-      if (subGoalId != null) 'sub_goal_id': subGoalId,
+      'account_id': accountId,
+      'sub_goal_id': subGoalId,
     });
   }
 

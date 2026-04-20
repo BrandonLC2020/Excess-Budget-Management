@@ -4,7 +4,6 @@ class Allocation {
   final String name;
   final double amount;
   final String reason;
-  final String? accountId; // New
 
   Allocation({
     required this.type,
@@ -12,7 +11,6 @@ class Allocation {
     required this.name,
     required this.amount,
     required this.reason,
-    this.accountId, // New
   });
 
   factory Allocation.fromJson(Map<String, dynamic> json) {
@@ -22,7 +20,6 @@ class Allocation {
       name: json['name'] as String,
       amount: (json['amount'] as num).toDouble(),
       reason: json['reason'] as String,
-      accountId: json['account_id'] as String?, // New
     );
   }
 }
