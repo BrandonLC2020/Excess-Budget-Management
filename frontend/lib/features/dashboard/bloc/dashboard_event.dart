@@ -2,6 +2,8 @@ import '../models/allocation.dart';
 
 abstract class DashboardEvent {}
 
+class DashboardInitialDataRequested extends DashboardEvent {}
+
 class GenerateSuggestionsRequested extends DashboardEvent {
   final double excessFunds;
 

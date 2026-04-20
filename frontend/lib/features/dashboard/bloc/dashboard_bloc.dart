@@ -5,22 +5,54 @@ import '../repositories/suggestion_repository.dart';
 import '../../accounts/repositories/account_repository.dart';
 import '../../goals/repositories/goal_repository.dart';
 import '../../auth/repositories/profile_repository.dart';
+import '../../budget/repositories/budget_repository.dart';
+import '../../accounts/models/account.dart';
+import '../../budget/models/budget_category.dart';
+import '../../goals/models/goal.dart';
+import '../../goals/models/allocation.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final SuggestionRepository suggestionRepository;
   final AccountRepository accountRepository;
   final GoalRepository goalRepository;
   final ProfileRepository profileRepository;
+  final BudgetRepository budgetRepository;
 
   DashboardBloc({
     required this.suggestionRepository,
     required this.accountRepository,
     required this.goalRepository,
     required this.profileRepository,
+    required this.budgetRepository,
   }) : super(DashboardInitial()) {
+    on<DashboardInitialDataRequested>(_onDashboardInitialDataRequested);
     on<GenerateSuggestionsRequested>(_onGenerateSuggestionsRequested);
     on<AcceptSuggestionRequested>(_onAcceptSuggestionRequested);
     on<DashboardResetRequested>(_onDashboardResetRequested);
+  }
+
+  Future<void> _onDashboardInitialDataRequested(
+    DashboardInitialDataRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
+    emit(DashboardLoading());
+    try {
+      final results = await Future.wait([
+        accountRepository.getAccounts(),
+        budgetRepository.getBudgetCategories(),
+        goalRepository.getGoals(),
+        goalRepository.getAllocations(),
+      ]);
+
+      emit(DashboardDataLoaded(
+        accounts: results[0] as List<Account>,
+        budgetCategories: results[1] as List<BudgetCategory>,
+        goals: results[2] as List<Goal>,
+        recentAllocations: results[3] as List<GoalAllocation>,
+      ));
+    } catch (e) {
+      emit(DashboardError(e.toString()));
+    }
   }
 
   Future<void> _onGenerateSuggestionsRequested(
