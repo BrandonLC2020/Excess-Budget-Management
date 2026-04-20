@@ -71,7 +71,12 @@ class GoalRepository {
     return Goal.fromJson(response);
   }
 
-  Future<void> insertAllocation(String goalId, double amount) async {
+  Future<void> insertAllocation(
+    String goalId,
+    double amount, {
+    String? accountId,
+    String? subGoalId,
+  }) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
 
@@ -79,13 +84,15 @@ class GoalRepository {
       'user_id': userId,
       'goal_id': goalId,
       'amount': amount,
+      if (accountId != null) 'account_id': accountId,
+      if (subGoalId != null) 'sub_goal_id': subGoalId,
     });
   }
 
   Future<List<GoalAllocation>> getAllocations() async {
     final response = await supabase
         .from('goal_allocations')
-        .select('*, goals(name)')
+        .select('*, goals(name), accounts(name)')
         .order('created_at', ascending: false);
     return (response as List).map((e) => GoalAllocation.fromJson(e)).toList();
   }

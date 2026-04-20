@@ -13,6 +13,8 @@ import '../widgets/allocation_card.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/sub_goal_distribution_sheet.dart';
 import '../../../goals/models/goal.dart';
+import '../../../goals/models/allocation.dart'; // New
+import '../../../accounts/models/account.dart'; // New
 
 class OverviewTab extends StatefulWidget {
   const OverviewTab({super.key});
@@ -77,7 +79,7 @@ class _OverviewTabState extends State<OverviewTab> {
     }
   }
 
-  void _showManualAllocation(List<Goal> goals) {
+  void _showManualAllocation(List<Goal> goals, List<Account> accounts) {
     if (goals.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No goals found. Create one first!')),
@@ -86,7 +88,9 @@ class _OverviewTabState extends State<OverviewTab> {
     }
 
     Goal? selectedGoal;
+    Account? selectedAccount;
     final amountController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
@@ -95,28 +99,78 @@ class _OverviewTabState extends State<OverviewTab> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('Manual Allocation'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<Goal>(
-                    initialValue: selectedGoal,
-                    decoration: const InputDecoration(labelText: 'Select Goal'),
-                    items: goals.map((g) {
-                      return DropdownMenuItem(value: g, child: Text(g.name));
-                    }).toList(),
-                    onChanged: (val) =>
-                        setDialogState(() => selectedGoal = val),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: amountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      prefixText: r'$',
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<Goal>(
+                      initialValue: selectedGoal,
+                      decoration:
+                          const InputDecoration(labelText: 'Select Goal'),
+                      items:
+                          goals.map((g) {
+                            return DropdownMenuItem(
+                              value: g,
+                              child: Text(g.name),
+                            );
+                          }).toList(),
+                      validator:
+                          (val) => val == null ? 'Please select a goal' : null,
+                      onChanged: (val) =>
+                          setDialogState(() => selectedGoal = val),
                     ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<Account>(
+                      initialValue: selectedAccount,
+                      decoration: const InputDecoration(
+                        labelText: 'Source Account (Optional)',
+                        helperText: 'Funds will be deducted from this account',
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('None (Manual Entry)'),
+                        ),
+                        ...accounts.map(
+                          (a) => DropdownMenuItem(
+                            value: a,
+                            child: Text(
+                              '${a.name} (\$${a.balance.toStringAsFixed(2)})',
+                            ),
+                          ),
+                        ),
+                      ],
+                      onChanged: (val) =>
+                          setDialogState(() => selectedAccount = val),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: amountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        prefixText: r'$',
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) {
+                          return 'Please enter an amount';
+                        }
+                        final amount = double.tryParse(val);
+                        if (amount == null || amount <= 0) {
+                          return 'Enter a valid positive amount';
+                        }
+                        if (selectedAccount != null &&
+                            amount > selectedAccount!.balance) {
+                          return 'Insufficient funds in account';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -125,42 +179,42 @@ class _OverviewTabState extends State<OverviewTab> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (selectedGoal != null) {
-                      final amount = double.tryParse(amountController.text);
-                      if (amount != null && amount > 0) {
-                        final allocation = Allocation(
-                          id: selectedGoal!.id,
-                          name: selectedGoal!.name,
-                          amount: amount,
-                          type: 'goal',
-                          reason: 'Manual allocation',
-                        );
+                    if (formKey.currentState?.validate() == true) {
+                      final amount = double.parse(amountController.text);
+                      final allocation = Allocation(
+                        id: selectedGoal!.id,
+                        name: selectedGoal!.name,
+                        amount: amount,
+                        type: 'goal',
+                        reason: 'Manual allocation',
+                        accountId: selectedAccount?.id,
+                      );
 
-                        if (selectedGoal!.subGoals.isNotEmpty) {
-                          Navigator.pop(context);
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) => SubGoalDistributionSheet(
-                              goal: selectedGoal!,
-                              amount: amount,
-                              onConfirm: (distribution) {
-                                Navigator.pop(context);
-                                context.read<DashboardBloc>().add(
-                                  AcceptSuggestionRequested(
-                                    allocation,
-                                    subGoalDistribution: distribution,
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        } else {
-                          context.read<DashboardBloc>().add(
-                            AcceptSuggestionRequested(allocation),
-                          );
-                          Navigator.pop(context);
-                        }
+                      if (selectedGoal!.subGoals.isNotEmpty) {
+                        Navigator.pop(context);
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder:
+                              (context) => SubGoalDistributionSheet(
+                                goal: selectedGoal!,
+                                amount: amount,
+                                onConfirm: (distribution) {
+                                  Navigator.pop(context);
+                                  context.read<DashboardBloc>().add(
+                                    AcceptSuggestionRequested(
+                                      allocation,
+                                      subGoalDistribution: distribution,
+                                    ),
+                                  );
+                                },
+                              ),
+                        );
+                      } else {
+                        context.read<DashboardBloc>().add(
+                          AcceptSuggestionRequested(allocation),
+                        );
+                        Navigator.pop(context);
                       }
                     }
                   },
@@ -189,6 +243,11 @@ class _OverviewTabState extends State<OverviewTab> {
           _ => [],
         };
 
+        final List<Account> accounts = switch (state) {
+          DashboardDataLoaded d => d.accounts,
+          _ => [],
+        };
+
         return Scaffold(
           appBar:
               context.isCompact ? AppBar(title: const Text('Overview')) : null,
@@ -201,37 +260,61 @@ class _OverviewTabState extends State<OverviewTab> {
             children: [
               RefreshIndicator(
                 onRefresh: () async {
-                  // Trigger a refresh of current amount if needed,
-                  // for now we just reset or re-analyze if we have an amount
-                  final val = double.tryParse(_amountController.text);
-                  if (val != null && val > 0) {
-                    context.read<DashboardBloc>().add(
-                      GenerateSuggestionsRequested(val),
-                    );
-                  } else {
-                    context.read<DashboardBloc>().add(
-                      DashboardInitialDataRequested(),
-                    );
-                  }
+                  context.read<DashboardBloc>().add(
+                    DashboardInitialDataRequested(),
+                  );
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(24.0),
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
+                      constraints: const BoxConstraints(maxWidth: 1200),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildHeader(context),
                           const SizedBox(height: 32),
-                          _buildAnalysisInput(context, goals),
-                          const SizedBox(height: 32),
                           if (state is DashboardLoading)
                             const Center(child: CircularProgressIndicator())
                           else if (state is DashboardDataLoaded) ...[
-                            _buildMetrics(context, state),
-                            const SizedBox(height: 32),
+                            if (context.isCompact) ...[
+                              _buildAnalysisInput(context, goals, accounts),
+                              const SizedBox(height: 32),
+                              _buildMetrics(context, state),
+                              const SizedBox(height: 32),
+                              _buildRecentActivity(
+                                context,
+                                state.recentAllocations,
+                              ),
+                            ] else
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: Column(
+                                      children: [
+                                        _buildAnalysisInput(
+                                          context,
+                                          goals,
+                                          accounts,
+                                        ),
+                                        const SizedBox(height: 32),
+                                        _buildMetrics(context, state),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 32),
+                                  Expanded(
+                                    flex: 2,
+                                    child: _buildRecentActivity(
+                                      context,
+                                      state.recentAllocations,
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ] else if (state is DashboardSuggestionsLoaded)
                             _buildSuggestionsList(context, state)
                           else if (state is DashboardError)
@@ -313,7 +396,11 @@ class _OverviewTabState extends State<OverviewTab> {
     );
   }
 
-  Widget _buildAnalysisInput(BuildContext context, List<Goal> goals) {
+  Widget _buildAnalysisInput(
+    BuildContext context,
+    List<Goal> goals,
+    List<Account> accounts,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -418,7 +505,7 @@ class _OverviewTabState extends State<OverviewTab> {
           ),
           const SizedBox(height: 16),
           TextButton.icon(
-            onPressed: () => _showManualAllocation(goals),
+            onPressed: () => _showManualAllocation(goals, accounts),
             icon: const Icon(Icons.add_circle_outline, size: 18),
             label: const Text('Perform Manual Allocation'),
             style: TextButton.styleFrom(
@@ -500,6 +587,97 @@ class _OverviewTabState extends State<OverviewTab> {
             );
           },
         ),
+      ],
+    );
+  }
+
+  Widget _buildRecentActivity(
+    BuildContext context,
+    List<GoalAllocation> allocations,
+  ) {
+    if (allocations.isEmpty) return const SizedBox.shrink();
+
+    // Group by date
+    final grouped = <String, List<GoalAllocation>>{};
+    for (var a in allocations) {
+      final date = DateFormat.yMMMMd().format(a.createdAt);
+      final today = DateFormat.yMMMMd().format(DateTime.now());
+      final yesterday = DateFormat.yMMMMd().format(
+        DateTime.now().subtract(const Duration(days: 1)),
+      );
+
+      String label = date;
+      if (date == today) {
+        label = 'Today';
+      } else if (date == yesterday) {
+        label = 'Yesterday';
+      }
+
+      grouped.putIfAbsent(label, () => []).add(a);
+    }
+
+    final currencyFormat = NumberFormat.simpleCurrency();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Activity',
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        ...grouped.entries.map((entry) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  entry.key,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ...entry.value.map((a) {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      child: Icon(
+                        Icons.track_changes,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      '${a.goalName ?? 'Goal'} Allocation',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      a.accountName != null
+                          ? 'from ${a.accountName}'
+                          : 'Manual Entry',
+                    ),
+                    trailing: Text(
+                      currencyFormat.format(a.amount),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          );
+        }),
       ],
     );
   }

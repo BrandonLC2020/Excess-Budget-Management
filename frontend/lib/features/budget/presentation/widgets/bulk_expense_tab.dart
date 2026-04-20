@@ -66,7 +66,7 @@ class BulkExpenseTab extends StatelessWidget {
                                     if (budgetState is BudgetLoaded) categories = budgetState.categories;
                                     
                                     return DropdownButtonFormField<String>(
-                                      value: row.budgetCategoryId,
+                                      initialValue: row.budgetCategoryId,
                                       decoration: const InputDecoration(labelText: 'Category'),
                                       items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
                                       onChanged: (val) => context.read<BulkExpensesBloc>().add(UpdateExpenseRow(rowId: row.id, budgetCategoryId: val)),
