@@ -31,6 +31,7 @@ class BulkIncomeBloc extends Bloc<BulkIncomeEvent, BulkIncomeState> {
       final newRows = state.rows.map((row) {
         if (row.id == event.rowId) {
           return row.copyWith(
+            accountId: event.accountId,
             amount: event.amount,
             description: event.description,
             dateReceived: event.dateReceived,
@@ -66,6 +67,7 @@ class BulkIncomeBloc extends Bloc<BulkIncomeEvent, BulkIncomeState> {
       try {
         final insertData = validatedRows.map((row) => {
           'amount': row.amount,
+          'account_id': row.accountId,
           'description': row.description,
           'date_received': row.dateReceived.toIso8601String().split('T').first,
         }).toList();

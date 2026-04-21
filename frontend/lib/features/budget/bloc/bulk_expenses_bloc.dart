@@ -32,6 +32,7 @@ class BulkExpensesBloc extends Bloc<BulkExpensesEvent, BulkExpensesState> {
         if (row.id == event.rowId) {
           return row.copyWith(
             budgetCategoryId: event.budgetCategoryId,
+            accountId: event.accountId,
             amount: event.amount,
             description: event.description,
             date: event.date,
@@ -67,6 +68,7 @@ class BulkExpensesBloc extends Bloc<BulkExpensesEvent, BulkExpensesState> {
       try {
         final insertData = validatedRows.map((row) => {
           'budget_category_id': row.budgetCategoryId,
+          'account_id': row.accountId,
           'amount': row.amount,
           'description': row.description ?? '',
           'date': row.date.toIso8601String().split('T').first,
