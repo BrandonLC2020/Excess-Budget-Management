@@ -405,11 +405,12 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          IconButton(
-                            onPressed: _showAddSubGoal,
-                            icon: const Icon(Icons.add_circle_outline),
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                          if (_currentGoal.accountId == null)
+                            IconButton(
+                              onPressed: _showAddSubGoal,
+                              icon: const Icon(Icons.add_circle_outline),
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -524,6 +525,34 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                     ],
                   ),
                 ),
+              if (_currentGoal.accountId != null) ...[
+                if (isCompleted) const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.sync, color: Colors.white, size: 16),
+                      SizedBox(width: 4),
+                      Text(
+                        'Synced',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -564,21 +593,49 @@ class _GoalDetailViewState extends State<GoalDetailView> {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _showManualFundGoal,
-              icon: const Icon(Icons.add_card),
-              label: const Text('Fund Goal'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                foregroundColor: isCompleted ? Colors.green.shade700 : Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          if (_currentGoal.accountId == null)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _showManualFundGoal,
+                icon: const Icon(Icons.add_card),
+                label: const Text('Fund Goal'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                  foregroundColor:
+                      isCompleted
+                          ? Colors.green.shade700
+                          : Theme.of(context).colorScheme.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.white, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'Synced with Account Balance',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -625,23 +682,24 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                     ],
                   ),
                 ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                      onPressed: () => _showEditSubGoalAmount(subGoal),
-                      tooltip: 'Edit Amount',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 20),
-                      onPressed: () async {
-                        await _goalRepository.deleteSubGoal(subGoal.id);
-                        _refreshGoal();
-                      },
-                      tooltip: 'Delete Subgoal',
-                    ),
-                  ],
-                ),
+                if (_currentGoal.accountId == null)
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        onPressed: () => _showEditSubGoalAmount(subGoal),
+                        tooltip: 'Edit Amount',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        onPressed: () async {
+                          await _goalRepository.deleteSubGoal(subGoal.id);
+                          _refreshGoal();
+                        },
+                        tooltip: 'Delete Subgoal',
+                      ),
+                    ],
+                  ),
               ],
             ),
             const SizedBox(height: 4),

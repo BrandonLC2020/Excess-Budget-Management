@@ -12,6 +12,8 @@ class Goal {
   final DateTime createdAt;
   final List<SubGoal> subGoals;
 
+  final String? accountId;
+
   Goal({
     required this.id,
     required this.userId,
@@ -23,6 +25,7 @@ class Goal {
     required this.category,
     required this.createdAt,
     this.subGoals = const [],
+    this.accountId,
   });
 
   bool get isCompleted => targetAmount > 0 && currentAmount >= targetAmount;
@@ -34,9 +37,10 @@ class Goal {
       name: json['name'] as String,
       targetAmount: (json['target_amount'] as num).toDouble(),
       currentAmount: (json['current_amount'] as num).toDouble(),
-      targetDate: json['target_date'] != null
-          ? DateTime.parse(json['target_date'] as String)
-          : null,
+      targetDate:
+          json['target_date'] != null
+              ? DateTime.parse(json['target_date'] as String)
+              : null,
       type: json['type'] as String,
       category: json['category'] as String? ?? 'savings',
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -45,6 +49,7 @@ class Goal {
               ?.map((e) => SubGoal.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      accountId: json['account_id'] as String?,
     );
   }
 
@@ -58,6 +63,7 @@ class Goal {
       'type': type,
       'category': category,
       'sub_goals': subGoals.map((e) => e.toJson()).toList(),
+      'account_id': accountId,
     };
   }
 }

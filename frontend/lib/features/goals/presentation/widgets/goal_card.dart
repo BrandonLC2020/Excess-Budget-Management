@@ -83,12 +83,25 @@ class _GoalCardState extends State<GoalCard> {
                     ),
                   ),
                 ),
-                if (isCompleted)
+                if (isCompleted) ...[
+                  const SizedBox(width: 4),
                   Icon(
                     Icons.check_circle,
                     color: Colors.green.shade600,
                     size: 16,
                   ),
+                ],
+                if (widget.goal.accountId != null) ...[
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Synced with Account',
+                    child: Icon(
+                      Icons.sync,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 16,
+                    ),
+                  ),
+                ],
               ],
             ),
             subtitle: Column(

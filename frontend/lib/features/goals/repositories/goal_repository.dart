@@ -51,6 +51,7 @@ class GoalRepository {
     String type, {
     String category = 'savings',
     DateTime? targetDate,
+    String? accountId,
   }) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
@@ -63,7 +64,8 @@ class GoalRepository {
           'target_amount': targetAmount,
           'type': type,
           'category': category,
-          if (targetDate != null) 'target_date': targetDate.toIso8601String(),
+          'target_date': targetDate?.toIso8601String(),
+          'account_id': accountId,
         })
         .select()
         .single();
