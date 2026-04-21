@@ -11,12 +11,14 @@ class RemoveIncomeRow extends BulkIncomeEvent {
 
 class UpdateIncomeRow extends BulkIncomeEvent {
   final String rowId;
+  final String? accountId;
   final double? amount;
   final String? description;
   final DateTime? dateReceived;
 
   UpdateIncomeRow({
     required this.rowId,
+    this.accountId,
     this.amount,
     this.description,
     this.dateReceived,

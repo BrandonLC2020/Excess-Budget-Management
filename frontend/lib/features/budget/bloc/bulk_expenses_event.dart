@@ -12,6 +12,7 @@ class RemoveExpenseRow extends BulkExpensesEvent {
 class UpdateExpenseRow extends BulkExpensesEvent {
   final String rowId;
   final String? budgetCategoryId;
+  final String? accountId;
   final double? amount;
   final String? description;
   final DateTime? date;
@@ -19,6 +20,7 @@ class UpdateExpenseRow extends BulkExpensesEvent {
   UpdateExpenseRow({
     required this.rowId,
     this.budgetCategoryId,
+    this.accountId,
     this.amount,
     this.description,
     this.date,

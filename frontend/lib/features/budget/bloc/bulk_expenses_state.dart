@@ -3,6 +3,7 @@ part of 'bulk_expenses_bloc.dart';
 class BulkExpenseRow {
   final String id;
   final String? budgetCategoryId;
+  final String? accountId;
   final double? amount;
   final String? description;
   final DateTime date;
@@ -11,6 +12,7 @@ class BulkExpenseRow {
   BulkExpenseRow({
     required this.id,
     this.budgetCategoryId,
+    this.accountId,
     this.amount,
     this.description,
     required this.date,
@@ -19,6 +21,7 @@ class BulkExpenseRow {
 
   BulkExpenseRow copyWith({
     String? budgetCategoryId,
+    String? accountId,
     double? amount,
     String? description,
     DateTime? date,
@@ -28,6 +31,7 @@ class BulkExpenseRow {
     return BulkExpenseRow(
       id: id,
       budgetCategoryId: budgetCategoryId ?? this.budgetCategoryId,
+      accountId: accountId ?? this.accountId,
       amount: amount ?? this.amount,
       description: description ?? this.description,
       date: date ?? this.date,
