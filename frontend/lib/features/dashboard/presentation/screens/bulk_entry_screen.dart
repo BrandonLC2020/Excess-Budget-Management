@@ -8,6 +8,7 @@ import '../../../income/bloc/bulk_income_bloc.dart';
 import '../../../income/repositories/income_repository.dart';
 import '../../../budget/presentation/widgets/bulk_expense_tab.dart';
 import '../../../income/presentation/widgets/bulk_income_tab.dart';
+import '../widgets/projected_balance_summary.dart';
 
 class BulkEntryScreen extends StatelessWidget {
   const BulkEntryScreen({super.key});
@@ -49,6 +50,7 @@ class BulkEntryScreen extends StatelessWidget {
               BulkIncomeTab(),
             ],
           ),
+          bottomNavigationBar: const ProjectedBalanceSummary(),
         ),
       ),
     );
