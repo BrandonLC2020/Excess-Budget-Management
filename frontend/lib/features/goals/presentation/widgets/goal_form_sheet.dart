@@ -67,16 +67,15 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
             children: [
               Text(
                 widget.goal == null ? 'Add Goal' : 'Edit Goal',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Goal Name'),
-                validator: (value) =>
-                    value == null || value.isEmpty
+                validator: (value) => value == null || value.isEmpty
                     ? 'Please enter a name'
                     : null,
               ),
@@ -102,7 +101,10 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
                     value: 'short_term',
                     child: Text('Short Term'),
                   ),
-                  DropdownMenuItem(value: 'long_term', child: Text('Long Term')),
+                  DropdownMenuItem(
+                    value: 'long_term',
+                    child: Text('Long Term'),
+                  ),
                 ],
                 onChanged: (val) => setState(() => _type = val!),
               ),

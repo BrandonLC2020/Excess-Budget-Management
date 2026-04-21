@@ -9,15 +9,15 @@ class AllocationHistoryBloc
   final GoalRepository goalRepository;
 
   AllocationHistoryBloc({required this.goalRepository})
-      : super(AllocationHistoryInitial()) {
+    : super(AllocationHistoryInitial()) {
     on<FetchAllocationHistory>((event, emit) async {
       emit(AllocationHistoryLoading());
       try {
         final allocations = await goalRepository.getAllocations();
-        
+
         final List<AllocationListItem> groupedItems = [];
         String? currentMonth;
-        
+
         for (final allocation in allocations) {
           final monthStr = DateFormat('MMMM yyyy').format(allocation.createdAt);
           if (monthStr != currentMonth) {

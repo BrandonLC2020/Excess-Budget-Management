@@ -57,10 +57,7 @@ class MetricCard extends StatelessWidget {
                 letterSpacing: -0.5,
               ),
             ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              subtitle!,
-            ],
+            if (subtitle != null) ...[const SizedBox(height: 8), subtitle!],
           ],
         ),
       ),

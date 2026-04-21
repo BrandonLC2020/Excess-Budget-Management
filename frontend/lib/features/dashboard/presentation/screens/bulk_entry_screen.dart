@@ -30,7 +30,7 @@ class BulkEntryScreen extends StatelessWidget {
         // Ensure BudgetBloc is loaded so the category dropdown works
         BlocProvider.value(
           value: context.read<BudgetBloc>()..add(LoadBudgets()),
-        )
+        ),
       ],
       child: DefaultTabController(
         length: 2,
@@ -44,12 +44,7 @@ class BulkEntryScreen extends StatelessWidget {
               ],
             ),
           ),
-          body: const TabBarView(
-            children: [
-              BulkExpenseTab(),
-              BulkIncomeTab(),
-            ],
-          ),
+          body: const TabBarView(children: [BulkExpenseTab(), BulkIncomeTab()]),
           bottomNavigationBar: const ProjectedBalanceSummary(),
         ),
       ),

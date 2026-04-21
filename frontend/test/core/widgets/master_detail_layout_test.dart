@@ -37,7 +37,9 @@ void main() {
       });
     });
 
-    testWidgets('displays both master and detail on medium screen', (tester) async {
+    testWidgets('displays both master and detail on medium screen', (
+      tester,
+    ) async {
       // Set surface size to simulate medium screen width 800 (600 <= 800 < 1200)
       tester.view.physicalSize = const Size(800 * 3.0, 600 * 3.0);
       tester.view.devicePixelRatio = 3.0;
@@ -46,7 +48,7 @@ void main() {
 
       expect(find.text('Master View'), findsOneWidget);
       expect(find.text('Select an item to view details'), findsOneWidget);
-      
+
       // Reset view
       addTearDown(() {
         tester.view.resetPhysicalSize();
@@ -54,7 +56,9 @@ void main() {
       });
     });
 
-    testWidgets('displays custom detail widget on medium screen', (tester) async {
+    testWidgets('displays custom detail widget on medium screen', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800 * 3.0, 600 * 3.0);
       tester.view.devicePixelRatio = 3.0;
 
@@ -64,7 +68,7 @@ void main() {
 
       expect(find.text('Master View'), findsOneWidget);
       expect(find.text('Custom Detail'), findsOneWidget);
-      
+
       addTearDown(() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();

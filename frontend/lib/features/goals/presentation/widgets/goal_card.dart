@@ -25,10 +25,9 @@ class _GoalCardState extends State<GoalCard> {
 
   @override
   Widget build(BuildContext context) {
-    final progress =
-        widget.goal.targetAmount > 0
-            ? widget.goal.currentAmount / widget.goal.targetAmount
-            : 0.0;
+    final progress = widget.goal.targetAmount > 0
+        ? widget.goal.currentAmount / widget.goal.targetAmount
+        : 0.0;
     final isCompleted = widget.goal.isCompleted;
 
     return MouseRegion(
@@ -50,19 +49,15 @@ class _GoalCardState extends State<GoalCard> {
         child: Card(
           margin: EdgeInsets.zero,
           elevation: 0,
-          color:
-              !context.isCompact && widget.isSelected
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).colorScheme.surface,
+          color: !context.isCompact && widget.isSelected
+              ? Theme.of(context).colorScheme.primaryContainer
+              : Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color:
-                  _isHovered
-                      ? Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.2)
-                      : Colors.transparent,
+              color: _isHovered
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                  : Colors.transparent,
             ),
           ),
           child: ListTile(
@@ -76,10 +71,9 @@ class _GoalCardState extends State<GoalCard> {
                   child: Text(
                     widget.goal.name,
                     style: TextStyle(
-                      fontWeight:
-                          widget.isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -129,13 +123,12 @@ class _GoalCardState extends State<GoalCard> {
                 ),
               ],
             ),
-            trailing:
-                context.isCompact
-                    ? IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: widget.onDelete,
-                    )
-                    : null,
+            trailing: context.isCompact
+                ? IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: widget.onDelete,
+                  )
+                : null,
           ),
         ),
       ),

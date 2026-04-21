@@ -78,10 +78,9 @@ class _GoalListScreenState extends State<GoalListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          context.isCompact
-              ? AppBar(title: const Text('Financial Goals'))
-              : null,
+      appBar: context.isCompact
+          ? AppBar(title: const Text('Financial Goals'))
+          : null,
       body: MasterDetailLayout(
         master: _buildMasterPane(),
         detail: _selectedGoal != null

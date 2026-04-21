@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../accounts/bloc/account_bloc.dart';
-import '../../accounts/models/account.dart';
-import '../../budget/bloc/bulk_expenses_bloc.dart';
-import '../../income/bloc/bulk_income_bloc.dart';
+import '../../../accounts/bloc/account_bloc.dart';
+import '../../../budget/bloc/bulk_expenses_bloc.dart';
+import '../../../income/bloc/bulk_income_bloc.dart';
 
 class ProjectedBalanceSummary extends StatelessWidget {
   const ProjectedBalanceSummary({super.key});
@@ -29,13 +28,14 @@ class ProjectedBalanceSummary extends StatelessWidget {
                 if (affectedAccounts.isEmpty) return const SizedBox.shrink();
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     border: Border(
-                      top: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                      ),
+                      top: BorderSide(color: Theme.of(context).dividerColor),
                     ),
                   ),
                   child: Column(
@@ -45,8 +45,8 @@ class ProjectedBalanceSummary extends StatelessWidget {
                       Text(
                         'Projected Balances',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       SingleChildScrollView(
@@ -55,7 +55,9 @@ class ProjectedBalanceSummary extends StatelessWidget {
                           children: affectedAccounts.map((account) {
                             final delta = deltas[account.id]!;
                             final projected = account.balance + delta;
-                            final currencyFormat = NumberFormat.currency(symbol: '\$');
+                            final currencyFormat = NumberFormat.currency(
+                              symbol: '\$',
+                            );
 
                             return Container(
                               margin: const EdgeInsets.only(right: 16),
@@ -64,7 +66,9 @@ class ProjectedBalanceSummary extends StatelessWidget {
                                 color: Theme.of(context).colorScheme.surface,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: Theme.of(context).dividerColor.withOpacity(0.5),
+                                  color: Theme.of(
+                                    context,
+                                  ).dividerColor.withOpacity(0.5),
                                 ),
                               ),
                               child: Column(
@@ -72,24 +76,30 @@ class ProjectedBalanceSummary extends StatelessWidget {
                                 children: [
                                   Text(
                                     account.name,
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
                                       Text(
                                         currencyFormat.format(account.balance),
-                                        style: Theme.of(context).textTheme.bodySmall,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
                                       ),
                                       const Icon(Icons.arrow_forward, size: 12),
                                       Text(
                                         currencyFormat.format(projected),
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
                                               color: delta > 0
                                                   ? Colors.green
-                                                  : (delta < 0 ? Colors.red : null),
+                                                  : (delta < 0
+                                                        ? Colors.red
+                                                        : null),
                                               fontWeight: FontWeight.bold,
                                             ),
                                       ),
@@ -97,7 +107,10 @@ class ProjectedBalanceSummary extends StatelessWidget {
                                   ),
                                   Text(
                                     '(${delta >= 0 ? '+' : ''}${currencyFormat.format(delta)})',
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
                                           color: delta > 0
                                               ? Colors.green
                                               : (delta < 0 ? Colors.red : null),

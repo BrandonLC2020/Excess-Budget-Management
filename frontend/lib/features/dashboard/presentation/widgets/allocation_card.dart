@@ -38,11 +38,11 @@ class _AllocationCardState extends State<AllocationCard> {
             onConfirm: (distribution) {
               Navigator.pop(context);
               context.read<DashboardBloc>().add(
-                    AcceptSuggestionRequested(
-                      widget.allocation,
-                      subGoalDistribution: distribution,
-                    ),
-                  );
+                AcceptSuggestionRequested(
+                  widget.allocation,
+                  subGoalDistribution: distribution,
+                ),
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
@@ -58,17 +58,22 @@ class _AllocationCardState extends State<AllocationCard> {
     }
 
     // Default fallback for accounts or flat goals
-    context.read<DashboardBloc>().add(AcceptSuggestionRequested(widget.allocation));
+    context.read<DashboardBloc>().add(
+      AcceptSuggestionRequested(widget.allocation),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Accepted allocation for ${widget.allocation.name}')),
+      SnackBar(
+        content: Text('Accepted allocation for ${widget.allocation.name}'),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final isGoal = widget.allocation.type == 'goal';
-    final icon =
-        isGoal ? Icons.flag_rounded : Icons.account_balance_wallet_rounded;
+    final icon = isGoal
+        ? Icons.flag_rounded
+        : Icons.account_balance_wallet_rounded;
     final color = isGoal
         ? Colors.purpleAccent.shade400
         : Theme.of(context).colorScheme.primary;
@@ -76,7 +81,9 @@ class _AllocationCardState extends State<AllocationCard> {
     Goal? targetGoal;
     if (isGoal) {
       try {
-        targetGoal = widget.goals.firstWhere((g) => g.id == widget.allocation.id);
+        targetGoal = widget.goals.firstWhere(
+          (g) => g.id == widget.allocation.id,
+        );
       } catch (_) {
         targetGoal = null;
       }
@@ -103,9 +110,7 @@ class _AllocationCardState extends State<AllocationCard> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: _isHovered ? 0.08 : 0.04,
-                ),
+                color: Colors.black.withValues(alpha: _isHovered ? 0.08 : 0.04),
                 blurRadius: _isHovered ? 25 : 15,
                 offset: Offset(0, _isHovered ? 12 : 8),
               ),
@@ -159,9 +164,7 @@ class _AllocationCardState extends State<AllocationCard> {
                           ),
                           Text(
                             '\$${widget.allocation.amount.toStringAsFixed(2)}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: color,
@@ -172,21 +175,20 @@ class _AllocationCardState extends State<AllocationCard> {
                       const SizedBox(height: 4),
                       Text(
                         isGoal ? 'Savings Goal' : 'Account Deposit',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.6),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.6),
                               letterSpacing: 1.2,
                             ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         widget.allocation.reason,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(height: 1.5),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(height: 1.5),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -195,13 +197,17 @@ class _AllocationCardState extends State<AllocationCard> {
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () => _handleAccept(context),
-                          icon: const Icon(Icons.check_circle_outline, size: 18),
+                          icon: const Icon(
+                            Icons.check_circle_outline,
+                            size: 18,
+                          ),
                           label: const Text('Accept Suggestion'),
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size.fromHeight(48),
                             foregroundColor: color,
-                            side:
-                                BorderSide(color: color.withValues(alpha: 0.5)),
+                            side: BorderSide(
+                              color: color.withValues(alpha: 0.5),
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

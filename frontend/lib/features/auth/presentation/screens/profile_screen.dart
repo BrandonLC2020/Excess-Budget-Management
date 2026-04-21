@@ -125,10 +125,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          context.isCompact
-              ? AppBar(title: const Text('Profile Settings'))
-              : null,
+      appBar: context.isCompact
+          ? AppBar(title: const Text('Profile Settings'))
+          : null,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -150,19 +149,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         if (_isUploading)
                           const Positioned.fill(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         Positioned(
                           bottom: 0,
                           right: 0,
                           child: CircleAvatar(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
                             radius: 18,
                             child: IconButton(
-                              icon: const Icon(Icons.edit, size: 18, color: Colors.white),
-                              onPressed: _isUploading ? null : _pickAndUploadImage,
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                              onPressed: _isUploading
+                                  ? null
+                                  : _pickAndUploadImage,
                             ),
                           ),
                         ),
@@ -217,7 +222,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     }),
                     onChangeEnd: _saveRatio,
                     divisions: 10,
-                    label: '${((_profile?.defaultSavingsRatio ?? 0.5) * 100).toInt()}% Savings',
+                    label:
+                        '${((_profile?.defaultSavingsRatio ?? 0.5) * 100).toInt()}% Savings',
                   ),
                   Center(
                     child: Text(

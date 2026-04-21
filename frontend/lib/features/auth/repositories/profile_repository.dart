@@ -25,10 +25,7 @@ class ProfileRepository {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
 
-    await supabase
-        .from('profiles')
-        .update(profile.toJson())
-        .eq('id', userId);
+    await supabase.from('profiles').update(profile.toJson()).eq('id', userId);
   }
 
   Future<String> uploadAvatar(XFile file) async {
@@ -39,13 +36,17 @@ class ProfileRepository {
     final fileName = '$userId/avatar.$fileExt';
     final filePath = fileName;
 
-    await supabase.storage.from('avatars').upload(
+    await supabase.storage
+        .from('avatars')
+        .upload(
           filePath,
           File(file.path),
           fileOptions: const FileOptions(upsert: true),
         );
 
-    final String publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+    final String publicUrl = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
     return publicUrl;
   }
 

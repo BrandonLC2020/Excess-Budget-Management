@@ -38,14 +38,13 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar:
-          context.isCompact
-              ? AppBar(
-                title: const Text('Budget Categories'),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-              )
-              : null,
+      appBar: context.isCompact
+          ? AppBar(
+              title: const Text('Budget Categories'),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            )
+          : null,
       body: BlocBuilder<BudgetBloc, BudgetState>(
         builder: (context, state) {
           if (state is BudgetLoading) {
@@ -191,8 +190,8 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                           onTap: () => _showCategoryForm(category),
                           onDelete: () {
                             context.read<BudgetBloc>().add(
-                                  DeleteBudgetCategory(category.id),
-                                );
+                              DeleteBudgetCategory(category.id),
+                            );
                           },
                         );
                       }, childCount: state.categories.length),

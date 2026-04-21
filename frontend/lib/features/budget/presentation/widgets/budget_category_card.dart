@@ -48,9 +48,7 @@ class _BudgetCategoryCardState extends State<BudgetCategoryCard> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: _isHovered ? 0.08 : 0.0,
-              ),
+              color: Colors.black.withValues(alpha: _isHovered ? 0.08 : 0.0),
               blurRadius: _isHovered ? 12 : 0,
               offset: Offset(0, _isHovered ? 6 : 0),
             ),
@@ -84,10 +82,7 @@ class _BudgetCategoryCardState extends State<BudgetCategoryCard> {
                           color: categoryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          categoryIcon,
-                          color: categoryColor,
-                        ),
+                        child: Icon(categoryIcon, color: categoryColor),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -116,9 +111,7 @@ class _BudgetCategoryCardState extends State<BudgetCategoryCard> {
                       IconButton(
                         icon: Icon(
                           Icons.delete_outline,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.error,
+                          color: Theme.of(context).colorScheme.error,
                         ),
                         onPressed: widget.onDelete,
                       ),
@@ -130,8 +123,9 @@ class _BudgetCategoryCardState extends State<BudgetCategoryCard> {
                     child: LinearProgressIndicator(
                       value: widget.percent,
                       minHeight: 6,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
                       color: widget.percent >= 1.0
                           ? Theme.of(context).colorScheme.error
                           : categoryColor,

@@ -11,10 +11,7 @@ class GoalDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(goal.name)),
-      body: GoalDetailView(
-        goal: goal,
-        onDelete: () => Navigator.pop(context),
-      ),
+      body: GoalDetailView(goal: goal, onDelete: () => Navigator.pop(context)),
     );
   }
 }

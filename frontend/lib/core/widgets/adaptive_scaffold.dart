@@ -46,9 +46,7 @@ class AdaptiveScaffold extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       drawer: NavigationDrawer(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) {
@@ -64,16 +62,18 @@ class AdaptiveScaffold extends StatelessWidget {
             child: Text(
               'Excess Budget',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
             ),
           ),
           const SizedBox(height: 12),
-          ...destinations.map((dest) => NavigationDrawerDestination(
-                icon: dest.icon,
-                selectedIcon: dest.selectedIcon,
-                label: Text(dest.label),
-              )),
+          ...destinations.map(
+            (dest) => NavigationDrawerDestination(
+              icon: dest.icon,
+              selectedIcon: dest.selectedIcon,
+              label: Text(dest.label),
+            ),
+          ),
         ],
       ),
       body: navigationShell,

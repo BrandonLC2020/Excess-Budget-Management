@@ -37,10 +37,9 @@ class Goal {
       name: json['name'] as String,
       targetAmount: (json['target_amount'] as num).toDouble(),
       currentAmount: (json['current_amount'] as num).toDouble(),
-      targetDate:
-          json['target_date'] != null
-              ? DateTime.parse(json['target_date'] as String)
-              : null,
+      targetDate: json['target_date'] != null
+          ? DateTime.parse(json['target_date'] as String)
+          : null,
       type: json['type'] as String,
       category: json['category'] as String? ?? 'savings',
       createdAt: DateTime.parse(json['created_at'] as String),

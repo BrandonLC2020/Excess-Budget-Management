@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import '../../bloc/budget_bloc.dart';
 import '../../bloc/bulk_expenses_bloc.dart';
 import '../../models/budget_category.dart';
-import '../../accounts/bloc/account_bloc.dart';
-import '../../accounts/models/account.dart';
+import '../../../accounts/bloc/account_bloc.dart';
+import '../../../accounts/models/account.dart';
 
 class BulkExpenseTab extends StatelessWidget {
   const BulkExpenseTab({super.key});
@@ -15,12 +15,19 @@ class BulkExpenseTab extends StatelessWidget {
     return BlocConsumer<BulkExpensesBloc, BulkExpensesState>(
       listener: (context, state) {
         if (state.isSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Expenses saved successfully')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Expenses saved successfully')),
+          );
           // Normally would pop, but we leave it to the shell to decide, or clear state.
           Navigator.of(context).pop();
         }
         if (state.submissionError != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.submissionError!), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.submissionError!),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       },
       builder: (context, state) {
@@ -41,12 +48,20 @@ class BulkExpenseTab extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text('Expense ${index + 1}', style: Theme.of(context).textTheme.titleMedium),
+                              Text(
+                                'Expense ${index + 1}',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
                               const Spacer(),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                onPressed: () => context.read<BulkExpensesBloc>().add(RemoveExpenseRow(row.id)),
-                              )
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => context
+                                    .read<BulkExpensesBloc>()
+                                    .add(RemoveExpenseRow(row.id)),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -55,9 +70,21 @@ class BulkExpenseTab extends StatelessWidget {
                               Expanded(
                                 child: TextFormField(
                                   initialValue: row.amount?.toString(),
-                                  decoration: const InputDecoration(labelText: 'Amount', prefixText: '\$'),
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  onChanged: (val) => context.read<BulkExpensesBloc>().add(UpdateExpenseRow(rowId: row.id, amount: double.tryParse(val))),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Amount',
+                                    prefixText: '\$',
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  onChanged: (val) =>
+                                      context.read<BulkExpensesBloc>().add(
+                                        UpdateExpenseRow(
+                                          rowId: row.id,
+                                          amount: double.tryParse(val),
+                                        ),
+                                      ),
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -65,13 +92,29 @@ class BulkExpenseTab extends StatelessWidget {
                                 child: BlocBuilder<BudgetBloc, BudgetState>(
                                   builder: (context, budgetState) {
                                     List<BudgetCategory> categories = [];
-                                    if (budgetState is BudgetLoaded) categories = budgetState.categories;
-                                    
+                                    if (budgetState is BudgetLoaded)
+                                      categories = budgetState.categories;
+
                                     return DropdownButtonFormField<String>(
                                       value: row.budgetCategoryId,
-                                      decoration: const InputDecoration(labelText: 'Category'),
-                                      items: categories.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
-                                      onChanged: (val) => context.read<BulkExpensesBloc>().add(UpdateExpenseRow(rowId: row.id, budgetCategoryId: val)),
+                                      decoration: const InputDecoration(
+                                        labelText: 'Category',
+                                      ),
+                                      items: categories
+                                          .map(
+                                            (c) => DropdownMenuItem(
+                                              value: c.id,
+                                              child: Text(c.name),
+                                            ),
+                                          )
+                                          .toList(),
+                                      onChanged: (val) =>
+                                          context.read<BulkExpensesBloc>().add(
+                                            UpdateExpenseRow(
+                                              rowId: row.id,
+                                              budgetCategoryId: val,
+                                            ),
+                                          ),
                                     );
                                   },
                                 ),
@@ -82,26 +125,33 @@ class BulkExpenseTab extends StatelessWidget {
                           BlocBuilder<AccountBloc, AccountState>(
                             builder: (context, accountState) {
                               List<Account> accounts = [];
-                              if (accountState is AccountLoaded) accounts = accountState.accounts;
+                              if (accountState is AccountLoaded)
+                                accounts = accountState.accounts;
 
                               return DropdownButtonFormField<String>(
                                 value: row.accountId,
                                 decoration: const InputDecoration(
                                   labelText: 'Account (Optional)',
-                                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
-                                  helperText: 'Affects account balance if selected',
+                                  prefixIcon: Icon(
+                                    Icons.account_balance_wallet_outlined,
+                                  ),
+                                  helperText:
+                                      'Affects account balance if selected',
                                 ),
                                 items: [
                                   const DropdownMenuItem<String>(
                                     value: null,
                                     child: Text('No Account'),
                                   ),
-                                  ...accounts.map((a) => DropdownMenuItem(
-                                        value: a.id,
-                                        child: Text(a.name),
-                                      )),
+                                  ...accounts.map(
+                                    (a) => DropdownMenuItem(
+                                      value: a.id,
+                                      child: Text(a.name),
+                                    ),
+                                  ),
                                 ],
-                                onChanged: (val) => context.read<BulkExpensesBloc>().add(
+                                onChanged: (val) =>
+                                    context.read<BulkExpensesBloc>().add(
                                       UpdateExpenseRow(
                                         rowId: row.id,
                                         accountId: val,
@@ -116,22 +166,44 @@ class BulkExpenseTab extends StatelessWidget {
                               Expanded(
                                 child: TextFormField(
                                   initialValue: row.description,
-                                  decoration: const InputDecoration(labelText: 'Description'),
-                                  onChanged: (val) => context.read<BulkExpensesBloc>().add(UpdateExpenseRow(rowId: row.id, description: val)),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Description',
+                                  ),
+                                  onChanged: (val) =>
+                                      context.read<BulkExpensesBloc>().add(
+                                        UpdateExpenseRow(
+                                          rowId: row.id,
+                                          description: val,
+                                        ),
+                                      ),
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: InkWell(
                                   onTap: () async {
-                                    final date = await showDatePicker(context: context, initialDate: row.date, firstDate: DateTime(2000), lastDate: DateTime(2100));
+                                    final date = await showDatePicker(
+                                      context: context,
+                                      initialDate: row.date,
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                    );
                                     if (date != null && context.mounted) {
-                                      context.read<BulkExpensesBloc>().add(UpdateExpenseRow(rowId: row.id, date: date));
+                                      context.read<BulkExpensesBloc>().add(
+                                        UpdateExpenseRow(
+                                          rowId: row.id,
+                                          date: date,
+                                        ),
+                                      );
                                     }
                                   },
                                   child: InputDecorator(
-                                    decoration: const InputDecoration(labelText: 'Date'),
-                                    child: Text(DateFormat.yMMMd().format(row.date)),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Date',
+                                    ),
+                                    child: Text(
+                                      DateFormat.yMMMd().format(row.date),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -140,8 +212,13 @@ class BulkExpenseTab extends StatelessWidget {
                           if (row.error != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(row.error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                            )
+                              child: Text(
+                                row.error!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -154,19 +231,30 @@ class BulkExpenseTab extends StatelessWidget {
               child: Row(
                 children: [
                   OutlinedButton.icon(
-                    onPressed: () => context.read<BulkExpensesBloc>().add(AddExpenseRow()),
+                    onPressed: () =>
+                        context.read<BulkExpensesBloc>().add(AddExpenseRow()),
                     icon: const Icon(Icons.add),
                     label: const Text('Add Row'),
                   ),
                   const Spacer(),
                   FilledButton.icon(
-                    onPressed: state.isSubmitting ? null : () => context.read<BulkExpensesBloc>().add(SubmitBulkExpenses()),
-                    icon: state.isSubmitting ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.save),
+                    onPressed: state.isSubmitting
+                        ? null
+                        : () => context.read<BulkExpensesBloc>().add(
+                            SubmitBulkExpenses(),
+                          ),
+                    icon: state.isSubmitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save),
                     label: const Text('Save All Expenses'),
                   ),
                 ],
               ),
-            )
+            ),
           ],
         );
       },

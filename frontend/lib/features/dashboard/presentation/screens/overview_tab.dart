@@ -190,8 +190,9 @@ class _OverviewTabState extends State<OverviewTab> {
         };
 
         return Scaffold(
-          appBar:
-              context.isCompact ? AppBar(title: const Text('Overview')) : null,
+          appBar: context.isCompact
+              ? AppBar(title: const Text('Overview'))
+              : null,
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => context.go('/bulk-entry'),
             icon: const Icon(Icons.library_add),
@@ -552,22 +553,23 @@ class _OverviewTabState extends State<OverviewTab> {
       0.0,
       (sum, b) => sum + b.limitAmount,
     );
-    final budgetProgress =
-        totalLimit > 0 ? (totalSpent / totalLimit).clamp(0.0, 1.0) : 0.0;
+    final budgetProgress = totalLimit > 0
+        ? (totalSpent / totalLimit).clamp(0.0, 1.0)
+        : 0.0;
 
     final totalSaved = state.goals.fold(0.0, (sum, g) => sum + g.currentAmount);
     final totalTarget = state.goals.fold(0.0, (sum, g) => sum + g.targetAmount);
-    final goalProgress =
-        totalTarget > 0 ? (totalSaved / totalTarget).clamp(0.0, 1.0) : 0.0;
+    final goalProgress = totalTarget > 0
+        ? (totalSaved / totalTarget).clamp(0.0, 1.0)
+        : 0.0;
 
     final currencyFormat = NumberFormat.simpleCurrency(decimalDigits: 0);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount =
-            constraints.maxWidth > 800
-                ? 3
-                : (constraints.maxWidth > 600 ? 2 : 1);
+        final crossAxisCount = constraints.maxWidth > 800
+            ? 3
+            : (constraints.maxWidth > 600 ? 2 : 1);
 
         return GridView.count(
           shrinkWrap: true,

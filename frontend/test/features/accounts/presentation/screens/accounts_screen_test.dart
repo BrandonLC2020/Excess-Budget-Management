@@ -26,7 +26,9 @@ void main() {
   setUp(() {
     mockAccountBloc = MockAccountBloc();
     when(() => mockAccountBloc.state).thenReturn(AccountLoaded([testAccount]));
-    when(() => mockAccountBloc.stream).thenAnswer((_) => Stream.value(AccountLoaded([testAccount])));
+    when(
+      () => mockAccountBloc.stream,
+    ).thenAnswer((_) => Stream.value(AccountLoaded([testAccount])));
   });
 
   Widget createWidgetUnderTest() {
@@ -57,33 +59,40 @@ void main() {
     expect(find.text('Edit Account'), findsOneWidget);
   });
 
-  testWidgets('In expanded mode, tapping account shows detail view in right pane', (tester) async {
-    tester.view.physicalSize = const Size(1200, 800);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() => tester.view.resetPhysicalSize());
+  testWidgets(
+    'In expanded mode, tapping account shows detail view in right pane',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    
-    // Initially no detail view selected
-    expect(find.text('Select an item to view details'), findsOneWidget);
+      await tester.pumpWidget(createWidgetUnderTest());
 
-    await tester.tap(find.text('Test Account'));
-    await tester.pumpAndSettle();
+      // Initially no detail view selected
+      expect(find.text('Select an item to view details'), findsOneWidget);
 
-    expect(find.byType(AccountDetailView), findsOneWidget);
-    expect(find.text('Edit Account'), findsOneWidget);
-    // Should NOT be an AlertDialog
-    expect(find.byType(AlertDialog), findsNothing);
-  });
+      await tester.tap(find.text('Test Account'));
+      await tester.pumpAndSettle();
 
-  testWidgets('FloatingActionButton opens add dialog in both modes', (tester) async {
+      expect(find.byType(AccountDetailView), findsOneWidget);
+      expect(find.text('Edit Account'), findsOneWidget);
+      // Should NOT be an AlertDialog
+      expect(find.byType(AlertDialog), findsNothing);
+    },
+  );
+
+  testWidgets('FloatingActionButton opens add dialog in both modes', (
+    tester,
+  ) async {
     // Compact mode
     tester.view.physicalSize = const Size(400, 800);
     await tester.pumpWidget(createWidgetUnderTest());
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.text('Add Account'), findsOneWidget);
-    await tester.tap(find.text('Cancel')); // Assuming there is a cancel or we can just pump
+    await tester.tap(
+      find.text('Cancel'),
+    ); // Assuming there is a cancel or we can just pump
     await tester.pumpAndSettle();
 
     // Expanded mode

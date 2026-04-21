@@ -90,8 +90,8 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       },
                       onDelete: () {
                         context.read<AccountBloc>().add(
-                              DeleteAccount(account.id),
-                            );
+                          DeleteAccount(account.id),
+                        );
                       },
                     );
                   },

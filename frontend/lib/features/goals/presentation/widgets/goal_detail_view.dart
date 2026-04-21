@@ -299,10 +299,9 @@ class _GoalDetailViewState extends State<GoalDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    final progress =
-        _currentGoal.targetAmount > 0
-            ? _currentGoal.currentAmount / _currentGoal.targetAmount
-            : 0.0;
+    final progress = _currentGoal.targetAmount > 0
+        ? _currentGoal.currentAmount / _currentGoal.targetAmount
+        : 0.0;
 
     return Stack(
       children: [
@@ -319,11 +318,8 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                   Flexible(
                     child: Text(
                       _currentGoal.name,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -399,11 +395,8 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                         children: [
                           Text(
                             'Line Items (Subgoals)',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           if (_currentGoal.accountId == null)
                             IconButton(
@@ -479,7 +472,11 @@ class _GoalDetailViewState extends State<GoalDetailView> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: (isCompleted ? Colors.green : Theme.of(context).colorScheme.primary).withValues(alpha: 0.3),
+            color:
+                (isCompleted
+                        ? Colors.green
+                        : Theme.of(context).colorScheme.primary)
+                    .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -602,10 +599,9 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                 label: const Text('Fund Goal'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                  foregroundColor:
-                      isCompleted
-                          ? Colors.green.shade700
-                          : Theme.of(context).colorScheme.primary,
+                  foregroundColor: isCompleted
+                      ? Colors.green.shade700
+                      : Theme.of(context).colorScheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

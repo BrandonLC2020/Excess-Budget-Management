@@ -68,8 +68,10 @@ class BudgetRepository {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
 
-    final rowsToInsert = expenses.map((e) => {...e, 'user_id': userId}).toList();
-    
+    final rowsToInsert = expenses
+        .map((e) => {...e, 'user_id': userId})
+        .toList();
+
     await supabase.from('expenses').insert(rowsToInsert);
   }
 }

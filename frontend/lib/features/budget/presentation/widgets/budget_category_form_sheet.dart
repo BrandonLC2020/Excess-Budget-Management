@@ -175,10 +175,12 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
               ),
 
               Text(
-                widget.category == null ? 'New Budget Category' : 'Edit Category',
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                widget.category == null
+                    ? 'New Budget Category'
+                    : 'Edit Category',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -194,7 +196,11 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                     itemBuilder: (context, index) {
                       final preset = _presets[index];
                       return ActionChip(
-                        avatar: Icon(preset.icon, size: 16, color: preset.color),
+                        avatar: Icon(
+                          preset.icon,
+                          size: 16,
+                          color: preset.color,
+                        ),
                         label: Text(preset.name),
                         onPressed: () {
                           setState(() {
@@ -233,7 +239,11 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                           width: 2,
                         ),
                       ),
-                      child: Icon(_selectedIcon, color: _selectedColor, size: 32),
+                      child: Icon(
+                        _selectedIcon,
+                        color: _selectedColor,
+                        size: 32,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -248,9 +258,12 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                         const SizedBox(height: 4),
                         Text(
                           'Tap the box to change icon or select a color below.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ],
                     ),
@@ -265,7 +278,8 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _colorOptions.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
                   itemBuilder: (context, index) {
                     final color = _colorOptions[index];
                     final isSelected = _selectedColor == color;
@@ -285,7 +299,11 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                           ),
                         ),
                         child: isSelected
-                            ? const Icon(Icons.check, color: Colors.white, size: 20)
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 20,
+                              )
                             : null,
                       ),
                     );
@@ -377,9 +395,9 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
             children: [
               Text(
                 'Choose an Icon',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               GridView.builder(
@@ -400,7 +418,9 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(icon, color: _selectedColor),

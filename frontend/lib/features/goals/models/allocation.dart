@@ -29,8 +29,9 @@ class GoalAllocation {
       goalName: json['goals'] != null ? json['goals']['name'] as String? : null,
       accountId: json['account_id'] as String?,
       subGoalId: json['sub_goal_id'] as String?,
-      accountName:
-          json['accounts'] != null ? json['accounts']['name'] as String? : null,
+      accountName: json['accounts'] != null
+          ? json['accounts']['name'] as String?
+          : null,
       amount: (json['amount'] as num).toDouble(),
       createdAt: DateTime.parse(json['created_at'] as String),
     );

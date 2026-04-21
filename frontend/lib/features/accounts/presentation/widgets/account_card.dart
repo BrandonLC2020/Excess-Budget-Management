@@ -35,9 +35,7 @@ class _AccountCardState extends State<AccountCard> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: _isHovered ? 0.08 : 0.04,
-              ),
+              color: Colors.black.withValues(alpha: _isHovered ? 0.08 : 0.04),
               blurRadius: _isHovered ? 12 : 4,
               offset: Offset(0, _isHovered ? 6 : 2),
             ),
@@ -59,15 +57,15 @@ class _AccountCardState extends State<AccountCard> {
           ),
           child: ListTile(
             onTap: widget.onTap,
-            hoverColor: Theme.of(context)
-                .colorScheme
-                .primaryContainer
-                .withValues(alpha: 0.1),
+            hoverColor: Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withValues(alpha: 0.1),
             title: Text(
               widget.account.name,
               style: TextStyle(
-                fontWeight:
-                    widget.isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: widget.isSelected
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
             ),
             subtitle: Text('\$${widget.account.balance.toStringAsFixed(2)}'),
