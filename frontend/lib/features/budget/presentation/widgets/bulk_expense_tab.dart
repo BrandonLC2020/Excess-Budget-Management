@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../bloc/budget_bloc.dart';
 import '../../bloc/bulk_expenses_bloc.dart';
 import '../../models/budget_category.dart';
+import '../../accounts/bloc/account_bloc.dart';
+import '../../accounts/models/account.dart';
 
 class BulkExpenseTab extends StatelessWidget {
   const BulkExpenseTab({super.key});
@@ -75,6 +77,38 @@ class BulkExpenseTab extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 8),
+                          BlocBuilder<AccountBloc, AccountState>(
+                            builder: (context, accountState) {
+                              List<Account> accounts = [];
+                              if (accountState is AccountLoaded) accounts = accountState.accounts;
+
+                              return DropdownButtonFormField<String>(
+                                value: row.accountId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Account (Optional)',
+                                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                                  helperText: 'Affects account balance if selected',
+                                ),
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text('No Account'),
+                                  ),
+                                  ...accounts.map((a) => DropdownMenuItem(
+                                        value: a.id,
+                                        child: Text(a.name),
+                                      )),
+                                ],
+                                onChanged: (val) => context.read<BulkExpensesBloc>().add(
+                                      UpdateExpenseRow(
+                                        rowId: row.id,
+                                        accountId: val,
+                                      ),
+                                    ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           Row(

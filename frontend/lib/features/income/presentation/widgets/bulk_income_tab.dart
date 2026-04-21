@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../bloc/bulk_income_bloc.dart';
+import '../../accounts/bloc/account_bloc.dart';
+import '../../accounts/models/account.dart';
 
 class BulkIncomeTab extends StatelessWidget {
   const BulkIncomeTab({super.key});
@@ -64,6 +66,38 @@ class BulkIncomeTab extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 8),
+                          BlocBuilder<AccountBloc, AccountState>(
+                            builder: (context, accountState) {
+                              List<Account> accounts = [];
+                              if (accountState is AccountLoaded) accounts = accountState.accounts;
+
+                              return DropdownButtonFormField<String>(
+                                value: row.accountId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Account (Optional)',
+                                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                                  helperText: 'Affects account balance if selected',
+                                ),
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text('No Account'),
+                                  ),
+                                  ...accounts.map((a) => DropdownMenuItem(
+                                        value: a.id,
+                                        child: Text(a.name),
+                                      )),
+                                ],
+                                onChanged: (val) => context.read<BulkIncomeBloc>().add(
+                                      UpdateIncomeRow(
+                                        rowId: row.id,
+                                        accountId: val,
+                                      ),
+                                    ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           InkWell(
