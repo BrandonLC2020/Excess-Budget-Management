@@ -41,7 +41,7 @@ Deno.serve(async (req: Request) => {
     - If a goal category has no active goals, allocate according to the available goals.
 
     Provide a brief explanation of this balance and any specific subgoals targeted in the 'reason' field.
-    `
+
 Here are their active goals:
 ${JSON.stringify(goals, null, 2)}
 
