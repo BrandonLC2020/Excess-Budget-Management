@@ -66,9 +66,9 @@ class TransactionCard extends StatelessWidget {
           trailing: Text(
             formatCurrency.format(amount),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: isExpense ? Colors.red : Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: isExpense ? Colors.red : Colors.green,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),

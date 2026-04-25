@@ -41,10 +41,7 @@ class TransactionsScreen extends StatelessWidget {
             ),
           ),
           body: const TabBarView(
-            children: [
-              TransactionsExpensesTab(),
-              TransactionsIncomeTab(),
-            ],
+            children: [TransactionsExpensesTab(), TransactionsIncomeTab()],
           ),
         ),
       ),

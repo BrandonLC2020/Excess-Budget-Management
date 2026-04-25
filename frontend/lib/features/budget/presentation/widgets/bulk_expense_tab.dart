@@ -6,6 +6,7 @@ import '../../bloc/bulk_expenses_bloc.dart';
 import '../../models/budget_category.dart';
 import '../../../accounts/bloc/account_bloc.dart';
 import '../../../accounts/models/account.dart';
+import '../../../../core/utils/optional.dart';
 
 class BulkExpenseTab extends StatelessWidget {
   const BulkExpenseTab({super.key});
@@ -82,7 +83,7 @@ class BulkExpenseTab extends StatelessWidget {
                                       context.read<BulkExpensesBloc>().add(
                                         UpdateExpenseRow(
                                           rowId: row.id,
-                                          amount: double.tryParse(val),
+                                          amount: Wrapped(double.tryParse(val)),
                                         ),
                                       ),
                                 ),
@@ -92,11 +93,12 @@ class BulkExpenseTab extends StatelessWidget {
                                 child: BlocBuilder<BudgetBloc, BudgetState>(
                                   builder: (context, budgetState) {
                                     List<BudgetCategory> categories = [];
-                                    if (budgetState is BudgetLoaded)
+                                    if (budgetState is BudgetLoaded) {
                                       categories = budgetState.categories;
+                                    }
 
                                     return DropdownButtonFormField<String>(
-                                      value: row.budgetCategoryId,
+                                      initialValue: row.budgetCategoryId,
                                       decoration: const InputDecoration(
                                         labelText: 'Category',
                                       ),
@@ -112,7 +114,7 @@ class BulkExpenseTab extends StatelessWidget {
                                           context.read<BulkExpensesBloc>().add(
                                             UpdateExpenseRow(
                                               rowId: row.id,
-                                              budgetCategoryId: val,
+                                              budgetCategoryId: Wrapped(val),
                                             ),
                                           ),
                                     );
@@ -125,11 +127,12 @@ class BulkExpenseTab extends StatelessWidget {
                           BlocBuilder<AccountBloc, AccountState>(
                             builder: (context, accountState) {
                               List<Account> accounts = [];
-                              if (accountState is AccountLoaded)
+                              if (accountState is AccountLoaded) {
                                 accounts = accountState.accounts;
+                              }
 
                               return DropdownButtonFormField<String>(
-                                value: row.accountId,
+                                initialValue: row.accountId,
                                 decoration: const InputDecoration(
                                   labelText: 'Account (Optional)',
                                   prefixIcon: Icon(
@@ -154,7 +157,7 @@ class BulkExpenseTab extends StatelessWidget {
                                     context.read<BulkExpensesBloc>().add(
                                       UpdateExpenseRow(
                                         rowId: row.id,
-                                        accountId: val,
+                                        accountId: Wrapped(val),
                                       ),
                                     ),
                               );
@@ -173,7 +176,7 @@ class BulkExpenseTab extends StatelessWidget {
                                       context.read<BulkExpensesBloc>().add(
                                         UpdateExpenseRow(
                                           rowId: row.id,
-                                          description: val,
+                                          description: Wrapped(val),
                                         ),
                                       ),
                                 ),

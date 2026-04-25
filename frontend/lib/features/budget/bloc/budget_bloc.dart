@@ -42,14 +42,17 @@ class AddBudgetCategory extends BudgetEvent {
   final double limitAmount;
   final int? iconCode;
   final String? colorHex;
+  final BudgetCategoryType type;
+
   const AddBudgetCategory(
     this.name,
     this.limitAmount, {
     this.iconCode,
     this.colorHex,
+    this.type = BudgetCategoryType.expense,
   });
   @override
-  List<Object?> get props => [name, limitAmount, iconCode, colorHex];
+  List<Object?> get props => [name, limitAmount, iconCode, colorHex, type];
 }
 
 class UpdateBudgetCategory extends BudgetEvent {
@@ -58,15 +61,18 @@ class UpdateBudgetCategory extends BudgetEvent {
   final double limitAmount;
   final int? iconCode;
   final String? colorHex;
+  final BudgetCategoryType? type;
+
   const UpdateBudgetCategory(
     this.id,
     this.name,
     this.limitAmount, {
     this.iconCode,
     this.colorHex,
+    this.type,
   });
   @override
-  List<Object?> get props => [id, name, limitAmount, iconCode, colorHex];
+  List<Object?> get props => [id, name, limitAmount, iconCode, colorHex, type];
 }
 
 class DeleteBudgetCategory extends BudgetEvent {
@@ -98,6 +104,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
           event.limitAmount,
           iconCode: event.iconCode,
           colorHex: event.colorHex,
+          type: event.type,
         );
         add(LoadBudgets());
       } catch (e) {
@@ -113,6 +120,7 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
           event.limitAmount,
           iconCode: event.iconCode,
           colorHex: event.colorHex,
+          type: event.type,
         );
         add(LoadBudgets());
       } catch (e) {

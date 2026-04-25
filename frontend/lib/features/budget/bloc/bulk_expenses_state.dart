@@ -20,20 +20,22 @@ class BulkExpenseRow {
   });
 
   BulkExpenseRow copyWith({
-    String? budgetCategoryId,
-    String? accountId,
-    double? amount,
-    String? description,
+    Wrapped<String?>? budgetCategoryId,
+    Wrapped<String?>? accountId,
+    Wrapped<double?>? amount,
+    Wrapped<String?>? description,
     DateTime? date,
     String? error,
     bool clearError = false,
   }) {
     return BulkExpenseRow(
       id: id,
-      budgetCategoryId: budgetCategoryId ?? this.budgetCategoryId,
-      accountId: accountId ?? this.accountId,
-      amount: amount ?? this.amount,
-      description: description ?? this.description,
+      budgetCategoryId: budgetCategoryId != null
+          ? budgetCategoryId.value
+          : this.budgetCategoryId,
+      accountId: accountId != null ? accountId.value : this.accountId,
+      amount: amount != null ? amount.value : this.amount,
+      description: description != null ? description.value : this.description,
       date: date ?? this.date,
       error: clearError ? null : (error ?? this.error),
     );

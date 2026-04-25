@@ -6,6 +6,7 @@ import '../../../accounts/bloc/account_bloc.dart';
 import '../../../accounts/models/account.dart';
 import '../../../budget/bloc/budget_bloc.dart';
 import '../../../budget/models/budget_category.dart';
+import '../../../../core/utils/optional.dart';
 
 class BulkIncomeTab extends StatelessWidget {
   const BulkIncomeTab({super.key});
@@ -81,7 +82,7 @@ class BulkIncomeTab extends StatelessWidget {
                                       context.read<BulkIncomeBloc>().add(
                                         UpdateIncomeRow(
                                           rowId: row.id,
-                                          amount: double.tryParse(val),
+                                          amount: Wrapped(double.tryParse(val)),
                                         ),
                                       ),
                                 ),
@@ -97,7 +98,7 @@ class BulkIncomeTab extends StatelessWidget {
                                       context.read<BulkIncomeBloc>().add(
                                         UpdateIncomeRow(
                                           rowId: row.id,
-                                          description: val,
+                                          description: Wrapped(val),
                                         ),
                                       ),
                                 ),
@@ -138,7 +139,7 @@ class BulkIncomeTab extends StatelessWidget {
                                     context.read<BulkIncomeBloc>().add(
                                       UpdateIncomeRow(
                                         rowId: row.id,
-                                        accountId: val,
+                                        accountId: Wrapped(val),
                                       ),
                                     ),
                               );
@@ -175,7 +176,7 @@ class BulkIncomeTab extends StatelessWidget {
                                     context.read<BulkIncomeBloc>().add(
                                       UpdateIncomeRow(
                                         rowId: row.id,
-                                        categoryId: val,
+                                        categoryId: Wrapped(val),
                                       ),
                                     ),
                               );

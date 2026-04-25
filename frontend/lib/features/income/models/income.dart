@@ -25,7 +25,6 @@ class Income {
     this.categoryId,
   });
 
-  factory Income.fromJson(Map<String, dynamic> json) =>
-      _$IncomeFromJson(json);
+  factory Income.fromJson(Map<String, dynamic> json) => _$IncomeFromJson(json);
   Map<String, dynamic> toJson() => _$IncomeToJson(this);
 }

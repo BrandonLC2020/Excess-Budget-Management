@@ -11,10 +11,10 @@ class RemoveExpenseRow extends BulkExpensesEvent {
 
 class UpdateExpenseRow extends BulkExpensesEvent {
   final String rowId;
-  final String? budgetCategoryId;
-  final String? accountId;
-  final double? amount;
-  final String? description;
+  final Wrapped<String?>? budgetCategoryId;
+  final Wrapped<String?>? accountId;
+  final Wrapped<double?>? amount;
+  final Wrapped<String?>? description;
   final DateTime? date;
 
   UpdateExpenseRow({

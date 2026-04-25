@@ -13,9 +13,9 @@ class TransactionsExpensesTab extends StatelessWidget {
     return BlocBuilder<TransactionExpensesBloc, TransactionExpensesState>(
       builder: (context, state) {
         if (state is TransactionExpensesInitial) {
-          context
-              .read<TransactionExpensesBloc>()
-              .add(FetchTransactionExpenses());
+          context.read<TransactionExpensesBloc>().add(
+            FetchTransactionExpenses(),
+          );
           return const Center(child: CircularProgressIndicator());
         }
         if (state is TransactionExpensesLoading) {
@@ -31,9 +31,9 @@ class TransactionsExpensesTab extends StatelessWidget {
           }
           return RefreshIndicator(
             onRefresh: () async {
-              context
-                  .read<TransactionExpensesBloc>()
-                  .add(FetchTransactionExpenses());
+              context.read<TransactionExpensesBloc>().add(
+                FetchTransactionExpenses(),
+              );
             },
             child: ListView.builder(
               itemCount: expenses.length,
@@ -46,9 +46,9 @@ class TransactionsExpensesTab extends StatelessWidget {
                   isExpense: true,
                   accountId: expense.accountId,
                   onDelete: () {
-                    context
-                        .read<TransactionExpensesBloc>()
-                        .add(DeleteTransactionExpense(expense.id));
+                    context.read<TransactionExpensesBloc>().add(
+                      DeleteTransactionExpense(expense.id),
+                    );
                   },
                 );
               },

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/utils/optional.dart';
 import '../repositories/budget_repository.dart';
 
 part 'bulk_expenses_event.dart';

@@ -33,6 +33,7 @@ class BudgetRepository {
     double limitAmount, {
     int? iconCode,
     String? colorHex,
+    BudgetCategoryType type = BudgetCategoryType.expense,
   }) async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('User not logged in');
@@ -45,6 +46,7 @@ class BudgetRepository {
           'limit_amount': limitAmount,
           'icon_code': iconCode,
           'color_hex': colorHex,
+          'category_type': type.name,
         })
         .select()
         .single();
@@ -58,15 +60,22 @@ class BudgetRepository {
     double limitAmount, {
     int? iconCode,
     String? colorHex,
+    BudgetCategoryType? type,
   }) async {
+    final updates = {
+      'name': name,
+      'limit_amount': limitAmount,
+      'icon_code': iconCode,
+      'color_hex': colorHex,
+    };
+
+    if (type != null) {
+      updates['category_type'] = type.name;
+    }
+
     final response = await supabase
         .from('budget_categories')
-        .update({
-          'name': name,
-          'limit_amount': limitAmount,
-          'icon_code': iconCode,
-          'color_hex': colorHex,
-        })
+        .update(updates)
         .eq('id', id)
         .select()
         .single();

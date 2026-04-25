@@ -29,9 +29,9 @@ class TransactionsIncomeTab extends StatelessWidget {
           }
           return RefreshIndicator(
             onRefresh: () async {
-              context
-                  .read<TransactionIncomeBloc>()
-                  .add(FetchTransactionIncome());
+              context.read<TransactionIncomeBloc>().add(
+                FetchTransactionIncome(),
+              );
             },
             child: ListView.builder(
               itemCount: income.length,
@@ -44,9 +44,9 @@ class TransactionsIncomeTab extends StatelessWidget {
                   isExpense: false,
                   accountId: inc.accountId,
                   onDelete: () {
-                    context
-                        .read<TransactionIncomeBloc>()
-                        .add(DeleteTransactionIncome(inc.id));
+                    context.read<TransactionIncomeBloc>().add(
+                      DeleteTransactionIncome(inc.id),
+                    );
                   },
                 );
               },

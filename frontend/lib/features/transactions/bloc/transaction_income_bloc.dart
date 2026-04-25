@@ -8,13 +8,15 @@ class TransactionIncomeBloc
   final IncomeRepository incomeRepository;
 
   TransactionIncomeBloc({required this.incomeRepository})
-      : super(TransactionIncomeInitial()) {
+    : super(TransactionIncomeInitial()) {
     on<FetchTransactionIncome>(_onFetchTransactionIncome);
     on<DeleteTransactionIncome>(_onDeleteTransactionIncome);
   }
 
   Future<void> _onFetchTransactionIncome(
-      FetchTransactionIncome event, Emitter<TransactionIncomeState> emit) async {
+    FetchTransactionIncome event,
+    Emitter<TransactionIncomeState> emit,
+  ) async {
     emit(TransactionIncomeLoading());
     try {
       final income = await incomeRepository.getIncome();
@@ -25,7 +27,9 @@ class TransactionIncomeBloc
   }
 
   Future<void> _onDeleteTransactionIncome(
-      DeleteTransactionIncome event, Emitter<TransactionIncomeState> emit) async {
+    DeleteTransactionIncome event,
+    Emitter<TransactionIncomeState> emit,
+  ) async {
     try {
       await incomeRepository.deleteIncome(event.id);
       add(FetchTransactionIncome()); // Refresh list

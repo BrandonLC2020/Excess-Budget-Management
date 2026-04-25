@@ -98,7 +98,9 @@ class _BudgetCategoryCardState extends State<BudgetCategoryCard> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '\$${widget.category.spentAmount.toStringAsFixed(2)} / \$${widget.category.limitAmount.toStringAsFixed(2)}',
+                              widget.category.type == BudgetCategoryType.income
+                                  ? 'Saved \$${widget.category.spentAmount.toStringAsFixed(2)} of \$${widget.category.limitAmount.toStringAsFixed(2)}'
+                                  : 'Spent \$${widget.category.spentAmount.toStringAsFixed(2)} of \$${widget.category.limitAmount.toStringAsFixed(2)}',
                               style: TextStyle(
                                 color: Theme.of(
                                   context,
@@ -126,9 +128,13 @@ class _BudgetCategoryCardState extends State<BudgetCategoryCard> {
                       backgroundColor: Theme.of(
                         context,
                       ).colorScheme.surfaceContainerHighest,
-                      color: widget.percent >= 1.0
-                          ? Theme.of(context).colorScheme.error
-                          : categoryColor,
+                      color: widget.category.type == BudgetCategoryType.income
+                          ? (widget.percent >= 1.0
+                                ? Colors.green
+                                : categoryColor)
+                          : (widget.percent >= 1.0
+                                ? Theme.of(context).colorScheme.error
+                                : categoryColor),
                     ),
                   ),
                 ],

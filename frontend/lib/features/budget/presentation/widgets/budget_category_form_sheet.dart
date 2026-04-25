@@ -20,6 +20,7 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
   late TextEditingController _limitController;
   late IconData _selectedIcon;
   late Color _selectedColor;
+  late BudgetCategoryType _selectedType;
 
   final List<({String name, IconData icon, Color color})> _presets = [
     (name: 'Groceries', icon: Icons.restaurant, color: Colors.green),
@@ -85,6 +86,7 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
     _selectedColor = widget.category?.colorHex != null
         ? _parseColor(widget.category!.colorHex!)
         : Colors.grey;
+    _selectedType = widget.category?.type ?? BudgetCategoryType.expense;
   }
 
   Color _parseColor(String hex) {
@@ -118,6 +120,7 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
             limit,
             iconCode: _selectedIcon.codePoint,
             colorHex: _toHex(_selectedColor),
+            type: _selectedType,
           ),
         );
       } else {
@@ -128,6 +131,7 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
             limit,
             iconCode: _selectedIcon.codePoint,
             colorHex: _toHex(_selectedColor),
+            type: _selectedType,
           ),
         );
       }
@@ -312,6 +316,42 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
               ),
               const SizedBox(height: 24),
 
+              // Type Selector
+              Text(
+                'Category Type',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              SegmentedButton<BudgetCategoryType>(
+                segments: const [
+                  ButtonSegment<BudgetCategoryType>(
+                    value: BudgetCategoryType.expense,
+                    label: Text('Expense'),
+                    icon: Icon(Icons.outbound),
+                  ),
+                  ButtonSegment<BudgetCategoryType>(
+                    value: BudgetCategoryType.income,
+                    label: Text('Income'),
+                    icon: Icon(Icons.call_received),
+                  ),
+                ],
+                selected: {_selectedType},
+                onSelectionChanged: (Set<BudgetCategoryType> newSelection) {
+                  setState(() {
+                    _selectedType = newSelection.first;
+                    // Auto-adjust color if it's still default or based on type
+                    if (_selectedType == BudgetCategoryType.income &&
+                        _selectedColor == Colors.grey) {
+                      _selectedColor = Colors.green;
+                    } else if (_selectedType == BudgetCategoryType.expense &&
+                        _selectedColor == Colors.green) {
+                      // Maybe keep it or change to something else if we want
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 24),
+
               TextFormField(
                 controller: _nameController,
                 autofocus: widget.category == null,
@@ -331,7 +371,9 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
               TextFormField(
                 controller: _limitController,
                 decoration: InputDecoration(
-                  labelText: 'Limit Amount',
+                  labelText: _selectedType == BudgetCategoryType.income
+                      ? 'Target Amount'
+                      : 'Limit Amount',
                   prefixIcon: const Icon(Icons.attach_money),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

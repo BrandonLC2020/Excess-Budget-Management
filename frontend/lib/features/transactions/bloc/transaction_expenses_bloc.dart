@@ -8,13 +8,15 @@ class TransactionExpensesBloc
   final BudgetRepository budgetRepository;
 
   TransactionExpensesBloc({required this.budgetRepository})
-      : super(TransactionExpensesInitial()) {
+    : super(TransactionExpensesInitial()) {
     on<FetchTransactionExpenses>(_onFetchTransactionExpenses);
     on<DeleteTransactionExpense>(_onDeleteTransactionExpense);
   }
 
-  Future<void> _onFetchTransactionExpenses(FetchTransactionExpenses event,
-      Emitter<TransactionExpensesState> emit) async {
+  Future<void> _onFetchTransactionExpenses(
+    FetchTransactionExpenses event,
+    Emitter<TransactionExpensesState> emit,
+  ) async {
     emit(TransactionExpensesLoading());
     try {
       final expenses = await budgetRepository.getExpenses();
@@ -24,8 +26,10 @@ class TransactionExpensesBloc
     }
   }
 
-  Future<void> _onDeleteTransactionExpense(DeleteTransactionExpense event,
-      Emitter<TransactionExpensesState> emit) async {
+  Future<void> _onDeleteTransactionExpense(
+    DeleteTransactionExpense event,
+    Emitter<TransactionExpensesState> emit,
+  ) async {
     try {
       await budgetRepository.deleteExpense(event.id);
       add(FetchTransactionExpenses()); // Refresh list
