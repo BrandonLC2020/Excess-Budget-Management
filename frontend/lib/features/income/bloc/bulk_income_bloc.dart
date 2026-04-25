@@ -38,6 +38,7 @@ class BulkIncomeBloc extends Bloc<BulkIncomeEvent, BulkIncomeState> {
         if (row.id == event.rowId) {
           return row.copyWith(
             accountId: event.accountId,
+            categoryId: event.categoryId,
             amount: event.amount,
             description: event.description,
             dateReceived: event.dateReceived,
@@ -81,6 +82,7 @@ class BulkIncomeBloc extends Bloc<BulkIncomeEvent, BulkIncomeState> {
               (row) => {
                 'amount': row.amount,
                 'account_id': row.accountId,
+                'budget_category_id': row.categoryId,
                 'description': row.description,
                 'date_received': row.dateReceived
                     .toIso8601String()

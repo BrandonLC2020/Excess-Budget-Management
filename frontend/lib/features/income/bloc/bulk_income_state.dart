@@ -3,6 +3,7 @@ part of 'bulk_income_bloc.dart';
 class BulkIncomeRow {
   final String id;
   final String? accountId;
+  final String? categoryId;
   final double? amount;
   final String? description;
   final DateTime dateReceived;
@@ -11,6 +12,7 @@ class BulkIncomeRow {
   BulkIncomeRow({
     required this.id,
     this.accountId,
+    this.categoryId,
     this.amount,
     this.description,
     required this.dateReceived,
@@ -19,6 +21,7 @@ class BulkIncomeRow {
 
   BulkIncomeRow copyWith({
     String? accountId,
+    String? categoryId,
     double? amount,
     String? description,
     DateTime? dateReceived,
@@ -28,6 +31,7 @@ class BulkIncomeRow {
     return BulkIncomeRow(
       id: id,
       accountId: accountId ?? this.accountId,
+      categoryId: categoryId ?? this.categoryId,
       amount: amount ?? this.amount,
       description: description ?? this.description,
       dateReceived: dateReceived ?? this.dateReceived,
