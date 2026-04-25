@@ -1,3 +1,10 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'budget_category.g.dart';
+
+enum BudgetCategoryType { expense, income }
+
+@JsonSerializable(fieldRename: FieldRename.snake)
 class BudgetCategory {
   final String id;
   final String userId;
@@ -7,6 +14,8 @@ class BudgetCategory {
   final int? iconCode;
   final String? colorHex;
   final DateTime createdAt;
+  @JsonKey(name: 'category_type', defaultValue: BudgetCategoryType.expense)
+  final BudgetCategoryType type;
 
   BudgetCategory({
     required this.id,
@@ -17,28 +26,11 @@ class BudgetCategory {
     this.iconCode,
     this.colorHex,
     required this.createdAt,
+    this.type = BudgetCategoryType.expense,
   });
 
-  factory BudgetCategory.fromJson(Map<String, dynamic> json) {
-    return BudgetCategory(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      name: json['name'] as String,
-      limitAmount: (json['limit_amount'] as num).toDouble(),
-      spentAmount: (json['spent_amount'] as num).toDouble(),
-      iconCode: json['icon_code'] as int?,
-      colorHex: json['color_hex'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
+  factory BudgetCategory.fromJson(Map<String, dynamic> json) =>
+      _$BudgetCategoryFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'limit_amount': limitAmount,
-      'spent_amount': spentAmount,
-      'icon_code': iconCode,
-      'color_hex': colorHex,
-    };
-  }
+  Map<String, dynamic> toJson() => _$BudgetCategoryToJson(this);
 }

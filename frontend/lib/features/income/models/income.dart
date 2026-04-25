@@ -11,6 +11,8 @@ class Income {
   final DateTime dateReceived;
   final DateTime createdAt;
   final String? accountId;
+  @JsonKey(name: 'budget_category_id')
+  final String? categoryId;
 
   Income({
     required this.id,
@@ -20,6 +22,7 @@ class Income {
     required this.dateReceived,
     required this.createdAt,
     this.accountId,
+    this.categoryId,
   });
 
   factory Income.fromJson(Map<String, dynamic> json) =>

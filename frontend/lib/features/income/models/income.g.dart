@@ -14,6 +14,7 @@ Income _$IncomeFromJson(Map<String, dynamic> json) => Income(
   dateReceived: DateTime.parse(json['date_received'] as String),
   createdAt: DateTime.parse(json['created_at'] as String),
   accountId: json['account_id'] as String?,
+  categoryId: json['budget_category_id'] as String?,
 );
 
 Map<String, dynamic> _$IncomeToJson(Income instance) => <String, dynamic>{
@@ -24,4 +25,5 @@ Map<String, dynamic> _$IncomeToJson(Income instance) => <String, dynamic>{
   'date_received': instance.dateReceived.toIso8601String(),
   'created_at': instance.createdAt.toIso8601String(),
   'account_id': instance.accountId,
+  'budget_category_id': instance.categoryId,
 };
