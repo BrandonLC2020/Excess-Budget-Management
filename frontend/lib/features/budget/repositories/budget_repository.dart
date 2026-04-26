@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../income/models/income.dart';
 import '../models/budget_category.dart';
 import '../models/expense.dart';
 
@@ -104,5 +105,23 @@ class BudgetRepository {
         .toList();
 
     await supabase.from('expenses').insert(rowsToInsert);
+  }
+
+  Future<List<Expense>> getCategoryExpenses(String categoryId) async {
+    final response = await supabase
+        .from('expenses')
+        .select()
+        .eq('budget_category_id', categoryId)
+        .order('date', ascending: false);
+    return (response as List).map((e) => Expense.fromJson(e)).toList();
+  }
+
+  Future<List<Income>> getCategoryIncome(String categoryId) async {
+    final response = await supabase
+        .from('extra_income')
+        .select()
+        .eq('budget_category_id', categoryId)
+        .order('date_received', ascending: false);
+    return (response as List).map((e) => Income.fromJson(e)).toList();
   }
 }

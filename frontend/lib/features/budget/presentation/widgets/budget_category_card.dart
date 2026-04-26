@@ -75,13 +75,16 @@ class _BudgetCategoryCardState extends State<BudgetCategoryCard> {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: categoryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                      Hero(
+                        tag: 'category_icon_${widget.category.id}',
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: categoryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(categoryIcon, color: categoryColor),
                         ),
-                        child: Icon(categoryIcon, color: categoryColor),
                       ),
                       const SizedBox(width: 16),
                       Expanded(

@@ -4,6 +4,7 @@ import '../../../../core/breakpoints.dart';
 import '../../bloc/budget_bloc.dart';
 import '../widgets/budget_category_card.dart';
 import '../widgets/budget_category_form_sheet.dart';
+import '../widgets/budget_category_detail_view.dart';
 import '../../models/budget_category.dart';
 
 class BudgetCategoriesScreen extends StatefulWidget {
@@ -31,6 +32,15 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
         ),
         child: BudgetCategoryFormSheet(category: budgetCategory),
       ),
+    );
+  }
+
+  void _showCategoryDetail(BudgetCategory category) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => BudgetCategoryDetailView(category: category),
     );
   }
 
@@ -200,7 +210,7 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                                 child: BudgetCategoryCard(
                                   category: category,
                                   percent: percent,
-                                  onTap: () => _showCategoryForm(category),
+                                  onTap: () => _showCategoryDetail(category),
                                   onDelete: () {
                                     context.read<BudgetBloc>().add(
                                       DeleteBudgetCategory(category.id),
@@ -232,7 +242,7 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                               return BudgetCategoryCard(
                                 category: category,
                                 percent: percent,
-                                onTap: () => _showCategoryForm(category),
+                                onTap: () => _showCategoryDetail(category),
                                 onDelete: () {
                                   context.read<BudgetBloc>().add(
                                     DeleteBudgetCategory(category.id),
