@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/budget_bloc.dart';
 import '../../models/budget_category.dart';
+import '../../../../core/utils/validation_utils.dart';
 
 class BudgetCategoryFormSheet extends StatefulWidget {
   final BudgetCategory?
@@ -363,9 +364,10 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                   ),
                   filled: true,
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Please enter a name'
-                    : null,
+                validator: (value) => ValidationUtils.validateRequired(
+                  value,
+                  'Category Name',
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -385,15 +387,7 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                 ),
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _save(),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a limit';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
+                validator: ValidationUtils.validateAmount,
               ),
               const SizedBox(height: 32),
               ElevatedButton(

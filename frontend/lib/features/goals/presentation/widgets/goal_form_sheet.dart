@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/goal.dart';
 import '../../../accounts/bloc/account_bloc.dart';
+import '../../../../core/utils/validation_utils.dart';
 
 class GoalFormSheet extends StatefulWidget {
   final Goal? goal;
@@ -50,6 +51,13 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _targetAmountController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
@@ -75,9 +83,10 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Goal Name'),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a name'
-                    : null,
+                validator: (value) => ValidationUtils.validateRequired(
+                  value,
+                  'Goal Name',
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -86,11 +95,10 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
                   labelText: 'Target Amount',
                   prefixText: '\$',
                 ),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value == null || double.tryParse(value) == null
-                    ? 'Please enter a valid amount'
-                    : null,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                validator: ValidationUtils.validateAmount,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(

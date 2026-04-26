@@ -7,9 +7,17 @@ import '../../../accounts/models/account.dart';
 import '../../../budget/bloc/budget_bloc.dart';
 import '../../../budget/models/budget_category.dart';
 import '../../../../core/utils/optional.dart';
+import '../../../../core/utils/validation_utils.dart';
 
-class BulkIncomeTab extends StatelessWidget {
+class BulkIncomeTab extends StatefulWidget {
   const BulkIncomeTab({super.key});
+
+  @override
+  State<BulkIncomeTab> createState() => _BulkIncomeTabState();
+}
+
+class _BulkIncomeTabState extends State<BulkIncomeTab> {
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -31,231 +39,227 @@ class BulkIncomeTab extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: state.rows.length,
-                itemBuilder: (context, index) {
-                  final row = state.rows[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Income ${index + 1}',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const Spacer(),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () => context
-                                    .read<BulkIncomeBloc>()
-                                    .add(RemoveIncomeRow(row.id)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  initialValue: row.amount?.toString(),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Amount',
-                                    prefixText: '\$',
+        return Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: state.rows.length,
+                  itemBuilder: (context, index) {
+                    final row = state.rows[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: row.amount?.toString(),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Amount',
+                                      prefixText: '\$',
+                                    ),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    validator: ValidationUtils.validateAmount,
+                                    onChanged: (val) =>
+                                        context.read<BulkIncomeBloc>().add(
+                                          UpdateIncomeRow(
+                                            rowId: row.id,
+                                            amount: Wrapped(
+                                              double.tryParse(val),
+                                            ),
+                                          ),
+                                        ),
                                   ),
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: row.description,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Source/Description',
+                                    ),
+                                    validator: (val) =>
+                                        ValidationUtils.validateRequired(
+                                          val,
+                                          'Source/Description',
+                                        ),
+                                    onChanged: (val) =>
+                                        context.read<BulkIncomeBloc>().add(
+                                          UpdateIncomeRow(
+                                            rowId: row.id,
+                                            description: Wrapped(val),
+                                          ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            BlocBuilder<AccountBloc, AccountState>(
+                              builder: (context, accountState) {
+                                List<Account> accounts = [];
+                                if (accountState is AccountLoaded) {
+                                  accounts = accountState.accounts;
+                                }
+
+                                return DropdownButtonFormField<String>(
+                                  initialValue: row.accountId,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Account (Optional)',
+                                    prefixIcon: Icon(
+                                      Icons.account_balance_wallet_outlined,
+                                    ),
+                                    helperText:
+                                        'Affects account balance if selected',
+                                  ),
+                                  items: [
+                                    const DropdownMenuItem<String>(
+                                      value: null,
+                                      child: Text('No Account'),
+                                    ),
+                                    ...accounts.map(
+                                      (a) => DropdownMenuItem(
+                                        value: a.id,
+                                        child: Text(a.name),
                                       ),
+                                    ),
+                                  ],
                                   onChanged: (val) =>
                                       context.read<BulkIncomeBloc>().add(
                                         UpdateIncomeRow(
                                           rowId: row.id,
-                                          amount: Wrapped(double.tryParse(val)),
+                                          accountId: Wrapped(val),
                                         ),
                                       ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
-                                  initialValue: row.description,
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            BlocBuilder<BudgetBloc, BudgetState>(
+                              builder: (context, budgetState) {
+                                List<BudgetCategory> categories = [];
+                                if (budgetState is BudgetLoaded) {
+                                  categories = budgetState.categories;
+                                }
+
+                                return DropdownButtonFormField<String>(
+                                  initialValue: row.categoryId,
                                   decoration: const InputDecoration(
-                                    labelText: 'Source/Description',
+                                    labelText: 'Budget Category (Optional)',
+                                    prefixIcon: Icon(Icons.category_outlined),
+                                    helperText: 'Categorize this income',
                                   ),
+                                  items: [
+                                    const DropdownMenuItem<String>(
+                                      value: null,
+                                      child: Text('No Category'),
+                                    ),
+                                    ...categories.map(
+                                      (c) => DropdownMenuItem(
+                                        value: c.id,
+                                        child: Text(c.name),
+                                      ),
+                                    ),
+                                  ],
                                   onChanged: (val) =>
                                       context.read<BulkIncomeBloc>().add(
                                         UpdateIncomeRow(
                                           rowId: row.id,
-                                          description: Wrapped(val),
+                                          categoryId: Wrapped(val),
                                         ),
                                       ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: row.dateReceived,
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (date != null && context.mounted) {
+                                  context.read<BulkIncomeBloc>().add(
+                                    UpdateIncomeRow(
+                                      rowId: row.id,
+                                      dateReceived: date,
+                                    ),
+                                  );
+                                }
+                              },
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Date Received',
+                                ),
+                                child: Text(
+                                  DateFormat.yMMMd().format(row.dateReceived),
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          BlocBuilder<AccountBloc, AccountState>(
-                            builder: (context, accountState) {
-                              List<Account> accounts = [];
-                              if (accountState is AccountLoaded) {
-                                accounts = accountState.accounts;
-                              }
-
-                              return DropdownButtonFormField<String>(
-                                initialValue: row.accountId,
-                                decoration: const InputDecoration(
-                                  labelText: 'Account (Optional)',
-                                  prefixIcon: Icon(
-                                    Icons.account_balance_wallet_outlined,
+                            ),
+                            if (row.error != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  row.error!,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
                                   ),
-                                  helperText:
-                                      'Affects account balance if selected',
                                 ),
-                                items: [
-                                  const DropdownMenuItem<String>(
-                                    value: null,
-                                    child: Text('No Account'),
-                                  ),
-                                  ...accounts.map(
-                                    (a) => DropdownMenuItem(
-                                      value: a.id,
-                                      child: Text(a.name),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (val) =>
-                                    context.read<BulkIncomeBloc>().add(
-                                      UpdateIncomeRow(
-                                        rowId: row.id,
-                                        accountId: Wrapped(val),
-                                      ),
-                                    ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          BlocBuilder<BudgetBloc, BudgetState>(
-                            builder: (context, budgetState) {
-                              List<BudgetCategory> categories = [];
-                              if (budgetState is BudgetLoaded) {
-                                categories = budgetState.categories;
-                              }
-
-                              return DropdownButtonFormField<String>(
-                                initialValue: row.categoryId,
-                                decoration: const InputDecoration(
-                                  labelText: 'Budget Category (Optional)',
-                                  prefixIcon: Icon(Icons.category_outlined),
-                                  helperText: 'Categorize this income',
-                                ),
-                                items: [
-                                  const DropdownMenuItem<String>(
-                                    value: null,
-                                    child: Text('No Category'),
-                                  ),
-                                  ...categories.map(
-                                    (c) => DropdownMenuItem(
-                                      value: c.id,
-                                      child: Text(c.name),
-                                    ),
-                                  ),
-                                ],
-                                onChanged: (val) =>
-                                    context.read<BulkIncomeBloc>().add(
-                                      UpdateIncomeRow(
-                                        rowId: row.id,
-                                        categoryId: Wrapped(val),
-                                      ),
-                                    ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          InkWell(
-                            onTap: () async {
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: row.dateReceived,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                              );
-                              if (date != null && context.mounted) {
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          context.read<BulkIncomeBloc>().add(AddIncomeRow()),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Row'),
+                    ),
+                    const Spacer(),
+                    FilledButton.icon(
+                      onPressed: state.isSubmitting
+                          ? null
+                          : () {
+                              if (_formKey.currentState!.validate()) {
                                 context.read<BulkIncomeBloc>().add(
-                                  UpdateIncomeRow(
-                                    rowId: row.id,
-                                    dateReceived: date,
-                                  ),
+                                  SubmitBulkIncome(),
                                 );
                               }
                             },
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Date Received',
-                              ),
-                              child: Text(
-                                DateFormat.yMMMd().format(row.dateReceived),
-                              ),
-                            ),
-                          ),
-                          if (row.error != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                row.error!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                      icon: state.isSubmitting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save),
+                      label: const Text('Save All Income'),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () =>
-                        context.read<BulkIncomeBloc>().add(AddIncomeRow()),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Row'),
-                  ),
-                  const Spacer(),
-                  FilledButton.icon(
-                    onPressed: state.isSubmitting
-                        ? null
-                        : () => context.read<BulkIncomeBloc>().add(
-                            SubmitBulkIncome(),
-                          ),
-                    icon: state.isSubmitting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save),
-                    label: const Text('Save All Income'),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
