@@ -398,7 +398,7 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                          if (_currentGoal.accountId == null)
+                          if (_currentGoal.accountIds.isEmpty)
                             IconButton(
                               onPressed: _showAddSubGoal,
                               icon: const Icon(Icons.add_circle_outline),
@@ -407,6 +407,61 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      if (_currentGoal.accountIds.isNotEmpty)
+                        BlocBuilder<AccountBloc, AccountState>(
+                          builder: (context, state) {
+                            if (state is AccountLoaded) {
+                              final linkedAccounts =
+                                  state.accounts
+                                      .where(
+                                        (a) => _currentGoal.accountIds.contains(
+                                          a.id,
+                                        ),
+                                      )
+                                      .toList();
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 8, bottom: 8),
+                                    child: Text(
+                                      'Linked Accounts:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                  ...linkedAccounts.map(
+                                    (a) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.account_balance_wallet,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(a.name),
+                                          const Spacer(),
+                                          Text(
+                                            '\$${a.balance.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
                       if (_currentGoal.subGoals.isEmpty)
                         const Center(
                           child: Padding(
@@ -522,7 +577,7 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                     ],
                   ),
                 ),
-              if (_currentGoal.accountId != null) ...[
+              if (_currentGoal.accountIds.isNotEmpty) ...[
                 if (isCompleted) const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -590,7 +645,7 @@ class _GoalDetailViewState extends State<GoalDetailView> {
             ),
           ),
           const SizedBox(height: 16),
-          if (_currentGoal.accountId == null)
+          if (_currentGoal.accountIds.isEmpty)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -622,7 +677,7 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                   Icon(Icons.info_outline, color: Colors.white, size: 16),
                   SizedBox(width: 8),
                   Text(
-                    'Synced with Account Balance',
+                    'Synced with Account Balances',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -678,7 +733,7 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                     ],
                   ),
                 ),
-                if (_currentGoal.accountId == null)
+                if (_currentGoal.accountIds.isEmpty)
                   Row(
                     children: [
                       IconButton(
