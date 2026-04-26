@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:equatable/equatable.dart';
 import '../models/account.dart';
 import '../repositories/account_repository.dart';
@@ -61,25 +62,50 @@ class DeleteAccount extends AccountEvent {
   List<Object?> get props => [id];
 }
 
+class _UpdateAccounts extends AccountEvent {
+  final List<Account> accounts;
+  const _UpdateAccounts(this.accounts);
+  @override
+  List<Object?> get props => [accounts];
+}
+
+class _HandleAccountError extends AccountEvent {
+  final String message;
+  const _HandleAccountError(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
 // Bloc
 class AccountBloc extends Bloc<AccountEvent, AccountState> {
   final AccountRepository repository;
+  StreamSubscription<List<Account>>? _subscription;
 
   AccountBloc({required this.repository}) : super(AccountInitial()) {
     on<LoadAccounts>((event, emit) async {
       emit(AccountLoading());
-      try {
-        final accounts = await repository.getAccounts();
-        emit(AccountLoaded(accounts));
-      } catch (e) {
-        emit(AccountError(e.toString()));
-      }
+      await _subscription?.cancel();
+      _subscription = repository.getAccountsStream().listen(
+        (accounts) {
+          add(_UpdateAccounts(accounts));
+        },
+        onError: (e) {
+          add(_HandleAccountError(e.toString()));
+        },
+      );
+    });
+
+    on<_UpdateAccounts>((event, emit) {
+      emit(AccountLoaded(event.accounts));
+    });
+
+    on<_HandleAccountError>((event, emit) {
+      emit(AccountError(event.message));
     });
 
     on<AddAccount>((event, emit) async {
       try {
         await repository.addAccount(event.name, event.balance);
-        add(LoadAccounts());
       } catch (e) {
         emit(AccountError(e.toString()));
       }
@@ -88,7 +114,6 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     on<UpdateAccount>((event, emit) async {
       try {
         await repository.updateAccount(event.id, event.name, event.balance);
-        add(LoadAccounts());
       } catch (e) {
         emit(AccountError(e.toString()));
       }
@@ -97,10 +122,15 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
     on<DeleteAccount>((event, emit) async {
       try {
         await repository.deleteAccount(event.id);
-        add(LoadAccounts());
       } catch (e) {
         emit(AccountError(e.toString()));
       }
     });
+  }
+
+  @override
+  Future<void> close() {
+    _subscription?.cancel();
+    return super.close();
   }
 }

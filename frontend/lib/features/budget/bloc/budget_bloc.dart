@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../models/budget_category.dart';
 import '../repositories/budget_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
 
 // States
 abstract class BudgetState extends Equatable {
@@ -82,19 +83,45 @@ class DeleteBudgetCategory extends BudgetEvent {
   List<Object?> get props => [id];
 }
 
+class _UpdateBudgets extends BudgetEvent {
+  final List<BudgetCategory> categories;
+  const _UpdateBudgets(this.categories);
+  @override
+  List<Object?> get props => [categories];
+}
+
+class _HandleBudgetError extends BudgetEvent {
+  final String message;
+  const _HandleBudgetError(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
 // Bloc
 class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
   final BudgetRepository repository;
+  StreamSubscription<List<BudgetCategory>>? _subscription;
 
   BudgetBloc({required this.repository}) : super(BudgetInitial()) {
     on<LoadBudgets>((event, emit) async {
       emit(BudgetLoading());
-      try {
-        final categories = await repository.getBudgetCategories();
-        emit(BudgetLoaded(categories));
-      } catch (e) {
-        emit(BudgetError(e.toString()));
-      }
+      await _subscription?.cancel();
+      _subscription = repository.getBudgetCategoriesStream().listen(
+        (categories) {
+          add(_UpdateBudgets(categories));
+        },
+        onError: (e) {
+          add(_HandleBudgetError(e.toString()));
+        },
+      );
+    });
+
+    on<_UpdateBudgets>((event, emit) {
+      emit(BudgetLoaded(event.categories));
+    });
+
+    on<_HandleBudgetError>((event, emit) {
+      emit(BudgetError(event.message));
     });
 
     on<AddBudgetCategory>((event, emit) async {
@@ -106,7 +133,6 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
           colorHex: event.colorHex,
           type: event.type,
         );
-        add(LoadBudgets());
       } catch (e) {
         emit(BudgetError(e.toString()));
       }
@@ -122,7 +148,6 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
           colorHex: event.colorHex,
           type: event.type,
         );
-        add(LoadBudgets());
       } catch (e) {
         emit(BudgetError(e.toString()));
       }
@@ -131,10 +156,15 @@ class BudgetBloc extends Bloc<BudgetEvent, BudgetState> {
     on<DeleteBudgetCategory>((event, emit) async {
       try {
         await repository.deleteBudgetCategory(event.id);
-        add(LoadBudgets());
       } catch (e) {
         emit(BudgetError(e.toString()));
       }
     });
+  }
+
+  @override
+  Future<void> close() {
+    _subscription?.cancel();
+    return super.close();
   }
 }

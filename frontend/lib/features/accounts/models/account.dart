@@ -1,11 +1,13 @@
-class Account {
+import 'package:equatable/equatable.dart';
+
+class Account extends Equatable {
   final String id;
   final String userId;
   final String name;
   final double balance;
   final DateTime createdAt;
 
-  Account({
+  const Account({
     required this.id,
     required this.userId,
     required this.name,
@@ -26,4 +28,7 @@ class Account {
   Map<String, dynamic> toJson() {
     return {'id': id, 'name': name, 'balance': balance};
   }
+
+  @override
+  List<Object?> get props => [id, userId, name, balance, createdAt];
 }

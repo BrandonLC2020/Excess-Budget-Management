@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'budget_category.g.dart';
@@ -5,7 +6,7 @@ part 'budget_category.g.dart';
 enum BudgetCategoryType { expense, income }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
-class BudgetCategory {
+class BudgetCategory extends Equatable {
   final String id;
   final String userId;
   final String name;
@@ -17,7 +18,7 @@ class BudgetCategory {
   @JsonKey(name: 'category_type', defaultValue: BudgetCategoryType.expense)
   final BudgetCategoryType type;
 
-  BudgetCategory({
+  const BudgetCategory({
     required this.id,
     required this.userId,
     required this.name,
@@ -33,4 +34,17 @@ class BudgetCategory {
       _$BudgetCategoryFromJson(json);
 
   Map<String, dynamic> toJson() => _$BudgetCategoryToJson(this);
+
+  @override
+  List<Object?> get props => [
+    id,
+    userId,
+    name,
+    limitAmount,
+    spentAmount,
+    iconCode,
+    colorHex,
+    createdAt,
+    type,
+  ];
 }
