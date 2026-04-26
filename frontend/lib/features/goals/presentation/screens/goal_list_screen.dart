@@ -60,14 +60,14 @@ class _GoalListScreenState extends State<GoalListScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) => GoalFormSheet(
-        onSave: (name, amount, type, category, targetDate, accountId) async {
+        onSave: (name, amount, type, category, targetDate, accountIds) async {
           await _goalRepository.addGoal(
             name,
             amount,
             type,
             category: category,
             targetDate: targetDate,
-            accountId: accountId,
+            accountIds: accountIds,
           );
           _loadGoals();
         },

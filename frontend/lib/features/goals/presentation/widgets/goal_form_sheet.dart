@@ -11,7 +11,7 @@ class GoalFormSheet extends StatefulWidget {
     String type,
     String category,
     DateTime? targetDate,
-    String? accountId,
+    List<String> accountIds,
   )
   onSave;
 
@@ -28,7 +28,7 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
   late String _type;
   late String _category;
   DateTime? _targetDate;
-  String? _accountId;
+  List<String> _accountIds = [];
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
     _type = widget.goal?.type ?? 'short_term';
     _category = widget.goal?.category ?? 'savings';
     _targetDate = widget.goal?.targetDate;
-    _accountId = widget.goal?.accountId;
+    _accountIds = widget.goal?.accountIds.toList() ?? [];
 
     // Load accounts if not already loaded
     final accountBloc = context.read<AccountBloc>();
@@ -138,28 +138,35 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        DropdownButtonFormField<String?>(
-                          initialValue: _accountId,
-                          decoration: const InputDecoration(
-                            labelText: 'Auto-sync with Account (Optional)',
-                            helperText:
-                                'Goal progress will match the account balance',
-                          ),
-                          items: [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text('Manual Updates Only'),
-                            ),
-                            ...state.accounts.map(
-                              (a) => DropdownMenuItem(
-                                value: a.id,
-                                child: Text(a.name),
-                              ),
-                            ),
-                          ],
-                          onChanged: (val) => setState(() => _accountId = val),
+                        const Text(
+                          'Auto-sync with Accounts (Optional)',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        if (_accountId != null) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children:
+                              state.accounts.map((account) {
+                                final isSelected = _accountIds.contains(
+                                  account.id,
+                                );
+                                return FilterChip(
+                                  label: Text(account.name),
+                                  selected: isSelected,
+                                  onSelected: (bool selected) {
+                                    setState(() {
+                                      if (selected) {
+                                        _accountIds.add(account.id);
+                                      } else {
+                                        _accountIds.remove(account.id);
+                                      }
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                        ),
+                        if (_accountIds.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.all(12),
@@ -180,7 +187,7 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
                                 SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'When synced, manual progress updates will be disabled.',
+                                    'When synced, manual progress updates will be disabled. Progress is the sum of linked account balances.',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.amber,
@@ -228,7 +235,7 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
                       _type,
                       _category,
                       _targetDate,
-                      _accountId,
+                      _accountIds,
                     );
                     Navigator.pop(context);
                   }
