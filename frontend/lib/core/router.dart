@@ -66,11 +66,15 @@ final goRouter = GoRouter(
                   path: 'bulk-entry',
                   builder: (context, state) => const BulkEntryScreen(),
                 ),
-                GoRoute(
-                  path: 'transactions',
-                  builder: (context, state) => const TransactionsScreen(),
-                ),
               ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/transactions',
+              builder: (context, state) => const TransactionsScreen(),
             ),
           ],
         ),

@@ -14,6 +14,11 @@ class DashboardScreen extends StatelessWidget {
       label: 'Overview',
     ),
     NavigationDestination(
+      icon: Icon(Icons.receipt_long_outlined),
+      selectedIcon: Icon(Icons.receipt_long),
+      label: 'Transactions',
+    ),
+    NavigationDestination(
       icon: Icon(Icons.account_balance_wallet_outlined),
       selectedIcon: Icon(Icons.account_balance_wallet),
       label: 'Accounts',

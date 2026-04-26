@@ -305,11 +305,6 @@ class _OverviewTabState extends State<OverviewTab> {
             ],
           ),
         ),
-        IconButton.filledTonal(
-          onPressed: () => context.push('/transactions'),
-          icon: const Icon(Icons.receipt_long),
-          tooltip: 'Transactions Ledger',
-        ),
         const SizedBox(width: 8),
         IconButton.filledTonal(
           onPressed: () => context.push('/history'),
