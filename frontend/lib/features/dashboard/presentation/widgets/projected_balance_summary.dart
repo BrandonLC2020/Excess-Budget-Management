@@ -68,7 +68,7 @@ class ProjectedBalanceSummary extends StatelessWidget {
                                 border: Border.all(
                                   color: Theme.of(
                                     context,
-                                  ).dividerColor.withOpacity(0.5),
+                                  ).dividerColor.withValues(alpha: 0.5),
                                 ),
                               ),
                               child: Column(

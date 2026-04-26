@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:confetti/confetti.dart';
 import '../../models/goal.dart';
 import '../../models/sub_goal.dart';
 import '../../repositories/goal_repository.dart';
+import '../../../accounts/bloc/account_bloc.dart';
 import '../../../dashboard/presentation/widgets/sub_goal_distribution_sheet.dart';
 
 class GoalDetailView extends StatefulWidget {

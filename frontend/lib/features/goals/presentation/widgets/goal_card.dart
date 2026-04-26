@@ -85,7 +85,7 @@ class _GoalCardState extends State<GoalCard> {
                     size: 16,
                   ),
                 ],
-                if (widget.goal.accountId != null) ...[
+                if (widget.goal.accountIds.isNotEmpty) ...[
                   const SizedBox(width: 4),
                   Tooltip(
                     message: 'Synced with Account',

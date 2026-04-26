@@ -38,7 +38,7 @@ class BrandingPanel extends StatelessWidget {
               Text(
                 'Manage your finances with ease and style.',
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                 ),
                 textAlign: TextAlign.center,
               ),
