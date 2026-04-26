@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../budget/models/expense.dart';
+import '../../income/models/income.dart';
 import '../models/account.dart';
 
 class AccountRepository {
@@ -59,5 +61,23 @@ class AccountRepository {
 
   Future<void> deleteAccount(String id) async {
     await supabase.from('accounts').delete().eq('id', id);
+  }
+
+  Future<List<Expense>> getAccountExpenses(String accountId) async {
+    final response = await supabase
+        .from('expenses')
+        .select()
+        .eq('account_id', accountId)
+        .order('date', ascending: false);
+    return (response as List).map((e) => Expense.fromJson(e)).toList();
+  }
+
+  Future<List<Income>> getAccountIncome(String accountId) async {
+    final response = await supabase
+        .from('extra_income')
+        .select()
+        .eq('account_id', accountId)
+        .order('date_received', ascending: false);
+    return (response as List).map((e) => Income.fromJson(e)).toList();
   }
 }

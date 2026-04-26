@@ -41,6 +41,30 @@ class _AccountsScreenState extends State<AccountsScreen> {
     );
   }
 
+  void _showAccountDetail(Account account) {
+    if (context.isCompact) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (context) => Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: AccountDetailView(
+            account: account,
+            onDelete: () => Navigator.pop(context),
+          ),
+        ),
+      );
+    } else {
+      setState(() {
+        _selectedAccount = account;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,15 +103,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                     return AccountCard(
                       account: account,
                       isSelected: isSelected,
-                      onTap: () {
-                        if (context.isCompact) {
-                          _showAccountDialog(account);
-                        } else {
-                          setState(() {
-                            _selectedAccount = account;
-                          });
-                        }
-                      },
+                      onTap: () => _showAccountDetail(account),
                       onDelete: () {
                         context.read<AccountBloc>().add(
                           DeleteAccount(account.id),
