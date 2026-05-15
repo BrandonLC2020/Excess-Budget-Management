@@ -153,3 +153,19 @@ backend/supabase/.env
 *.tfvars
 
 .worktrees/
+
+# b1CodingTool Generated
+CLAUDE.md
+.claude/
+GEMINI.md
+.gemini/
+
+# Agent context (private)
+agent.md
+.agent/
+AGENTS.md
+
+# Impeccable design context (private; contains proprietary design system)
+.impeccable/
+PRODUCT.md
+DESIGN.md
