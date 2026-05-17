@@ -1,9 +1,10 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from ninja_jwt.tokens import RefreshToken
 from .models import User, Profile
 from apps.common.exceptions import ConflictError
 
 
+@transaction.atomic
 def create_user(email: str, password: str) -> User:
     try:
         user = User.objects.create_user(email=email, password=password)
