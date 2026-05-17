@@ -9,9 +9,9 @@ dependencies = [
   "django-ninja-jwt>=5.3,<6.0",
   "psycopg[binary]>=3.2,<4.0",
   "pydantic>=2.7,<3.0",
-  "python-dotenv>=1.0",
-  "google-genai>=0.3",
-  "gunicorn>=22.0",
+  "python-dotenv>=1.0,<2.0",
+  "google-genai>=2.3,<3.0",
+  "gunicorn>=22.0,<27.0",
 ]
 
 [dependency-groups]
@@ -27,6 +27,7 @@ dev = [
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
 addopts = "-ra --tb=short"
+asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 100
