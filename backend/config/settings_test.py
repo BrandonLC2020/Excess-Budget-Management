@@ -26,10 +26,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Local apps — add here as each task lands:
     "apps.common",
+    "apps.users",
 ]
 
-# AUTH_USER_MODEL requires apps.users which doesn't exist yet
-AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = "users.User"
 
 DATABASES = {
     "default": {

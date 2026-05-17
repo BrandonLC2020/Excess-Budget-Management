@@ -12,6 +12,7 @@ dependencies = [
   "python-dotenv>=1.0,<2.0",
   "google-genai>=2.3,<3.0",
   "gunicorn>=22.0,<27.0",
+  "email-validator>=2.0",
 ]
 
 [dependency-groups]
