@@ -1,41 +1,37 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
+import 'package:frontend/core/api/api_client.dart';
 import '../../income/models/income.dart';
 import '../models/budget_category.dart';
 import '../models/expense.dart';
 
 class BudgetRepository {
-  final SupabaseClient supabase;
-
-  BudgetRepository({required this.supabase});
+  BudgetRepository({required this.client});
+  final ApiClient client;
 
   Future<List<BudgetCategory>> getBudgetCategories() async {
-    final response = await supabase
-        .from('budget_categories')
-        .select()
-        .order('created_at', ascending: true);
-    return (response as List).map((e) => BudgetCategory.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>('/budget/categories');
+    return r.data!
+        .map((e) => BudgetCategory.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Stream<List<BudgetCategory>> getBudgetCategoriesStream() {
-    return supabase
-        .from('budget_categories')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: true)
-        .map((data) => data.map((e) => BudgetCategory.fromJson(e)).toList());
+  /// Polled replacement for Supabase realtime stream.
+  /// Emits the current list immediately, then every 30 seconds.
+  Stream<List<BudgetCategory>> getBudgetCategoriesStream() async* {
+    yield await getBudgetCategories();
+    yield* Stream.periodic(const Duration(seconds: 30))
+        .asyncMap((_) => getBudgetCategories());
   }
 
   Future<List<Expense>> getExpenses() async {
-    final response = await supabase
-        .from('expenses')
-        .select()
-        .order('date', ascending: false)
-        .order('created_at', ascending: false);
-    return (response as List).map((e) => Expense.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>('/expenses');
+    return r.data!
+        .map((e) => Expense.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<void> deleteExpense(String id) async {
-    await supabase.from('expenses').delete().eq('id', id);
-  }
+  Future<void> deleteExpense(String id) =>
+      client.delete<void>('/expenses/$id');
 
   Future<BudgetCategory> addBudgetCategory(
     String name,
@@ -44,23 +40,19 @@ class BudgetRepository {
     String? colorHex,
     BudgetCategoryType type = BudgetCategoryType.expense,
   }) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
+    final body = <String, dynamic>{
+      'name': name,
+      'limit_amount': limitAmount.toStringAsFixed(2),
+      'category_type': type.name,
+    };
+    if (iconCode != null) body['icon_code'] = iconCode;
+    if (colorHex != null) body['color_hex'] = colorHex;
 
-    final response = await supabase
-        .from('budget_categories')
-        .insert({
-          'user_id': userId,
-          'name': name,
-          'limit_amount': limitAmount,
-          'icon_code': iconCode,
-          'color_hex': colorHex,
-          'category_type': type.name,
-        })
-        .select()
-        .single();
-
-    return BudgetCategory.fromJson(response);
+    final r = await client.post<Map<String, dynamic>>(
+      '/budget/categories',
+      body: body,
+    );
+    return BudgetCategory.fromJson(r.data!);
   }
 
   Future<BudgetCategory> updateBudgetCategory(
@@ -71,57 +63,51 @@ class BudgetRepository {
     String? colorHex,
     BudgetCategoryType? type,
   }) async {
-    final updates = {
+    final body = <String, dynamic>{
       'name': name,
-      'limit_amount': limitAmount,
-      'icon_code': iconCode,
-      'color_hex': colorHex,
+      'limit_amount': limitAmount.toStringAsFixed(2),
     };
+    if (iconCode != null) body['icon_code'] = iconCode;
+    if (colorHex != null) body['color_hex'] = colorHex;
+    if (type != null) body['category_type'] = type.name;
 
-    if (type != null) {
-      updates['category_type'] = type.name;
-    }
-
-    final response = await supabase
-        .from('budget_categories')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-    return BudgetCategory.fromJson(response);
+    final r = await client.patch<Map<String, dynamic>>(
+      '/budget/categories/$id',
+      body: body,
+    );
+    return BudgetCategory.fromJson(r.data!);
   }
 
-  Future<void> deleteBudgetCategory(String id) async {
-    await supabase.from('budget_categories').delete().eq('id', id);
-  }
+  Future<void> deleteBudgetCategory(String id) =>
+      client.delete<void>('/budget/categories/$id');
 
+  /// Inserts each expense individually via POST /expenses.
+  /// Strips `user_id` keys (server infers from auth).
+  /// Note: N round-trips — acceptable for dev; a future bulk endpoint can batch.
   Future<void> bulkInsertExpenses(List<Map<String, dynamic>> expenses) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    final rowsToInsert = expenses
-        .map((e) => {...e, 'user_id': userId})
-        .toList();
-
-    await supabase.from('expenses').insert(rowsToInsert);
+    for (final expense in expenses) {
+      final body = Map<String, dynamic>.from(expense)..remove('user_id');
+      await client.post<Map<String, dynamic>>('/expenses', body: body);
+    }
   }
 
   Future<List<Expense>> getCategoryExpenses(String categoryId) async {
-    final response = await supabase
-        .from('expenses')
-        .select()
-        .eq('budget_category_id', categoryId)
-        .order('date', ascending: false);
-    return (response as List).map((e) => Expense.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>(
+      '/expenses',
+      query: {'budget_category_id': categoryId},
+    );
+    return r.data!
+        .map((e) => Expense.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<Income>> getCategoryIncome(String categoryId) async {
-    final response = await supabase
-        .from('extra_income')
-        .select()
-        .eq('budget_category_id', categoryId)
-        .order('date_received', ascending: false);
-    return (response as List).map((e) => Income.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>(
+      '/income/extra',
+      query: {'budget_category_id': categoryId},
+    );
+    return r.data!
+        .map((e) => Income.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }
