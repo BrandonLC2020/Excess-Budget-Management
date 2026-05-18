@@ -1,6 +1,7 @@
 from .models import IncomeSource, ExtraIncome
 from apps.common.permissions import get_owned_or_404
 from apps.accounts.models import Account
+from apps.budget.models import BudgetCategory
 
 
 # ── IncomeSource ──────────────────────────────────────────────────────────────
@@ -50,8 +51,9 @@ def create_extra(user, payload) -> ExtraIncome:
     if payload.account_id is not None:
         account = get_owned_or_404(Account, payload.account_id, user)
 
-    # TODO(Task 11): resolve budget_category_id once budget.BudgetCategory exists.
-    # For now, budget_category_id is accepted in the schema but not persisted.
+    budget_category = None
+    if payload.budget_category_id is not None:
+        budget_category = get_owned_or_404(BudgetCategory, payload.budget_category_id, user)
 
     return ExtraIncome.objects.create(
         user=user,
@@ -59,6 +61,7 @@ def create_extra(user, payload) -> ExtraIncome:
         description=payload.description,
         date_received=payload.date_received,
         account=account,
+        budget_category=budget_category,
     )
 
 
@@ -80,7 +83,11 @@ def update_extra(user, extra_id, payload) -> ExtraIncome:
         # Explicit null clears the link
         ei.account = None
 
-    # TODO(Task 11): handle budget_category_id once budget.BudgetCategory exists.
+    if payload.budget_category_id is not None:
+        ei.budget_category = get_owned_or_404(BudgetCategory, payload.budget_category_id, user)
+    elif "budget_category_id" in payload.model_fields_set and payload.budget_category_id is None:
+        # Explicit null clears the link
+        ei.budget_category = None
 
     ei.save()
     return ei

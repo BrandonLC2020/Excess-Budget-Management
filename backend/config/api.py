@@ -30,6 +30,10 @@ from apps.income.api import router as income_router  # noqa: E402
 
 api.add_router("/income", income_router)
 
+from apps.budget.api import router as budget_router  # noqa: E402
+
+api.add_router("/budget", budget_router)
+
 
 @api.get("/health", tags=["meta"], summary="Health check", auth=None)
 def health(request):

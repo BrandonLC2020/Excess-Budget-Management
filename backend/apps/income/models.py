@@ -43,14 +43,13 @@ class ExtraIncome(models.Model):
         on_delete=models.SET_NULL,
         related_name="extra_income",
     )
-    # Task 11 will add:
-    # budget_category = models.ForeignKey(
-    #     "budget.BudgetCategory",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL,
-    #     related_name="extra_income",
-    # )
+    budget_category = models.ForeignKey(
+        "budget.BudgetCategory",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="extra_income",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
