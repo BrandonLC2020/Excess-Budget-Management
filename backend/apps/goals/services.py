@@ -3,6 +3,7 @@ from django.db.models import Sum
 from .models import Goal, Subgoal, GoalAccount
 from apps.accounts.models import Account
 from apps.common.permissions import get_owned_or_404
+from apps.common.exceptions import NotFoundError
 
 
 # --- Aggregation helpers ---
@@ -87,12 +88,17 @@ def create_subgoal(user, goal_id, payload) -> Subgoal:
 
 def get_subgoal(user, goal_id, subgoal_id) -> Subgoal:
     goal = get_owned_or_404(Goal, goal_id, user)
-    return get_owned_or_404(Subgoal, subgoal_id, user)
+    subgoal = get_owned_or_404(Subgoal, subgoal_id, user)
+    if subgoal.goal_id != goal.id:
+        raise NotFoundError("Subgoal not found.")
+    return subgoal
 
 
 def update_subgoal(user, goal_id, subgoal_id, payload) -> Subgoal:
-    get_owned_or_404(Goal, goal_id, user)
+    goal = get_owned_or_404(Goal, goal_id, user)
     subgoal = get_owned_or_404(Subgoal, subgoal_id, user)
+    if subgoal.goal_id != goal.id:
+        raise NotFoundError("Subgoal not found.")
     if payload.name is not None:
         subgoal.name = payload.name
     if payload.target_amount is not None:
@@ -104,8 +110,10 @@ def update_subgoal(user, goal_id, subgoal_id, payload) -> Subgoal:
 
 
 def delete_subgoal(user, goal_id, subgoal_id) -> None:
-    get_owned_or_404(Goal, goal_id, user)
+    goal = get_owned_or_404(Goal, goal_id, user)
     subgoal = get_owned_or_404(Subgoal, subgoal_id, user)
+    if subgoal.goal_id != goal.id:
+        raise NotFoundError("Subgoal not found.")
     subgoal.delete()
 
 
