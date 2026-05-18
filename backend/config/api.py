@@ -50,6 +50,10 @@ from apps.suggestions.api import router as suggestions_router  # noqa: E402
 
 api.add_router("/suggestions", suggestions_router)
 
+from apps.dashboard.api import router as dashboard_router  # noqa: E402
+
+api.add_router("/dashboard", dashboard_router)
+
 
 @api.get("/health", tags=["meta"], summary="Health check", auth=None)
 def health(request):

@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.expenses",
     "apps.allocations",
     "apps.suggestions",
+    "apps.dashboard",
 ]
 
 AUTH_USER_MODEL = "users.User"
