@@ -46,6 +46,10 @@ from apps.allocations.api import router as allocations_router  # noqa: E402
 
 api.add_router("/allocations", allocations_router)
 
+from apps.suggestions.api import router as suggestions_router  # noqa: E402
+
+api.add_router("/suggestions", suggestions_router)
+
 
 @api.get("/health", tags=["meta"], summary="Health check", auth=None)
 def health(request):
