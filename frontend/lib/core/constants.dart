@@ -4,4 +4,8 @@ class Constants {
   static const String supabaseUrl = 'http://127.0.0.1:54321';
   static const String supabaseAnonKey =
       'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8000/api/v1',
+  );
 }
