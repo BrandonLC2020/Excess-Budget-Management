@@ -1,88 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'core/constants.dart';
+import 'core/api/api_client.dart';
 import 'core/router.dart';
-import 'features/auth/bloc/auth_bloc.dart';
-import 'features/auth/bloc/auth_event.dart';
 import 'features/accounts/bloc/account_bloc.dart';
 import 'features/accounts/repositories/account_repository.dart';
+import 'features/auth/bloc/auth_bloc.dart';
+import 'features/auth/bloc/auth_event.dart';
+import 'features/auth/repositories/profile_repository.dart';
+import 'features/auth/services/auth_service.dart';
 import 'features/budget/bloc/budget_bloc.dart';
 import 'features/budget/repositories/budget_repository.dart';
-import 'features/goals/repositories/goal_repository.dart';
-import 'features/dashboard/repositories/suggestion_repository.dart';
 import 'features/dashboard/bloc/dashboard_bloc.dart';
-import 'features/auth/repositories/profile_repository.dart';
+import 'features/dashboard/repositories/suggestion_repository.dart';
+import 'features/goals/repositories/goal_repository.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Supabase.initialize(
-    url: Constants.supabaseUrl,
-    anonKey: Constants.supabaseAnonKey,
+  final apiClient = ApiClient(
+    onUnauthenticated: () async {
+      // AuthBloc listens to auth_state changes; the router handles redirecting to /login.
+      // No-op here; AuthCheckRequested will surface AuthUnauthenticated on next check.
+    },
   );
-
-  runApp(const BudgetApp());
+  final authService = AuthService(apiClient);
+  runApp(BudgetApp(apiClient: apiClient, authService: authService));
 }
 
 class BudgetApp extends StatelessWidget {
-  const BudgetApp({super.key});
+  const BudgetApp({
+    super.key,
+    required this.apiClient,
+    required this.authService,
+  });
+
+  final ApiClient apiClient;
+  final AuthService authService;
 
   @override
   Widget build(BuildContext context) {
-    final supabaseClient = Supabase.instance.client;
-
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) =>
-              AuthBloc(supabase: supabaseClient)..add(AuthCheckRequested()),
-        ),
-        BlocProvider<AccountBloc>(
-          create: (context) => AccountBloc(
-            repository: AccountRepository(supabase: supabaseClient),
+    return RepositoryProvider<ApiClient>.value(
+      value: apiClient,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (_) =>
+                AuthBloc(authService: authService)..add(AuthCheckRequested()),
           ),
-        ),
-        BlocProvider<BudgetBloc>(
-          create: (context) => BudgetBloc(
-            repository: BudgetRepository(supabase: supabaseClient),
-          ),
-        ),
-        BlocProvider<DashboardBloc>(
-          create: (context) => DashboardBloc(
-            suggestionRepository: SuggestionRepository(
-              supabase: supabaseClient,
+          BlocProvider<AccountBloc>(
+            create: (_) => AccountBloc(
+              repository: AccountRepository(client: apiClient),
             ),
-            accountRepository: AccountRepository(supabase: supabaseClient),
-            goalRepository: GoalRepository(supabase: supabaseClient),
-            profileRepository: ProfileRepository(supabase: supabaseClient),
-            budgetRepository: BudgetRepository(supabase: supabaseClient),
           ),
+          BlocProvider<BudgetBloc>(
+            create: (_) => BudgetBloc(
+              repository: BudgetRepository(client: apiClient),
+            ),
+          ),
+          BlocProvider<DashboardBloc>(
+            create: (_) => DashboardBloc(
+              suggestionRepository: SuggestionRepository(client: apiClient),
+              accountRepository: AccountRepository(client: apiClient),
+              goalRepository: GoalRepository(client: apiClient),
+              profileRepository: ProfileRepository(client: apiClient),
+              budgetRepository: BudgetRepository(client: apiClient),
+            ),
+          ),
+        ],
+        child: MaterialApp.router(
+          title: 'Excess Budget Management',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF2C5E4B),
+              brightness: Brightness.light,
+            ),
+            textTheme: GoogleFonts.outfitTextTheme(),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF2C5E4B),
+              brightness: Brightness.dark,
+            ),
+            textTheme: GoogleFonts.outfitTextTheme(
+              ThemeData(brightness: Brightness.dark).textTheme,
+            ),
+            useMaterial3: true,
+          ),
+          routerConfig: goRouter,
         ),
-      ],
-      child: MaterialApp.router(
-        title: 'Excess Budget Management',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF2C5E4B),
-            brightness: Brightness.light,
-          ),
-          textTheme: GoogleFonts.outfitTextTheme(),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF2C5E4B),
-            brightness: Brightness.dark,
-          ),
-          textTheme: GoogleFonts.outfitTextTheme(
-            ThemeData(brightness: Brightness.dark).textTheme,
-          ),
-          useMaterial3: true,
-        ),
-        routerConfig: goRouter,
       ),
     );
   }

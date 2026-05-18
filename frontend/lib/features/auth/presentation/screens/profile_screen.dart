@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../../core/breakpoints.dart';
+import '../../bloc/auth_bloc.dart';
+import '../../bloc/auth_event.dart';
 import '../../models/profile.dart';
 import '../../repositories/profile_repository.dart';
 
@@ -13,9 +16,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final ProfileRepository _profileRepository = ProfileRepository(
-    supabase: Supabase.instance.client,
-  );
+  late final ProfileRepository _profileRepository;
   final _nameController = TextEditingController();
   UserProfile? _profile;
   bool _isLoading = true;
@@ -24,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _profileRepository = ProfileRepository(client: context.read<ApiClient>());
     _loadProfile();
   }
 
@@ -233,7 +235,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 48),
                   OutlinedButton(
-                    onPressed: () => Supabase.instance.client.auth.signOut(),
+                    onPressed: () =>
+                        context.read<AuthBloc>().add(AuthLogoutRequested()),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
                       foregroundColor: Colors.red,

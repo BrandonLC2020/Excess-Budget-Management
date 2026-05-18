@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../features/auth/bloc/auth_bloc.dart';
+import '../features/auth/bloc/auth_state.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/signup_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -8,7 +10,6 @@ import '../features/dashboard/presentation/screens/overview_tab.dart';
 import '../features/accounts/presentation/screens/accounts_screen.dart';
 import '../features/budget/presentation/screens/budget_categories_screen.dart';
 import '../features/goals/presentation/screens/goal_list_screen.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../features/auth/presentation/screens/profile_screen.dart';
 import '../features/goals/presentation/screens/allocation_history_screen.dart';
 import '../features/dashboard/presentation/screens/bulk_entry_screen.dart';
@@ -16,8 +17,7 @@ import '../features/transactions/presentation/screens/transactions_screen.dart';
 import '../features/goals/bloc/allocation_history_bloc.dart';
 import '../features/goals/bloc/allocation_history_event.dart';
 import '../features/goals/repositories/goal_repository.dart';
-
-final supabase = Supabase.instance.client;
+import 'api/api_client.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -25,15 +25,16 @@ final goRouter = GoRouter(
   initialLocation: '/',
   navigatorKey: _rootNavigatorKey,
   redirect: (context, state) {
-    final session = supabase.auth.currentSession;
+    final authState = context.read<AuthBloc>().state;
+    final isAuthenticated = authState is AuthAuthenticated;
     final isLoggingIn =
         state.uri.toString() == '/login' || state.uri.toString() == '/signup';
 
-    if (session == null && !isLoggingIn) {
+    if (!isAuthenticated && !isLoggingIn) {
       return '/login';
     }
 
-    if (session != null && isLoggingIn) {
+    if (isAuthenticated && isLoggingIn) {
       return '/';
     }
 
@@ -57,7 +58,9 @@ final goRouter = GoRouter(
                   path: 'history',
                   builder: (context, state) => BlocProvider(
                     create: (context) => AllocationHistoryBloc(
-                      goalRepository: GoalRepository(supabase: supabase),
+                      goalRepository: GoalRepository(
+                        client: context.read<ApiClient>(),
+                      ),
                     )..add(FetchAllocationHistory()),
                     child: const AllocationHistoryScreen(),
                   ),

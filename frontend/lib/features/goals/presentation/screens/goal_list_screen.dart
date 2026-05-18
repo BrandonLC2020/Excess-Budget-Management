@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../../core/breakpoints.dart';
 import '../../../../core/widgets/master_detail_layout.dart';
 import '../../models/goal.dart';
@@ -17,9 +18,7 @@ class GoalListScreen extends StatefulWidget {
 }
 
 class _GoalListScreenState extends State<GoalListScreen> {
-  final GoalRepository _goalRepository = GoalRepository(
-    supabase: Supabase.instance.client,
-  );
+  late final GoalRepository _goalRepository;
   List<Goal> _goals = [];
   bool _isLoading = true;
   Goal? _selectedGoal;
@@ -27,6 +26,7 @@ class _GoalListScreenState extends State<GoalListScreen> {
   @override
   void initState() {
     super.initState();
+    _goalRepository = GoalRepository(client: context.read<ApiClient>());
     _loadGoals();
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:confetti/confetti.dart';
+import '../../../../../core/api/api_client.dart';
 import '../../models/goal.dart';
 import '../../models/sub_goal.dart';
 import '../../repositories/goal_repository.dart';
@@ -25,9 +25,7 @@ class GoalDetailView extends StatefulWidget {
 }
 
 class _GoalDetailViewState extends State<GoalDetailView> {
-  final GoalRepository _goalRepository = GoalRepository(
-    supabase: Supabase.instance.client,
-  );
+  late final GoalRepository _goalRepository;
   late Goal _currentGoal;
   bool _isLoading = false;
   late ConfettiController _confettiController;
@@ -35,6 +33,7 @@ class _GoalDetailViewState extends State<GoalDetailView> {
   @override
   void initState() {
     super.initState();
+    _goalRepository = GoalRepository(client: context.read<ApiClient>());
     _currentGoal = widget.goal;
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 3),
