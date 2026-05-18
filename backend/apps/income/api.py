@@ -44,8 +44,8 @@ def delete_source_(request, source_id: str):
 # ── ExtraIncome endpoints ─────────────────────────────────────────────────────
 
 @extra_router.get("", response=list[ExtraIncomeOut], summary="List extra income")
-def list_extra_(request):
-    return list_extra(request.auth)
+def list_extra_(request, account_id: str | None = None):
+    return list_extra(request.auth, account_id=account_id)
 
 
 @extra_router.post("", response={201: ExtraIncomeOut}, summary="Create extra income")
