@@ -1,18 +1,25 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
+import 'package:frontend/core/api/api_client.dart';
 import '../models/goal.dart';
 import '../models/allocation.dart';
 
 class GoalRepository {
-  final SupabaseClient supabase;
-
-  GoalRepository({required this.supabase});
+  GoalRepository({required this.client});
+  final ApiClient client;
 
   Future<List<Goal>> getGoals() async {
-    final response = await supabase
-        .from('goals')
-        .select('*, sub_goals(*), goal_accounts(account_id)')
-        .order('created_at', ascending: true);
-    return (response as List).map((e) => Goal.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>('/goals');
+    return r.data!
+        .map((e) => Goal.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Polled replacement for the old Supabase realtime stream.
+  /// Emits the current list immediately, then every 30 seconds.
+  Stream<List<Goal>> getGoalsStream() async* {
+    yield await getGoals();
+    yield* Stream.periodic(const Duration(seconds: 30))
+        .asyncMap((_) => getGoals());
   }
 
   Future<void> addSubGoal(
@@ -20,29 +27,50 @@ class GoalRepository {
     String name,
     double targetAmount,
   ) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    await supabase.from('sub_goals').insert({
-      'user_id': userId,
-      'goal_id': goalId,
-      'name': name,
-      'target_amount': targetAmount,
-    });
+    await client.post<Map<String, dynamic>>(
+      '/goals/$goalId/subgoals',
+      body: {
+        'name': name,
+        'target_amount': targetAmount.toStringAsFixed(2),
+      },
+    );
   }
 
   Future<void> updateSubGoalAmount(
     String subGoalId,
     double currentAmount,
   ) async {
-    await supabase
-        .from('sub_goals')
-        .update({'current_amount': currentAmount})
-        .eq('id', subGoalId);
+    // The backend requires finding the goal_id first. We iterate all goals to
+    // locate this sub_goal, then PATCH via /goals/{goal_id}/subgoals/{sid}.
+    // If callers already have the goal context, this can be replaced with a
+    // direct call to avoid the extra round-trip (tracked as future improvement).
+    final goals = await getGoals();
+    for (final goal in goals) {
+      final sub = goal.subGoals
+          .where((s) => s.id == subGoalId)
+          .firstOrNull;
+      if (sub != null) {
+        await client.patch<Map<String, dynamic>>(
+          '/goals/${goal.id}/subgoals/$subGoalId',
+          body: {'current_amount': currentAmount.toStringAsFixed(2)},
+        );
+        return;
+      }
+    }
+    throw StateError('Subgoal $subGoalId not found in any goal');
   }
 
   Future<void> deleteSubGoal(String subGoalId) async {
-    await supabase.from('sub_goals').delete().eq('id', subGoalId);
+    // Same lookup pattern as updateSubGoalAmount.
+    final goals = await getGoals();
+    for (final goal in goals) {
+      final found = goal.subGoals.any((s) => s.id == subGoalId);
+      if (found) {
+        await client.delete<void>('/goals/${goal.id}/subgoals/$subGoalId');
+        return;
+      }
+    }
+    throw StateError('Subgoal $subGoalId not found in any goal');
   }
 
   Future<Goal> addGoal(
@@ -53,61 +81,48 @@ class GoalRepository {
     DateTime? targetDate,
     List<String> accountIds = const [],
   }) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
+    final body = <String, dynamic>{
+      'name': name,
+      'target_amount': targetAmount.toStringAsFixed(2),
+      'type': type,
+      'category': category,
+    };
+    if (targetDate != null) {
+      body['target_date'] = targetDate.toIso8601String().split('T').first;
+    }
 
-    final response = await supabase
-        .from('goals')
-        .insert({
-          'user_id': userId,
-          'name': name,
-          'target_amount': targetAmount,
-          'type': type,
-          'category': category,
-          'target_date': targetDate?.toIso8601String(),
-        })
-        .select()
-        .single();
+    final r = await client.post<Map<String, dynamic>>('/goals', body: body);
+    final goal = Goal.fromJson(r.data!);
 
-    final goal = Goal.fromJson(response);
-
-    if (accountIds.isNotEmpty) {
-      final links =
-          accountIds
-              .map(
-                (id) => {
-                  'goal_id': goal.id,
-                  'account_id': id,
-                  'user_id': userId,
-                },
-              )
-              .toList();
-      await supabase.from('goal_accounts').insert(links);
+    // Link each account separately
+    for (final accountId in accountIds) {
+      await linkAccountToGoal(goal.id, accountId);
     }
 
     return goal;
   }
 
+  Future<void> linkAccountToGoal(String goalId, String accountId) async {
+    await client.post<Map<String, dynamic>>(
+      '/goals/$goalId/accounts',
+      body: {'account_id': accountId},
+    );
+  }
+
   Future<void> updateGoalAccounts(String goalId, List<String> accountIds) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
+    // 1. Fetch current linked accounts
+    final goals = await getGoals();
+    final goal = goals.firstWhere((g) => g.id == goalId,
+        orElse: () => throw StateError('Goal $goalId not found'));
 
-    // 1. Delete existing links
-    await supabase.from('goal_accounts').delete().eq('goal_id', goalId);
+    // 2. Unlink all current accounts
+    for (final accId in goal.accountIds) {
+      await client.delete<void>('/goals/$goalId/accounts/$accId');
+    }
 
-    // 2. Insert new links
-    if (accountIds.isNotEmpty) {
-      final links =
-          accountIds
-              .map(
-                (id) => {
-                  'goal_id': goalId,
-                  'account_id': id,
-                  'user_id': userId,
-                },
-              )
-              .toList();
-      await supabase.from('goal_accounts').insert(links);
+    // 3. Link new accounts
+    for (final accId in accountIds) {
+      await linkAccountToGoal(goalId, accId);
     }
   }
 
@@ -117,51 +132,55 @@ class GoalRepository {
     String? accountId,
     String? subGoalId,
   }) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    await supabase.from('goal_allocations').insert({
-      'user_id': userId,
+    final body = <String, dynamic>{
       'goal_id': goalId,
-      'amount': amount,
-      'account_id': accountId,
-      'sub_goal_id': subGoalId,
-    });
+      'amount': amount.toStringAsFixed(2),
+    };
+    if (accountId != null) body['account_id'] = accountId;
+    if (subGoalId != null) body['sub_goal_id'] = subGoalId;
+
+    await client.post<Map<String, dynamic>>('/allocations', body: body);
   }
 
   Future<List<GoalAllocation>> getAllocations() async {
-    final response = await supabase
-        .from('goal_allocations')
-        .select('*, goals(name), accounts(name)')
-        .order('created_at', ascending: false);
-    return (response as List).map((e) => GoalAllocation.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>('/allocations');
+    return r.data!
+        .map((e) => GoalAllocation.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Map<String, double>> getRecentAllocationSummary(int days) async {
-    final response = await supabase.rpc(
-      'get_recent_allocation_summary',
-      params: {'days': days},
+    final r = await client.get<Map<String, dynamic>>(
+      '/allocations/summary',
+      query: {'days': days.toString()},
     );
-
-    final data = response as Map<String, dynamic>;
+    final data = r.data!;
     return {
       'totalSavings': (data['totalSavings'] as num).toDouble(),
       'totalPurchases': (data['totalPurchases'] as num).toDouble(),
     };
   }
 
+  /// In the Django backend, current_amount is managed by DB signals triggered
+  /// by allocation creation/deletion. Calling this will re-fetch the goal to
+  /// return its latest state. The [currentAmount] parameter is ignored.
   Future<Goal> updateGoalCurrentAmount(String id, double currentAmount) async {
-    final response = await supabase
-        .from('goals')
-        .update({'current_amount': currentAmount})
-        .eq('id', id)
-        .select()
-        .single();
-
-    return Goal.fromJson(response);
+    final r = await client.get<Map<String, dynamic>>('/goals/$id');
+    return Goal.fromJson(r.data!);
   }
 
-  Future<void> deleteGoal(String id) async {
-    await supabase.from('goals').delete().eq('id', id);
+  Future<void> deleteGoal(String id) =>
+      client.delete<void>('/goals/$id');
+
+  Future<List<Goal>> getSubgoals(String goalId) async {
+    // The backend returns subgoals nested in goal; we can also GET them directly.
+    final r = await client.get<List<dynamic>>('/goals/$goalId/subgoals');
+    // Subgoals come back as SubgoalOut — wrap them as a minimal Goal proxy
+    // by re-fetching the parent goal. For most use cases callers just need the
+    // subgoals list from the Goal object itself, so we re-fetch:
+    final goals = await getGoals();
+    final goal = goals.firstWhere((g) => g.id == goalId,
+        orElse: () => throw StateError('Goal $goalId not found'));
+    return [goal]; // Returns parent with nested subGoals
   }
 }

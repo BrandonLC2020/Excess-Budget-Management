@@ -1,83 +1,66 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
+import 'package:frontend/core/api/api_client.dart';
 import '../../budget/models/expense.dart';
 import '../../income/models/income.dart';
 import '../models/account.dart';
 
 class AccountRepository {
-  final SupabaseClient supabase;
-
-  AccountRepository({required this.supabase});
+  AccountRepository({required this.client});
+  final ApiClient client;
 
   Future<List<Account>> getAccounts() async {
-    final response = await supabase
-        .from('accounts')
-        .select()
-        .order('created_at', ascending: true);
-    return (response as List).map((e) => Account.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>('/accounts');
+    return r.data!.map((e) => Account.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Stream<List<Account>> getAccountsStream() {
-    return supabase
-        .from('accounts')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: true)
-        .map((data) => data.map((e) => Account.fromJson(e)).toList());
+  /// Polled replacement for the old Supabase realtime stream.
+  /// Emits the current account list immediately, then every 30 seconds.
+  Stream<List<Account>> getAccountsStream() async* {
+    yield await getAccounts();
+    yield* Stream.periodic(const Duration(seconds: 30))
+        .asyncMap((_) => getAccounts());
   }
 
   Future<Account> addAccount(String name, double balance) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    final response = await supabase
-        .from('accounts')
-        .insert({'user_id': userId, 'name': name, 'balance': balance})
-        .select()
-        .single();
-
-    return Account.fromJson(response);
+    final r = await client.post<Map<String, dynamic>>(
+      '/accounts',
+      body: {'name': name, 'balance': balance.toStringAsFixed(2)},
+    );
+    return Account.fromJson(r.data!);
   }
 
   Future<Account> updateAccount(String id, String name, double balance) async {
-    final response = await supabase
-        .from('accounts')
-        .update({'name': name, 'balance': balance})
-        .eq('id', id)
-        .select()
-        .single();
-
-    return Account.fromJson(response);
+    final r = await client.patch<Map<String, dynamic>>(
+      '/accounts/$id',
+      body: {'name': name, 'balance': balance.toStringAsFixed(2)},
+    );
+    return Account.fromJson(r.data!);
   }
 
   Future<Account> updateAccountBalance(String id, double balance) async {
-    final response = await supabase
-        .from('accounts')
-        .update({'balance': balance})
-        .eq('id', id)
-        .select()
-        .single();
-
-    return Account.fromJson(response);
+    final r = await client.patch<Map<String, dynamic>>(
+      '/accounts/$id',
+      body: {'balance': balance.toStringAsFixed(2)},
+    );
+    return Account.fromJson(r.data!);
   }
 
-  Future<void> deleteAccount(String id) async {
-    await supabase.from('accounts').delete().eq('id', id);
-  }
+  Future<void> deleteAccount(String id) =>
+      client.delete<void>('/accounts/$id');
 
   Future<List<Expense>> getAccountExpenses(String accountId) async {
-    final response = await supabase
-        .from('expenses')
-        .select()
-        .eq('account_id', accountId)
-        .order('date', ascending: false);
-    return (response as List).map((e) => Expense.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>(
+      '/expenses',
+      query: {'account_id': accountId},
+    );
+    return r.data!.map((e) => Expense.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<List<Income>> getAccountIncome(String accountId) async {
-    final response = await supabase
-        .from('extra_income')
-        .select()
-        .eq('account_id', accountId)
-        .order('date_received', ascending: false);
-    return (response as List).map((e) => Income.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>(
+      '/income/extra',
+      query: {'account_id': accountId},
+    );
+    return r.data!.map((e) => Income.fromJson(e as Map<String, dynamic>)).toList();
   }
 }

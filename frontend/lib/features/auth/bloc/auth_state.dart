@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import '../models/profile.dart';
 
 abstract class AuthState extends Equatable {
   const AuthState();
@@ -13,7 +13,7 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
-  final User user;
+  final UserProfile user;
   const AuthAuthenticated(this.user);
 
   @override

@@ -1,6 +1,7 @@
 # Miscellaneous
 *.class
 *.lock
+!backend/uv.lock
 *.log
 *.pyc
 *.swp

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../budget/repositories/budget_repository.dart';
 import '../../../income/repositories/income_repository.dart';
 import '../../bloc/transaction_expenses_bloc.dart';
@@ -13,18 +13,18 @@ class TransactionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final supabase = Supabase.instance.client;
+    final apiClient = context.read<ApiClient>();
 
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => TransactionExpensesBloc(
-            budgetRepository: BudgetRepository(supabase: supabase),
+            budgetRepository: BudgetRepository(client: apiClient),
           ),
         ),
         BlocProvider(
           create: (context) => TransactionIncomeBloc(
-            incomeRepository: IncomeRepository(supabase: supabase),
+            incomeRepository: IncomeRepository(client: apiClient),
           ),
         ),
       ],

@@ -65,21 +65,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     emit(DashboardLoading());
 
     try {
-      final accounts = await accountRepository.getAccounts();
-      final goals = await goalRepository.getGoals();
-      final recentAllocations = await goalRepository.getRecentAllocationSummary(
-        30,
-      );
-      final defaultRatio = await profileRepository.getDefaultSavingsRatio();
-
+      // The Django backend gathers context server-side from the authenticated
+      // user — accounts, goals, allocations, and profile are not sent by the
+      // client. Only excess_funds is needed.
       final result = await suggestionRepository.getSuggestions(
         excessFunds: event.excessFunds,
-        accounts: accounts,
-        goals: goals,
-        recentAllocations: recentAllocations,
-        defaultSavingsRatio: defaultRatio,
       );
 
+      final goals = await goalRepository.getGoals();
       emit(DashboardSuggestionsLoaded(result, goals));
     } catch (e) {
       emit(DashboardError(e.toString()));

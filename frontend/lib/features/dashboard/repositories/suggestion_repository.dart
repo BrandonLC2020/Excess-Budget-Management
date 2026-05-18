@@ -1,35 +1,18 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:frontend/core/api/api_client.dart';
 import '../models/allocation.dart';
-import '../../accounts/models/account.dart';
-import '../../goals/models/goal.dart';
 
 class SuggestionRepository {
-  final SupabaseClient supabase;
+  SuggestionRepository({required this.client});
+  final ApiClient client;
 
-  SuggestionRepository({required this.supabase});
-
-  Future<SuggestionResult> getSuggestions({
-    required double excessFunds,
-    required List<Account> accounts,
-    required List<Goal> goals,
-    required Map<String, double> recentAllocations,
-    required double defaultSavingsRatio,
-  }) async {
-    final response = await supabase.functions.invoke(
-      'generate-suggestions',
-      body: {
-        'excessFunds': excessFunds,
-        'accounts': accounts.map((a) => a.toJson()).toList(),
-        'goals': goals.map((g) => g.toJson()).toList(),
-        'recentAllocations': recentAllocations,
-        'defaultSavingsRatio': defaultSavingsRatio,
-      },
+  /// Generates AI suggestions by sending excess_funds to the Django backend.
+  /// The server gathers all context (accounts, goals, allocations, profile)
+  /// from the authenticated user — no client-side context needed.
+  Future<SuggestionResult> getSuggestions({required double excessFunds}) async {
+    final r = await client.post<Map<String, dynamic>>(
+      '/suggestions/generate',
+      body: {'excess_funds': excessFunds.toStringAsFixed(2)},
     );
-
-    if (response.status != 200) {
-      throw Exception('Failed to generate suggestions: ${response.data}');
-    }
-
-    return SuggestionResult.fromJson(response.data as Map<String, dynamic>);
+    return SuggestionResult.fromJson(r.data!);
   }
 }

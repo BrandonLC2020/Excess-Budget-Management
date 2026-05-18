@@ -2,7 +2,8 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![Flutter](https://img.shields.io/badge/Flutter-v3.11.0-blue.svg)](https://flutter.dev/)
-[![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-green.svg)](https://supabase.com/)
+[![Django](https://img.shields.io/badge/Django-5.x-092e20.svg)](https://www.djangoproject.com/)
+[![Django Ninja](https://img.shields.io/badge/Django%20Ninja-1.6-12a594.svg)](https://django-ninja.dev/)
 
 **Excess-Budget-Management** is a full-stack personal finance application designed to help users track their income, manage accounts, set budget categories, and achieve financial goals through intelligent, AI-driven allocation.
 
@@ -15,11 +16,11 @@ The core engine of the app uses the **Gemini API** to suggest how to distribute 
 
 ### 📊 Subgoal Tracking & Aggregation (Phase 3)
 Break down large, categorical goals (e.g., "Vacation" or "Tech Upgrade") into specific, actionable line items (subgoals).
-- **Automatic Rollups:** Parent goals automatically aggregate the `target_amount` and `current_amount` of all nested subgoals using database triggers.
+- **Automatic Rollups:** Parent goals automatically aggregate the `target_amount` and `current_amount` of all nested subgoals via Django signals.
 - **Granular Progress:** Track individual items (like "Flights" or "New Keyboard") within a unified master progress bar.
 
 ### 🛡️ Secure & Private
-Built on **Supabase**, the application enforces **Row Level Security (RLS)** to ensure that your financial data is strictly yours. Authentication is handled via Supabase Auth (Email/Password).
+Authentication is handled via JWT (access + refresh) issued by `django-ninja-jwt`. Per-resource ownership is enforced at the application layer through a `get_owned_or_404` helper — every authenticated endpoint resolves resources scoped to the current user.
 
 ### 📱 Modern, Responsive UI
 A beautiful Material 3 interface built with Flutter, featuring:
@@ -37,10 +38,12 @@ A beautiful Material 3 interface built with Flutter, featuring:
 - **Navigation:** [go_router](https://pub.dev/packages/go_router)
 - **Theming:** Material 3 with [Google Fonts (Outfit)](https://fonts.google.com/specimen/Outfit)
 
-### Backend (Supabase)
-- **Database:** PostgreSQL (managed via migrations)
-- **Auth:** Supabase Auth (Email/Password)
-- **Edge Functions:** [Deno v2](https://deno.com/) for business logic and Gemini API integration.
+### Backend (Django + Django Ninja)
+- **Framework:** [Django 5.x](https://www.djangoproject.com/) with [Django Ninja](https://django-ninja.dev/) for typed, OpenAPI-documented endpoints.
+- **Database:** PostgreSQL 16 (Dockerized for local dev).
+- **Auth:** JWT access + refresh via [`django-ninja-jwt`](https://pypi.org/project/django-ninja-jwt/).
+- **AI:** Gemini API consumed server-side from `apps/suggestions` (key never leaves the backend).
+- **Tooling:** `uv`, `pytest-django`, `factory-boy`, `ruff`.
 
 ### Infrastructure
 - **Cloud Provider:** AWS
@@ -55,10 +58,13 @@ A beautiful Material 3 interface built with Flutter, featuring:
 /
 ├── frontend/               # Flutter application code
 │   ├── lib/features/       # Feature-based organization (auth, accounts, budget, goals)
-│   └── lib/core/           # Routing, shared utilities, and constants
-├── backend/supabase/       # Supabase configuration and database scripts
-│   ├── migrations/         # SQL schema and trigger logic
-│   └── functions/          # Deno Edge Functions (AI Suggestion Engine)
+│   └── lib/core/           # Routing, ApiClient infrastructure, shared utilities
+├── backend/                # Django project (NinjaAPI mounted at /api/v1)
+│   ├── apps/               # users, accounts, income, budget, goals, expenses,
+│   │                       #   allocations, suggestions, dashboard, common
+│   ├── config/             # Django settings, urls, NinjaAPI, JWTAuth
+│   ├── docker-compose.yml  # Postgres + web service for local dev
+│   └── Dockerfile
 ├── infra/                  # Terraform configuration for AWS (S3, CloudFront)
 └── docs/                   # Phase specifications and implementation plans
 ```
@@ -69,24 +75,25 @@ A beautiful Material 3 interface built with Flutter, featuring:
 
 ### Prerequisites
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (^3.11.0)
-- [Supabase CLI](https://supabase.com/docs/guides/cli)
-- [Docker](https://www.docker.com/) (for local Supabase environment)
+- [Docker](https://www.docker.com/) + Docker Compose (for the local Postgres + Django stack)
+- [`uv`](https://docs.astral.sh/uv/) (for running Django commands outside Docker, if preferred)
 - [Terraform](https://www.terraform.io/downloads) (for infrastructure deployment)
 
-### 1. Frontend Setup
+### 1. Backend Setup
+```bash
+cd backend
+cp .env.example .env
+# Set DJANGO_SECRET_KEY, JWT_SIGNING_KEY (random strings), and GEMINI_API_KEY in .env.
+docker compose up -d --build           # starts Postgres + Django at http://localhost:8000
+curl http://localhost:8000/api/v1/health
+```
+
+### 2. Frontend Setup
 ```bash
 cd frontend
 flutter pub get
-flutter run -d chrome  # Run locally for web
-```
-
-### 2. Backend Setup
-```bash
-# Requires Docker to be running
-cd backend
-supabase start
-supabase db reset      # Apply migrations and seed data
-supabase functions serve generate-suggestions
+flutter run -d chrome \
+  --dart-define=API_BASE_URL=http://localhost:8000/api/v1
 ```
 
 ### 3. Infrastructure Setup

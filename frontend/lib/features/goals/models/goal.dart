@@ -46,6 +46,8 @@ class Goal extends Equatable {
       ];
 
   factory Goal.fromJson(Map<String, dynamic> json) {
+    // goal_accounts is Supabase-only join syntax; Django API uses a flat list
+    // under the same key populated via GoalOut (not present yet) or omitted.
     List<String> parsedAccountIds = [];
     if (json['goal_accounts'] != null) {
       parsedAccountIds =
@@ -56,7 +58,8 @@ class Goal extends Equatable {
 
     return Goal(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
+      // user_id is not included in the Django GoalOut schema (inferred from auth).
+      userId: json['user_id'] as String? ?? '',
       name: json['name'] as String,
       targetAmount: (json['target_amount'] as num).toDouble(),
       currentAmount: (json['current_amount'] as num).toDouble(),
@@ -67,6 +70,8 @@ class Goal extends Equatable {
       type: json['type'] as String,
       category: json['category'] as String? ?? 'savings',
       createdAt: DateTime.parse(json['created_at'] as String),
+      // sub_goals nested join is Supabase-only; Django API does not embed subgoals
+      // in GoalOut — call GET /goals/{id}/subgoals explicitly if needed.
       subGoals:
           (json['sub_goals'] as List<dynamic>?)
               ?.map((e) => SubGoal.fromJson(e as Map<String, dynamic>))

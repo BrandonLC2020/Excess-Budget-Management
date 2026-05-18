@@ -1,75 +1,39 @@
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:frontend/core/api/api_client.dart';
 import '../models/profile.dart';
 
 class ProfileRepository {
-  final SupabaseClient supabase;
-
-  ProfileRepository({required this.supabase});
+  ProfileRepository({required this.client});
+  final ApiClient client;
 
   Future<UserProfile> getProfile() async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    final response = await supabase
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .single();
-
-    return UserProfile.fromJson(response);
+    final r = await client.get<Map<String, dynamic>>('/auth/me');
+    return UserProfile.fromJson(r.data!);
   }
 
   Future<void> updateProfile(UserProfile profile) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    await supabase.from('profiles').update(profile.toJson()).eq('id', userId);
+    await client.patch<Map<String, dynamic>>('/auth/me', body: {
+      'full_name': profile.fullName,
+      'avatar_url': profile.avatarUrl,
+      'default_savings_ratio': profile.defaultSavingsRatio,
+    });
   }
 
   Future<String> uploadAvatar(XFile file) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    final fileExt = file.path.split('.').last;
-    final fileName = '$userId/avatar.$fileExt';
-    final filePath = fileName;
-
-    await supabase.storage
-        .from('avatars')
-        .upload(
-          filePath,
-          File(file.path),
-          fileOptions: const FileOptions(upsert: true),
-        );
-
-    final String publicUrl = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-    return publicUrl;
+    // TODO: implement after Django backend gains a storage layer.
+    // Supabase Storage avatars bucket is not yet ported.
+    throw UnimplementedError(
+      'Avatar upload is pending the storage-backend migration.',
+    );
   }
 
   Future<double> getDefaultSavingsRatio() async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    final response = await supabase
-        .from('profiles')
-        .select('default_savings_ratio')
-        .eq('id', userId)
-        .single();
-
-    return (response['default_savings_ratio'] as num).toDouble();
+    final p = await getProfile();
+    return p.defaultSavingsRatio;
   }
 
   Future<void> updateDefaultSavingsRatio(double ratio) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    await supabase
-        .from('profiles')
-        .update({'default_savings_ratio': ratio})
-        .eq('id', userId);
+    await client.patch<Map<String, dynamic>>('/auth/me',
+        body: {'default_savings_ratio': ratio});
   }
 }

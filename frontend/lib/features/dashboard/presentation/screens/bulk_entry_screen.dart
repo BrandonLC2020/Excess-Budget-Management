@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/api/api_client.dart';
 import '../../../budget/bloc/budget_bloc.dart';
 import '../../../budget/bloc/bulk_expenses_bloc.dart';
 import '../../../budget/repositories/budget_repository.dart';
@@ -15,16 +15,17 @@ class BulkEntryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final apiClient = context.read<ApiClient>();
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => BulkExpensesBloc(
-            repository: BudgetRepository(supabase: Supabase.instance.client),
+            repository: BudgetRepository(client: apiClient),
           ),
         ),
         BlocProvider(
           create: (context) => BulkIncomeBloc(
-            repository: IncomeRepository(supabase: Supabase.instance.client),
+            repository: IncomeRepository(client: apiClient),
           ),
         ),
         // Ensure BudgetBloc is loaded so the category dropdown works
