@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.users",
     "apps.accounts",
+    "apps.income",
 ]
 
 AUTH_USER_MODEL = "users.User"
