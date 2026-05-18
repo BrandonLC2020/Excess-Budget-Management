@@ -1,7 +1,9 @@
 from django.db import IntegrityError, transaction
+from django.contrib.auth import authenticate as django_authenticate
 from ninja_jwt.tokens import RefreshToken
+from ninja_jwt.exceptions import TokenError
 from .models import User, Profile
-from apps.common.exceptions import ConflictError
+from apps.common.exceptions import AuthError, ConflictError
 
 
 @transaction.atomic
@@ -28,3 +30,21 @@ def to_user_out(user: User) -> dict:
         "default_savings_ratio": float(profile.default_savings_ratio) if profile else 0.5,
         "date_joined": user.date_joined,
     }
+
+
+def authenticate_user(email: str, password: str) -> User:
+    user = django_authenticate(username=email, password=password)
+    if user is None:
+        raise AuthError("Invalid email or password.")
+    return user
+
+
+def refresh_tokens(refresh_token_str: str) -> dict:
+    try:
+        token = RefreshToken(refresh_token_str)
+    except TokenError as e:
+        raise AuthError("Invalid or expired refresh token.") from e
+    user_id = token["user_id"]
+    user = User.objects.get(id=user_id)
+    new_refresh = RefreshToken.for_user(user)
+    return {"access": str(new_refresh.access_token), "refresh": str(new_refresh)}
