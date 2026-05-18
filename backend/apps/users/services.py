@@ -1,9 +1,12 @@
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.contrib.auth import authenticate as django_authenticate
 from ninja_jwt.tokens import RefreshToken
 from ninja_jwt.exceptions import TokenError
 from .models import User, Profile
 from apps.common.exceptions import AuthError, ConflictError
+from .tokens import make_reset_token, parse_reset_token
 
 
 @transaction.atomic
@@ -49,3 +52,29 @@ def refresh_tokens(refresh_token_str: str) -> dict:
         raise AuthError("Invalid or expired refresh token.")
     new_token = RefreshToken.for_user(user)
     return {"access": str(new_token.access_token), "refresh": str(new_token)}
+
+
+def request_password_reset(email: str) -> None:
+    user = User.objects.filter(email__iexact=email).first()
+    if user is None:
+        return  # silent success — don't leak account existence
+    token = make_reset_token(user.id)
+    link = settings.PASSWORD_RESET_URL_TEMPLATE.format(token=token)
+    send_mail(
+        subject="Reset your Excess Budget password",
+        message=f"Open this link to set a new password:\n\n{link}\n\nLink expires in 1 hour.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+    )
+
+
+def confirm_password_reset(token: str, new_password: str) -> None:
+    try:
+        user_id = parse_reset_token(token)
+    except ValueError as e:
+        raise AuthError("Invalid or expired reset token.") from e
+    user = User.objects.filter(id=user_id).first()
+    if user is None:
+        raise AuthError("Invalid or expired reset token.")
+    user.set_password(new_password)
+    user.save(update_fields=["password"])

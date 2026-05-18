@@ -1,9 +1,10 @@
 from ninja import Router
 from config.auth import JWTAuth
-from .schemas import SignupIn, LoginIn, RefreshIn, AuthResultOut, TokenPairOut, UserOut
+from .schemas import SignupIn, LoginIn, RefreshIn, AuthResultOut, TokenPairOut, UserOut, PasswordResetRequestIn, PasswordResetConfirmIn
 from .services import (
     create_user, issue_tokens, to_user_out,
     authenticate_user, refresh_tokens,
+    request_password_reset, confirm_password_reset,
 )
 
 router = Router(tags=["auth"])
@@ -35,3 +36,17 @@ def refresh(request, payload: RefreshIn):
             summary="Current authenticated user")
 def me(request):
     return to_user_out(request.auth)
+
+
+@router.post("/password-reset/request", response={204: None}, auth=None,
+             summary="Start password reset flow")
+def password_reset_request(request, payload: PasswordResetRequestIn):
+    request_password_reset(payload.email)
+    return 204, None
+
+
+@router.post("/password-reset/confirm", response={204: None}, auth=None,
+             summary="Confirm password reset with token")
+def password_reset_confirm(request, payload: PasswordResetConfirmIn):
+    confirm_password_reset(payload.token, payload.new_password)
+    return 204, None
