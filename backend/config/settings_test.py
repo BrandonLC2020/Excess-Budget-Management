@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     # Local apps — add here as each task lands:
     "apps.common",
     "apps.users",
+    "apps.accounts",
 ]
 
 AUTH_USER_MODEL = "users.User"

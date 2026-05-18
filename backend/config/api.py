@@ -22,6 +22,10 @@ from apps.users.api import router as users_router  # noqa: E402
 
 api.add_router("/auth", users_router)
 
+from apps.accounts.api import router as accounts_router  # noqa: E402
+
+api.add_router("/accounts", accounts_router)
+
 
 @api.get("/health", tags=["meta"], summary="Health check", auth=None)
 def health(request):
