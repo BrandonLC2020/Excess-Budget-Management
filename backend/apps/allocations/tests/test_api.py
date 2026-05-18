@@ -148,6 +148,39 @@ def test_cross_user_allocation_returns_404(auth_client, other_auth_client):
 
 
 @pytest.mark.django_db
+def test_allocation_summary(auth_client):
+    client, _ = auth_client
+    savings_goal = client.post(
+        "/api/v1/goals",
+        data={"name": "Emergency", "target_amount": "1000.00",
+              "type": "long_term", "category": "savings"},
+        content_type="application/json",
+    ).json()
+    purchase_goal = client.post(
+        "/api/v1/goals",
+        data={"name": "Laptop", "target_amount": "2000.00",
+              "type": "short_term", "category": "purchase"},
+        content_type="application/json",
+    ).json()
+
+    client.post("/api/v1/allocations",
+                data={"goal_id": savings_goal["id"], "amount": "100.00"},
+                content_type="application/json")
+    client.post("/api/v1/allocations",
+                data={"goal_id": savings_goal["id"], "amount": "50.00"},
+                content_type="application/json")
+    client.post("/api/v1/allocations",
+                data={"goal_id": purchase_goal["id"], "amount": "200.00"},
+                content_type="application/json")
+
+    r = client.get("/api/v1/allocations/summary?days=30")
+    assert r.status_code == 200, r.content
+    body = r.json()
+    assert body["totalSavings"] == 150.0
+    assert body["totalPurchases"] == 200.0
+
+
+@pytest.mark.django_db
 def test_requires_auth():
     from django.test import Client
     assert Client().get("/api/v1/allocations").status_code == 401

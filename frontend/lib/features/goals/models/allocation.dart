@@ -24,8 +24,10 @@ class GoalAllocation {
   factory GoalAllocation.fromJson(Map<String, dynamic> json) {
     return GoalAllocation(
       id: json['id'] as String,
-      userId: json['user_id'] as String,
+      // user_id is not returned by the Django API (inferred from auth token).
+      userId: json['user_id'] as String? ?? '',
       goalId: json['goal_id'] as String,
+      // Nested joins are Supabase-only; Django API returns flat IDs only.
       goalName: json['goals'] != null ? json['goals']['name'] as String? : null,
       accountId: json['account_id'] as String?,
       subGoalId: json['sub_goal_id'] as String?,

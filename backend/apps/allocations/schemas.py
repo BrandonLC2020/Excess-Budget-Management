@@ -26,3 +26,8 @@ class AllocationOut(Schema):
     account_id: uuid.UUID | None = None
     amount: Decimal
     created_at: dt.datetime
+
+
+class AllocationSummaryOut(Schema):
+    totalSavings: float
+    totalPurchases: float

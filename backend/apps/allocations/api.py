@@ -1,15 +1,21 @@
 from ninja import Router
 from config.auth import JWTAuth
-from .schemas import AllocationIn, AllocationPatch, AllocationOut
+from .schemas import AllocationIn, AllocationPatch, AllocationOut, AllocationSummaryOut
 from .services import (
     list_allocations,
     create_allocation,
     get_allocation,
     update_allocation,
     delete_allocation,
+    recent_allocation_summary,
 )
 
 router = Router(tags=["allocations"], auth=JWTAuth())
+
+
+@router.get("/summary", response=AllocationSummaryOut, summary="Recent allocation totals by category")
+def summary(request, days: int = 30):
+    return recent_allocation_summary(request.auth, days=days)
 
 
 @router.get("", response=list[AllocationOut], summary="List allocations")
