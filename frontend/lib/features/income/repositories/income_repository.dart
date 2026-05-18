@@ -1,34 +1,29 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:frontend/core/api/api_client.dart';
 import '../models/income.dart';
 
 class IncomeRepository {
-  final SupabaseClient supabase;
-
-  IncomeRepository({required this.supabase});
+  IncomeRepository({required this.client});
+  final ApiClient client;
 
   Future<List<Income>> getIncome() async {
-    final response = await supabase
-        .from('extra_income')
-        .select()
-        .order('date_received', ascending: false)
-        .order('created_at', ascending: false);
-    return (response as List).map((e) => Income.fromJson(e)).toList();
+    final r = await client.get<List<dynamic>>('/income/extra');
+    return r.data!
+        .map((e) => Income.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Future<void> deleteIncome(String id) async {
-    await supabase.from('extra_income').delete().eq('id', id);
-  }
+  Future<void> deleteIncome(String id) =>
+      client.delete<void>('/income/extra/$id');
 
+  /// Inserts each extra income entry individually via POST /income/extra.
+  /// Strips `user_id` keys (server infers from auth).
+  /// Note: N round-trips — acceptable for dev; a future bulk endpoint can batch.
   Future<void> bulkInsertExtraIncome(
     List<Map<String, dynamic>> incomeEntries,
   ) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception('User not logged in');
-
-    final rowsToInsert = incomeEntries
-        .map((e) => {...e, 'user_id': userId})
-        .toList();
-
-    await supabase.from('extra_income').insert(rowsToInsert);
+    for (final entry in incomeEntries) {
+      final body = Map<String, dynamic>.from(entry)..remove('user_id');
+      await client.post<Map<String, dynamic>>('/income/extra', body: body);
+    }
   }
 }
