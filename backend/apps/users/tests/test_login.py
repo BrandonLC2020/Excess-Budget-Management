@@ -37,3 +37,29 @@ def test_refresh_returns_new_tokens(user):
         content_type="application/json")
     assert r.status_code == 200
     assert r.json()["access"]
+
+@pytest.mark.django_db
+def test_refresh_rejects_token_for_deleted_user(user):
+    client = Client()
+    login = client.post("/api/v1/auth/login",
+        data={"email": "a@b.co", "password": "correct horse battery"},
+        content_type="application/json").json()
+    user.delete()
+    r = client.post("/api/v1/auth/refresh",
+        data={"refresh": login["refresh"]},
+        content_type="application/json")
+    assert r.status_code == 401
+    assert r.json()["error"]["code"] == "auth_error"
+
+@pytest.mark.django_db
+def test_refresh_rejects_token_for_inactive_user(user):
+    client = Client()
+    login = client.post("/api/v1/auth/login",
+        data={"email": "a@b.co", "password": "correct horse battery"},
+        content_type="application/json").json()
+    user.is_active = False
+    user.save(update_fields=["is_active"])
+    r = client.post("/api/v1/auth/refresh",
+        data={"refresh": login["refresh"]},
+        content_type="application/json")
+    assert r.status_code == 401

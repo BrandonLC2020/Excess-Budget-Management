@@ -44,7 +44,8 @@ def refresh_tokens(refresh_token_str: str) -> dict:
         token = RefreshToken(refresh_token_str)
     except TokenError as e:
         raise AuthError("Invalid or expired refresh token.") from e
-    user_id = token["user_id"]
-    user = User.objects.get(id=user_id)
-    new_refresh = RefreshToken.for_user(user)
-    return {"access": str(new_refresh.access_token), "refresh": str(new_refresh)}
+    user = User.objects.filter(id=token["user_id"], is_active=True).first()
+    if user is None:
+        raise AuthError("Invalid or expired refresh token.")
+    new_token = RefreshToken.for_user(user)
+    return {"access": str(new_token.access_token), "refresh": str(new_token)}
