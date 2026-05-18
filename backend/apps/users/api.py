@@ -1,6 +1,6 @@
 from ninja import Router
 from config.auth import JWTAuth
-from .schemas import SignupIn, LoginIn, RefreshIn, AuthResultOut, TokenPairOut, UserOut, PasswordResetRequestIn, PasswordResetConfirmIn
+from .schemas import SignupIn, LoginIn, RefreshIn, AuthResultOut, TokenPairOut, UserOut, MePatchIn, PasswordResetRequestIn, PasswordResetConfirmIn
 from .services import (
     create_user, issue_tokens, to_user_out,
     authenticate_user, refresh_tokens,
@@ -36,6 +36,22 @@ def refresh(request, payload: RefreshIn):
             summary="Current authenticated user")
 def me(request):
     return to_user_out(request.auth)
+
+
+@router.patch("/me", response=UserOut, auth=JWTAuth(),
+              summary="Update current user's profile")
+def patch_me(request, payload: MePatchIn):
+    from .models import Profile
+    user = request.auth
+    profile, _ = Profile.objects.get_or_create(user=user)
+    if payload.full_name is not None:
+        profile.full_name = payload.full_name
+    if payload.avatar_url is not None:
+        profile.avatar_url = payload.avatar_url
+    if payload.default_savings_ratio is not None:
+        profile.default_savings_ratio = payload.default_savings_ratio
+    profile.save()
+    return to_user_out(user)
 
 
 @router.post("/password-reset/request", response={204: None}, auth=None,

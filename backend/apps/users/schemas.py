@@ -21,8 +21,15 @@ class UserOut(Schema):
     id: str
     email: EmailStr
     full_name: str | None = None
+    avatar_url: str | None = None
     default_savings_ratio: float
     date_joined: datetime
+
+
+class MePatchIn(Schema):
+    full_name: str | None = None
+    avatar_url: str | None = None
+    default_savings_ratio: float | None = Field(default=None, ge=0, le=1)
 
 
 class TokenPairOut(Schema):

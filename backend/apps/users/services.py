@@ -30,6 +30,7 @@ def to_user_out(user: User) -> dict:
         "id": str(user.id),
         "email": user.email,
         "full_name": profile.full_name if profile else "",
+        "avatar_url": profile.avatar_url if profile else "",
         "default_savings_ratio": float(profile.default_savings_ratio) if profile else 0.5,
         "date_joined": user.date_joined,
     }
