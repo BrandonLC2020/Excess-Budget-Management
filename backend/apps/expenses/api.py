@@ -9,8 +9,8 @@ router = Router(tags=["expenses"], auth=JWTAuth())
 
 
 @router.get("", response=list[ExpenseOut], summary="List expenses")
-def list_(request, account_id: str | None = None):
-    return list_expenses(request.auth, account_id=account_id)
+def list_(request, account_id: str | None = None, budget_category_id: str | None = None):
+    return list_expenses(request.auth, account_id=account_id, budget_category_id=budget_category_id)
 
 
 @router.post("", response={201: ExpenseOut}, summary="Create expense")

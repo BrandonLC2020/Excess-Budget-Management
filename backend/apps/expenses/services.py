@@ -4,10 +4,12 @@ from apps.accounts.models import Account
 from apps.budget.models import BudgetCategory
 
 
-def list_expenses(user, account_id=None):
+def list_expenses(user, account_id=None, budget_category_id=None):
     qs = Expense.objects.filter(user=user)
     if account_id:
         qs = qs.filter(account_id=account_id)
+    if budget_category_id:
+        qs = qs.filter(budget_category_id=budget_category_id)
     return list(qs)
 
 

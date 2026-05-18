@@ -132,6 +132,27 @@ def test_delete_expense(auth_client):
 
 
 @pytest.mark.django_db
+def test_list_expenses_filters_by_budget_category(auth_client):
+    client, _ = auth_client
+    cat1 = client.post("/api/v1/budget/categories",
+        data={"name": "A", "limit_amount": "100.00", "category_type": "expense"},
+        content_type="application/json").json()
+    cat2 = client.post("/api/v1/budget/categories",
+        data={"name": "B", "limit_amount": "100.00", "category_type": "expense"},
+        content_type="application/json").json()
+    client.post("/api/v1/expenses",
+        data={"budget_category_id": cat1["id"], "amount": "10.00", "date": "2026-05-17"},
+        content_type="application/json")
+    client.post("/api/v1/expenses",
+        data={"budget_category_id": cat2["id"], "amount": "20.00", "date": "2026-05-17"},
+        content_type="application/json")
+    r = client.get(f"/api/v1/expenses?budget_category_id={cat1['id']}")
+    assert r.status_code == 200
+    assert len(r.json()) == 1
+    assert r.json()[0]["budget_category_id"] == cat1["id"]
+
+
+@pytest.mark.django_db
 def test_requires_auth():
     from django.test import Client
     assert Client().get("/api/v1/expenses").status_code == 401

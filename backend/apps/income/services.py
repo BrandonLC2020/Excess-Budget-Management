@@ -42,10 +42,12 @@ def delete_source(user, source_id) -> None:
 
 # ── ExtraIncome ───────────────────────────────────────────────────────────────
 
-def list_extra(user, account_id=None):
+def list_extra(user, account_id=None, budget_category_id=None):
     qs = ExtraIncome.objects.filter(user=user)
     if account_id:
         qs = qs.filter(account_id=account_id)
+    if budget_category_id:
+        qs = qs.filter(budget_category_id=budget_category_id)
     return list(qs)
 
 
