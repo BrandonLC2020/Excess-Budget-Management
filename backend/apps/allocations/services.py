@@ -1,3 +1,7 @@
+from datetime import timedelta
+from decimal import Decimal
+from django.db.models import Sum
+from django.utils import timezone
 from .models import GoalAllocation
 from apps.common.permissions import get_owned_or_404
 from apps.common.exceptions import AppError
@@ -75,3 +79,14 @@ def update_allocation(user, allocation_id, payload) -> GoalAllocation:
 def delete_allocation(user, allocation_id) -> None:
     allocation = get_owned_or_404(GoalAllocation, allocation_id, user)
     allocation.delete()
+
+
+def recent_allocation_summary(user, days: int = 30) -> dict:
+    since = timezone.now() - timedelta(days=days)
+    qs = GoalAllocation.objects.filter(user=user, created_at__gt=since)
+    by_category = qs.values("goal__category").annotate(total=Sum("amount"))
+    totals = {row["goal__category"]: row["total"] or Decimal("0") for row in by_category}
+    return {
+        "totalSavings": float(totals.get("savings", Decimal("0"))),
+        "totalPurchases": float(totals.get("purchase", Decimal("0"))),
+    }

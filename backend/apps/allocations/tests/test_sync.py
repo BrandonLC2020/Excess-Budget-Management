@@ -64,3 +64,14 @@ def test_allocation_delete_reverses(u):
     g.refresh_from_db()
     assert acc.balance == Decimal("500.00")
     assert g.current_amount == Decimal("0.00")
+
+
+@pytest.mark.django_db
+def test_recent_summary_buckets_by_goal_category(u):
+    g_sav = Goal.objects.create(user=u, name="s", target_amount=0, type="long_term", category="savings")
+    g_pur = Goal.objects.create(user=u, name="p", target_amount=0, type="short_term", category="purchase")
+    GoalAllocation.objects.create(user=u, goal=g_sav, amount=Decimal("100"))
+    GoalAllocation.objects.create(user=u, goal=g_pur, amount=Decimal("40"))
+    from apps.allocations.services import recent_allocation_summary
+    summary = recent_allocation_summary(u, days=30)
+    assert summary == {"totalSavings": 100.0, "totalPurchases": 40.0}
