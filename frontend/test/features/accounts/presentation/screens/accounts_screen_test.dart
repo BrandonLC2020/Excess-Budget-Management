@@ -5,9 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/features/accounts/presentation/screens/accounts_screen.dart';
 import 'package:frontend/features/accounts/bloc/account_bloc.dart';
 import 'package:frontend/features/accounts/models/account.dart';
+import 'package:frontend/features/accounts/repositories/account_repository.dart';
 import 'package:frontend/features/accounts/presentation/widgets/account_detail_view.dart';
 
 class MockAccountBloc extends Mock implements AccountBloc {}
+class MockAccountRepository extends Mock implements AccountRepository {}
 
 void main() {
   late MockAccountBloc mockAccountBloc;
@@ -31,11 +33,21 @@ void main() {
     ).thenAnswer((_) => Stream.value(AccountLoaded([testAccount])));
   });
 
+  late MockAccountRepository mockAccountRepository;
+
   Widget createWidgetUnderTest() {
-    return MaterialApp(
-      home: BlocProvider<AccountBloc>.value(
+    mockAccountRepository = MockAccountRepository();
+    // Stub methods if needed
+    when(() => mockAccountRepository.getAccountExpenses(any())).thenAnswer((_) async => []);
+    when(() => mockAccountRepository.getAccountIncome(any())).thenAnswer((_) async => []);
+    
+    return RepositoryProvider<AccountRepository>.value(
+      value: mockAccountRepository,
+      child: BlocProvider<AccountBloc>.value(
         value: mockAccountBloc,
-        child: const AccountsScreen(),
+        child: const MaterialApp(
+          home: AccountsScreen(),
+        ),
       ),
     );
   }
@@ -46,7 +58,7 @@ void main() {
     expect(find.text('\$100.00'), findsOneWidget);
   });
 
-  testWidgets('In compact mode, tapping account opens dialog', (tester) async {
+  testWidgets('In compact mode, tapping account opens bottom sheet with details', (tester) async {
     tester.view.physicalSize = const Size(400, 800);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -55,8 +67,8 @@ void main() {
     await tester.tap(find.text('Test Account'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.text('Edit Account'), findsOneWidget);
+    expect(find.byType(AccountDetailView), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
   });
 
   testWidgets(
@@ -75,7 +87,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AccountDetailView), findsOneWidget);
-      expect(find.text('Edit Account'), findsOneWidget);
       // Should NOT be an AlertDialog
       expect(find.byType(AlertDialog), findsNothing);
     },

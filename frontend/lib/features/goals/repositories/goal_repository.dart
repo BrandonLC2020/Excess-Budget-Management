@@ -174,7 +174,7 @@ class GoalRepository {
 
   Future<List<Goal>> getSubgoals(String goalId) async {
     // The backend returns subgoals nested in goal; we can also GET them directly.
-    final r = await client.get<List<dynamic>>('/goals/$goalId/subgoals');
+    await client.get<List<dynamic>>('/goals/$goalId/subgoals');
     // Subgoals come back as SubgoalOut — wrap them as a minimal Goal proxy
     // by re-fetching the parent goal. For most use cases callers just need the
     // subgoals list from the Goal object itself, so we re-fetch:

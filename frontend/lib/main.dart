@@ -40,8 +40,15 @@ class BudgetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<ApiClient>.value(
-      value: apiClient,
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider.value(value: apiClient),
+        RepositoryProvider(create: (_) => AccountRepository(client: apiClient)),
+        RepositoryProvider(create: (_) => BudgetRepository(client: apiClient)),
+        RepositoryProvider(create: (_) => GoalRepository(client: apiClient)),
+        RepositoryProvider(create: (_) => ProfileRepository(client: apiClient)),
+        RepositoryProvider(create: (_) => SuggestionRepository(client: apiClient)),
+      ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<AuthBloc>(
@@ -49,22 +56,22 @@ class BudgetApp extends StatelessWidget {
                 AuthBloc(authService: authService)..add(AuthCheckRequested()),
           ),
           BlocProvider<AccountBloc>(
-            create: (_) => AccountBloc(
-              repository: AccountRepository(client: apiClient),
+            create: (context) => AccountBloc(
+              repository: context.read<AccountRepository>(),
             ),
           ),
           BlocProvider<BudgetBloc>(
-            create: (_) => BudgetBloc(
-              repository: BudgetRepository(client: apiClient),
+            create: (context) => BudgetBloc(
+              repository: context.read<BudgetRepository>(),
             ),
           ),
           BlocProvider<DashboardBloc>(
-            create: (_) => DashboardBloc(
-              suggestionRepository: SuggestionRepository(client: apiClient),
-              accountRepository: AccountRepository(client: apiClient),
-              goalRepository: GoalRepository(client: apiClient),
-              profileRepository: ProfileRepository(client: apiClient),
-              budgetRepository: BudgetRepository(client: apiClient),
+            create: (context) => DashboardBloc(
+              suggestionRepository: context.read<SuggestionRepository>(),
+              accountRepository: context.read<AccountRepository>(),
+              goalRepository: context.read<GoalRepository>(),
+              profileRepository: context.read<ProfileRepository>(),
+              budgetRepository: context.read<BudgetRepository>(),
             ),
           ),
         ],
