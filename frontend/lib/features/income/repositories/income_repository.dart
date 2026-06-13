@@ -53,8 +53,8 @@ class IncomeRepository {
     final body = {
       'overtime_hours_per_week': overtimeHoursPerWeek,
       'standard_contribution': standardContribution,
-      if (goalId != null) 'goal_id': goalId,
-      if (subgoalId != null) 'subgoal_id': subgoalId,
+      'goal_id': ?goalId,
+      'subgoal_id': ?subgoalId,
     };
     final r = await client.post<Map<String, dynamic>>(
       '/income/overtime/projections',

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/breakpoints.dart';
-import '../../../../core/utils/optional.dart';
-import '../../goals/models/goal.dart';
-import '../../goals/models/sub_goal.dart';
-import '../../income/bloc/overtime_bloc.dart';
-import '../../income/models/overtime_settings.dart';
+import '../../../goals/models/goal.dart';
+import '../../../goals/models/sub_goal.dart';
+import '../../bloc/overtime_bloc.dart';
+import '../../models/overtime_settings.dart';
 
 class OvertimeScreen extends StatefulWidget {
   const OvertimeScreen({super.key});
@@ -204,7 +203,7 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                     controller: _baseWageController,
                     decoration: const InputDecoration(
                       labelText: 'Base Hourly Rate',
-                      prefixText: '$',
+                      prefixText: r'$',
                       border: OutlineInputBorder(),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -293,7 +292,7 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
               controller: _standardContribController,
               decoration: const InputDecoration(
                 labelText: 'Standard Monthly Savings Contribution',
-                prefixText: '$',
+                prefixText: r'$',
                 border: OutlineInputBorder(),
                 helperText: 'How much do you save towards this goal without overtime?',
               ),
@@ -475,7 +474,7 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                           decoration: BoxDecoration(
                             color: Colors.green.shade50,
                             borderRadius: BorderRadius.circular(20),
-                            border: BorderSide(color: Colors.green.shade200),
+                            border: Border.all(color: Colors.green.shade200),
                           ),
                           child: Text(
                             '${proj.monthsSaved!.toStringAsFixed(1)} mos saved',
