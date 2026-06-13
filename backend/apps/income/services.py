@@ -1,7 +1,9 @@
-from .models import IncomeSource, ExtraIncome
+from .models import IncomeSource, ExtraIncome, OvertimeSettings
 from apps.common.permissions import get_owned_or_404
 from apps.accounts.models import Account
 from apps.budget.models import BudgetCategory
+from apps.goals.models import Goal, Subgoal
+from decimal import Decimal
 
 
 # ── IncomeSource ──────────────────────────────────────────────────────────────
@@ -101,3 +103,77 @@ def update_extra(user, extra_id, payload) -> ExtraIncome:
 def delete_extra(user, extra_id) -> None:
     ei = get_owned_or_404(ExtraIncome, extra_id, user)
     ei.delete()
+
+
+# ── Overtime Settings & Calculations ──────────────────────────────────────────
+
+def get_overtime_settings(user) -> OvertimeSettings:
+    settings_obj, _ = OvertimeSettings.objects.get_or_create(user=user)
+    return settings_obj
+
+
+def update_overtime_settings(user, payload) -> OvertimeSettings:
+    settings_obj = get_overtime_settings(user)
+    if payload.hourly_base_rate is not None:
+        settings_obj.hourly_base_rate = payload.hourly_base_rate
+    if payload.overtime_multiplier is not None:
+        settings_obj.overtime_multiplier = payload.overtime_multiplier
+    if payload.estimated_tax_rate is not None:
+        settings_obj.estimated_tax_rate = payload.estimated_tax_rate
+    settings_obj.save()
+    return settings_obj
+
+
+def calculate_overtime_projections(user, payload) -> dict:
+    settings_obj = get_overtime_settings(user)
+    
+    base = Decimal(settings_obj.hourly_base_rate)
+    mult = Decimal(settings_obj.overtime_multiplier)
+    tax = Decimal(settings_obj.estimated_tax_rate)
+    
+    net_hourly_rate = base * mult * (Decimal("1.00") - tax)
+    weekly_overtime_net_income = net_hourly_rate * payload.overtime_hours_per_week
+    
+    # 52 weeks / 12 months = 4.3333333333 weeks per month
+    monthly_overtime_net_income = weekly_overtime_net_income * Decimal("52") / Decimal("12")
+    
+    # Rounded values for standard fields
+    result = {
+        "net_hourly_rate": round(net_hourly_rate, 2),
+        "weekly_overtime_net_income": round(weekly_overtime_net_income, 2),
+        "monthly_overtime_net_income": round(monthly_overtime_net_income, 2),
+        "total_hours_needed": None,
+        "months_to_complete_standard": None,
+        "months_to_complete_with_overtime": None,
+        "months_saved": None,
+    }
+    
+    remaining_amount = Decimal("0.00")
+    has_target = False
+    
+    if payload.subgoal_id:
+        subgoal = get_owned_or_404(Subgoal, payload.subgoal_id, user)
+        remaining_amount = subgoal.target_amount - subgoal.current_amount
+        has_target = True
+    elif payload.goal_id:
+        goal = get_owned_or_404(Goal, payload.goal_id, user)
+        remaining_amount = goal.target_amount - goal.current_amount
+        has_target = True
+        
+    if has_target:
+        remaining_amount = max(Decimal("0.00"), remaining_amount)
+        
+        if net_hourly_rate > 0:
+            result["total_hours_needed"] = round(remaining_amount / net_hourly_rate, 2)
+            
+        std_contrib = payload.standard_contribution
+        
+        if std_contrib > 0:
+            result["months_to_complete_standard"] = round(remaining_amount / std_contrib, 2)
+            total_monthly = std_contrib + monthly_overtime_net_income
+            result["months_to_complete_with_overtime"] = round(remaining_amount / total_monthly, 2)
+            result["months_saved"] = round(result["months_to_complete_standard"] - result["months_to_complete_with_overtime"], 2)
+        elif monthly_overtime_net_income > 0:
+            result["months_to_complete_with_overtime"] = round(remaining_amount / monthly_overtime_net_income, 2)
+            
+    return result

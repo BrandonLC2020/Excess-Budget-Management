@@ -17,6 +17,9 @@ import '../features/transactions/presentation/screens/transactions_screen.dart';
 import '../features/goals/bloc/allocation_history_bloc.dart';
 import '../features/goals/bloc/allocation_history_event.dart';
 import '../features/goals/repositories/goal_repository.dart';
+import '../features/income/bloc/overtime_bloc.dart';
+import '../features/income/presentation/screens/overtime_screen.dart';
+import '../features/income/repositories/income_repository.dart';
 import 'api/api_client.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -102,6 +105,24 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/goals',
               builder: (context, state) => const GoalListScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/overtime',
+              builder: (context, state) => BlocProvider(
+                create: (context) => OvertimeBloc(
+                  incomeRepository: IncomeRepository(
+                    client: context.read<ApiClient>(),
+                  ),
+                  goalRepository: GoalRepository(
+                    client: context.read<ApiClient>(),
+                  ),
+                )..add(FetchOvertimeData()),
+                child: const OvertimeScreen(),
+              ),
             ),
           ],
         ),

@@ -49,3 +49,34 @@ class ExtraIncomeOut(Schema):
     account_id: uuid.UUID | None = None
     budget_category_id: uuid.UUID | None = None  # Will be None until Task 11 adds the FK
     created_at: datetime
+
+
+class OvertimeSettingsIn(Schema):
+    hourly_base_rate: condecimal(max_digits=12, decimal_places=2) | None = None
+    overtime_multiplier: condecimal(max_digits=4, decimal_places=2) | None = None
+    estimated_tax_rate: condecimal(max_digits=4, decimal_places=2) | None = None
+
+
+class OvertimeSettingsOut(Schema):
+    hourly_base_rate: Decimal
+    overtime_multiplier: Decimal
+    estimated_tax_rate: Decimal
+    created_at: datetime
+    updated_at: datetime
+
+
+class OvertimeProjectionRequest(Schema):
+    overtime_hours_per_week: condecimal(max_digits=5, decimal_places=2)
+    goal_id: uuid.UUID | None = None
+    subgoal_id: uuid.UUID | None = None
+    standard_contribution: condecimal(max_digits=12, decimal_places=2) = Decimal("0.00")
+
+
+class OvertimeProjectionOut(Schema):
+    net_hourly_rate: Decimal
+    weekly_overtime_net_income: Decimal
+    monthly_overtime_net_income: Decimal
+    total_hours_needed: Decimal | None = None
+    months_to_complete_standard: Decimal | None = None
+    months_to_complete_with_overtime: Decimal | None = None
+    months_saved: Decimal | None = None

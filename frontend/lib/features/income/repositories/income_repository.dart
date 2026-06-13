@@ -1,5 +1,7 @@
 import 'package:frontend/core/api/api_client.dart';
 import '../models/income.dart';
+import '../models/overtime_settings.dart';
+import '../models/overtime_projection.dart';
 
 class IncomeRepository {
   IncomeRepository({required this.client});
@@ -25,5 +27,39 @@ class IncomeRepository {
       final body = Map<String, dynamic>.from(entry)..remove('user_id');
       await client.post<Map<String, dynamic>>('/income/extra', body: body);
     }
+  }
+
+  // ── Overtime Settings & Calculations ──────────────────────────────────────────
+
+  Future<OvertimeSettings> getOvertimeSettings() async {
+    final r = await client.get<Map<String, dynamic>>('/income/overtime/settings');
+    return OvertimeSettings.fromJson(r.data!);
+  }
+
+  Future<OvertimeSettings> updateOvertimeSettings(OvertimeSettings settings) async {
+    final r = await client.patch<Map<String, dynamic>>(
+      '/income/overtime/settings',
+      body: settings.toJson(),
+    );
+    return OvertimeSettings.fromJson(r.data!);
+  }
+
+  Future<OvertimeProjection> getOvertimeProjection({
+    required double overtimeHoursPerWeek,
+    String? goalId,
+    String? subgoalId,
+    double standardContribution = 0.0,
+  }) async {
+    final body = {
+      'overtime_hours_per_week': overtimeHoursPerWeek,
+      'standard_contribution': standardContribution,
+      if (goalId != null) 'goal_id': goalId,
+      if (subgoalId != null) 'subgoal_id': subgoalId,
+    };
+    final r = await client.post<Map<String, dynamic>>(
+      '/income/overtime/projections',
+      body: body,
+    );
+    return OvertimeProjection.fromJson(r.data!);
   }
 }

@@ -54,3 +54,22 @@ class ExtraIncome(models.Model):
 
     class Meta:
         ordering = ["-date_received", "-created_at"]
+
+
+class OvertimeSettings(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="overtime_settings",
+    )
+    hourly_base_rate = models.DecimalField(max_digits=12, decimal_places=2, default="0.00")
+    overtime_multiplier = models.DecimalField(max_digits=4, decimal_places=2, default="1.50")
+    estimated_tax_rate = models.DecimalField(max_digits=4, decimal_places=2, default="0.25")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Overtime Settings"
+
+    def __str__(self) -> str:
+        return f"Overtime settings for {self.user.email}"

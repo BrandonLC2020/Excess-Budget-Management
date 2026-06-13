@@ -34,6 +34,11 @@ class DashboardScreen extends StatelessWidget {
       label: 'Goals',
     ),
     NavigationDestination(
+      icon: Icon(Icons.trending_up_outlined),
+      selectedIcon: Icon(Icons.trending_up),
+      label: 'Overtime',
+    ),
+    NavigationDestination(
       icon: Icon(Icons.person_outline),
       selectedIcon: Icon(Icons.person),
       label: 'Profile',
