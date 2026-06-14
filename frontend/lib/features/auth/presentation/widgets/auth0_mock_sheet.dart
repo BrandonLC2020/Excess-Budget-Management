@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../../../../core/constants.dart';
 
 class Auth0MockSheet extends StatefulWidget {
   final Function(String token) onLogin;
@@ -29,7 +30,8 @@ class _Auth0MockSheetState extends State<Auth0MockSheet> {
       'email': email,
       'name': name,
       'picture': picture,
-      'iss': 'https://mock.auth0.com/',
+      'iss': 'https://${Constants.auth0Domain}/',
+      'aud': Constants.auth0Audience,
       'sub': 'auth0|mock_user_${DateTime.now().millisecondsSinceEpoch}',
     });
 

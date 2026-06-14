@@ -107,5 +107,10 @@ NINJA_JWT = {
 # Third-party keys
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
+# Auth0 settings
+AUTH0_DOMAIN = os.environ.get("AUTH0_DOMAIN", "")
+AUTH0_AUDIENCE = os.environ.get("AUTH0_AUDIENCE", "")
+
+
 # CORS — handled by django-cors-headers when added in Task 4
 CORS_ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if o.strip()]

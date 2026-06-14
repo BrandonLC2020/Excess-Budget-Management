@@ -6,4 +6,20 @@ class Constants {
     'API_BASE_URL',
     defaultValue: 'http://localhost:8000/api/v1',
   );
+
+  // Auth0 configurations
+  static const String auth0Domain = String.fromEnvironment(
+    'AUTH0_DOMAIN',
+    defaultValue: 'b1codes.us.auth0.com',
+  );
+
+  static const String auth0ClientId = String.fromEnvironment(
+    'AUTH0_CLIENT_ID',
+    defaultValue: 'vHX8TZc34HJfNRyA8aVZquT6509YnWUp',
+  );
+
+  static const String auth0Audience = String.fromEnvironment(
+    'AUTH0_AUDIENCE',
+    defaultValue: 'https://api.excessbudget.com/',
+  );
 }
