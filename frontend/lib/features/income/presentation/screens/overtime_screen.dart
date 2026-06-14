@@ -42,12 +42,12 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
     final tax = double.tryParse(_taxRateController.text) ?? 0.25;
 
     context.read<OvertimeBloc>().add(
-          UpdateOvertimeSettingsField(
-            hourlyBaseRate: base,
-            overtimeMultiplier: mult,
-            estimatedTaxRate: tax,
-          ),
-        );
+      UpdateOvertimeSettingsField(
+        hourlyBaseRate: base,
+        overtimeMultiplier: mult,
+        estimatedTaxRate: tax,
+      ),
+    );
   }
 
   void _onStandardContribChanged() {
@@ -60,11 +60,13 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
     final theme = Theme.of(context);
 
     return BlocListener<OvertimeBloc, OvertimeState>(
-      listenWhen: (prev, curr) => !prev.isLoading && curr.settings != null && !_initialized,
+      listenWhen: (prev, curr) =>
+          !prev.isLoading && curr.settings != null && !_initialized,
       listener: (context, state) {
         if (state.settings != null) {
           _initFields(state.settings!);
-          _standardContribController.text = state.standardContribution.toStringAsFixed(2);
+          _standardContribController.text = state.standardContribution
+              .toStringAsFixed(2);
         }
       },
       child: BlocBuilder<OvertimeBloc, OvertimeState>(
@@ -77,12 +79,17 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
 
           if (state.settings != null && !_initialized) {
             _initFields(state.settings!);
-            _standardContribController.text = state.standardContribution.toStringAsFixed(2);
+            _standardContribController.text = state.standardContribution
+                .toStringAsFixed(2);
           }
 
-          final selectedGoal = state.goals.where((g) => g.id == state.selectedGoalId).firstOrNull;
+          final selectedGoal = state.goals
+              .where((g) => g.id == state.selectedGoalId)
+              .firstOrNull;
           final subgoals = selectedGoal?.subGoals ?? [];
-          final selectedSubgoal = subgoals.where((s) => s.id == state.selectedSubgoalId).firstOrNull;
+          final selectedSubgoal = subgoals
+              .where((s) => s.id == state.selectedSubgoalId)
+              .firstOrNull;
 
           final content = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,12 +106,17 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: theme.colorScheme.onErrorContainer),
+                        Icon(
+                          Icons.error_outline,
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             state.errorMessage!,
-                            style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                            style: TextStyle(
+                              color: theme.colorScheme.onErrorContainer,
+                            ),
                           ),
                         ),
                       ],
@@ -112,21 +124,43 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                   ),
                 ),
               if (context.isCompact) ...[
-                _buildFormCard(context, state, selectedGoal, subgoals, selectedSubgoal),
+                _buildFormCard(
+                  context,
+                  state,
+                  selectedGoal,
+                  subgoals,
+                  selectedSubgoal,
+                ),
                 const SizedBox(height: 16),
-                _buildProjectionCard(context, state, selectedGoal, selectedSubgoal),
+                _buildProjectionCard(
+                  context,
+                  state,
+                  selectedGoal,
+                  selectedSubgoal,
+                ),
               ] else
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       flex: 4,
-                      child: _buildFormCard(context, state, selectedGoal, subgoals, selectedSubgoal),
+                      child: _buildFormCard(
+                        context,
+                        state,
+                        selectedGoal,
+                        subgoals,
+                        selectedSubgoal,
+                      ),
                     ),
                     const SizedBox(width: 20),
                     Expanded(
                       flex: 5,
-                      child: _buildProjectionCard(context, state, selectedGoal, selectedSubgoal),
+                      child: _buildProjectionCard(
+                        context,
+                        state,
+                        selectedGoal,
+                        selectedSubgoal,
+                      ),
                     ),
                   ],
                 ),
@@ -151,9 +185,13 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                     onPressed: state.settings == null
                         ? null
                         : () {
-                            context.read<OvertimeBloc>().add(SaveOvertimeSettings());
+                            context.read<OvertimeBloc>().add(
+                              SaveOvertimeSettings(),
+                            );
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Settings saved successfully.')),
+                              const SnackBar(
+                                content: Text('Settings saved successfully.'),
+                              ),
                             );
                           },
                     icon: const Icon(Icons.save),
@@ -193,7 +231,9 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
           children: [
             Text(
               'Earnings Profile',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -206,7 +246,9 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                       prefixText: r'$',
                       border: OutlineInputBorder(),
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (_) => _onFieldChanged(),
                   ),
                 ),
@@ -219,7 +261,9 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                       suffixText: 'x',
                       border: OutlineInputBorder(),
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (_) => _onFieldChanged(),
                   ),
                 ),
@@ -233,13 +277,17 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                 suffixIcon: Icon(Icons.percent),
                 border: OutlineInputBorder(),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onChanged: (_) => _onFieldChanged(),
             ),
             const Divider(height: 32),
             Text(
               'Target Allocation',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -256,8 +304,8 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
               }).toList(),
               onChanged: (val) {
                 context.read<OvertimeBloc>().add(
-                      SelectGoalOrSubgoal(goalId: val, subgoalId: null),
-                    );
+                  SelectGoalOrSubgoal(goalId: val, subgoalId: null),
+                );
               },
             ),
             if (subgoals.isNotEmpty) ...[
@@ -282,8 +330,11 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                 ],
                 onChanged: (val) {
                   context.read<OvertimeBloc>().add(
-                        SelectGoalOrSubgoal(goalId: state.selectedGoalId, subgoalId: val),
-                      );
+                    SelectGoalOrSubgoal(
+                      goalId: state.selectedGoalId,
+                      subgoalId: val,
+                    ),
+                  );
                 },
               ),
             ],
@@ -294,26 +345,35 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                 labelText: 'Standard Monthly Savings Contribution',
                 prefixText: r'$',
                 border: OutlineInputBorder(),
-                helperText: 'How much do you save towards this goal without overtime?',
+                helperText:
+                    'How much do you save towards this goal without overtime?',
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onChanged: (_) => _onStandardContribChanged(),
             ),
             const Divider(height: 32),
             Text(
               'Proposed Overtime Hours',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   '${state.overtimeHoursPerWeek.toStringAsFixed(1)} hrs / week',
-                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   '~ ${(state.overtimeHoursPerWeek * 4.33).toStringAsFixed(1)} hrs / month',
-                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -359,11 +419,16 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
     }
 
     final hasTarget = selectedGoal != null;
-    final targetName = selectedSubgoal != null ? '${selectedGoal!.name} → ${selectedSubgoal.name}' : (selectedGoal?.name ?? '');
+    final targetName = selectedSubgoal != null
+        ? '${selectedGoal!.name} → ${selectedSubgoal.name}'
+        : (selectedGoal?.name ?? '');
     final remainingAmount = selectedSubgoal != null
         ? (selectedSubgoal.targetAmount - selectedSubgoal.currentAmount)
-        : (selectedGoal?.targetAmount ?? 0.0) - (selectedGoal?.currentAmount ?? 0.0);
-    final targetString = remainingAmount > 0 ? '\$${remainingAmount.toStringAsFixed(2)} remaining' : 'Fully Funded';
+        : (selectedGoal?.targetAmount ?? 0.0) -
+              (selectedGoal?.currentAmount ?? 0.0);
+    final targetString = remainingAmount > 0
+        ? '\$${remainingAmount.toStringAsFixed(2)} remaining'
+        : 'Fully Funded';
 
     return Column(
       children: [
@@ -391,7 +456,8 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                       Text(
                         'Net Overtime Hourly Rate',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+                          color: theme.colorScheme.onPrimaryContainer
+                              .withOpacity(0.8),
                         ),
                       ),
                       Text(
@@ -424,12 +490,22 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
               children: [
                 Text(
                   'Overtime Earnings Impact',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                _buildStatRow(context, 'Weekly Net Increase', '+\$${proj.weeklyOvertimeNetIncome.toStringAsFixed(2)}'),
+                _buildStatRow(
+                  context,
+                  'Weekly Net Increase',
+                  '+\$${proj.weeklyOvertimeNetIncome.toStringAsFixed(2)}',
+                ),
                 const Divider(),
-                _buildStatRow(context, 'Monthly Net Increase', '+\$${proj.monthlyOvertimeNetIncome.toStringAsFixed(2)}'),
+                _buildStatRow(
+                  context,
+                  'Monthly Net Increase',
+                  '+\$${proj.monthlyOvertimeNetIncome.toStringAsFixed(2)}',
+                ),
               ],
             ),
           ),
@@ -442,7 +518,10 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
+              side: BorderSide(
+                color: theme.colorScheme.outlineVariant,
+                width: 1,
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -458,19 +537,26 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                           children: [
                             Text(
                               targetName,
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               targetString,
-                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       if (proj.monthsSaved != null && proj.monthsSaved! > 0)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.green.shade50,
                             borderRadius: BorderRadius.circular(20),
@@ -488,25 +574,34 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                     ],
                   ),
                   const Divider(height: 32),
-                  if (proj.totalHoursNeeded != null && proj.totalHoursNeeded! > 0) ...[
+                  if (proj.totalHoursNeeded != null &&
+                      proj.totalHoursNeeded! > 0) ...[
                     Text(
                       'Psychological Goal Target',
-                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     RichText(
                       text: TextSpan(
-                        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
                         children: [
                           const TextSpan(text: 'It will take '),
                           TextSpan(
-                            text: '${proj.totalHoursNeeded!.toStringAsFixed(1)} hours',
+                            text:
+                                '${proj.totalHoursNeeded!.toStringAsFixed(1)} hours',
                             style: TextStyle(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const TextSpan(text: ' of overtime to fully fund the remaining balance.'),
+                          const TextSpan(
+                            text:
+                                ' of overtime to fully fund the remaining balance.',
+                          ),
                         ],
                       ),
                     ),
@@ -514,7 +609,9 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                   ],
                   Text(
                     'Time to Complete',
-                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (proj.monthsToCompleteStandard != null) ...[
@@ -533,8 +630,11 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                       proj.monthsToCompleteWithOvertime!,
                       theme.colorScheme.primary,
                     ),
-                  if (proj.monthsToCompleteStandard == null && proj.monthsToCompleteWithOvertime == null)
-                    const Text('Enter hours or standard contribution to estimate timeline.'),
+                  if (proj.monthsToCompleteStandard == null &&
+                      proj.monthsToCompleteWithOvertime == null)
+                    const Text(
+                      'Enter hours or standard contribution to estimate timeline.',
+                    ),
                 ],
               ),
             ),
@@ -550,14 +650,29 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          Text(value, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTimelineBar(BuildContext context, String label, double months, Color color) {
+  Widget _buildTimelineBar(
+    BuildContext context,
+    String label,
+    double months,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,7 +683,9 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
             Text(label, style: theme.textTheme.bodySmall),
             Text(
               '${months.toStringAsFixed(1)} ${months == 1.0 ? 'month' : 'months'}',
-              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),

@@ -32,11 +32,15 @@ class IncomeRepository {
   // ── Overtime Settings & Calculations ──────────────────────────────────────────
 
   Future<OvertimeSettings> getOvertimeSettings() async {
-    final r = await client.get<Map<String, dynamic>>('/income/overtime/settings');
+    final r = await client.get<Map<String, dynamic>>(
+      '/income/overtime/settings',
+    );
     return OvertimeSettings.fromJson(r.data!);
   }
 
-  Future<OvertimeSettings> updateOvertimeSettings(OvertimeSettings settings) async {
+  Future<OvertimeSettings> updateOvertimeSettings(
+    OvertimeSettings settings,
+  ) async {
     final r = await client.patch<Map<String, dynamic>>(
       '/income/overtime/settings',
       body: settings.toJson(),

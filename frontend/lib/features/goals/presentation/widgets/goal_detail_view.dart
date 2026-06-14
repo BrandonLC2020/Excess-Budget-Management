@@ -412,14 +412,12 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                         BlocBuilder<AccountBloc, AccountState>(
                           builder: (context, state) {
                             if (state is AccountLoaded) {
-                              final linkedAccounts =
-                                  state.accounts
-                                      .where(
-                                        (a) => _currentGoal.accountIds.contains(
-                                          a.id,
-                                        ),
-                                      )
-                                      .toList();
+                              final linkedAccounts = state.accounts
+                                  .where(
+                                    (a) =>
+                                        _currentGoal.accountIds.contains(a.id),
+                                  )
+                                  .toList();
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [

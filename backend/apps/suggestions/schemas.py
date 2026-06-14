@@ -1,5 +1,4 @@
-from decimal import Decimal
-from pydantic import Field, condecimal
+from pydantic import condecimal
 from ninja import Schema
 
 

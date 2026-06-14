@@ -47,7 +47,9 @@ class BudgetApp extends StatelessWidget {
         RepositoryProvider(create: (_) => BudgetRepository(client: apiClient)),
         RepositoryProvider(create: (_) => GoalRepository(client: apiClient)),
         RepositoryProvider(create: (_) => ProfileRepository(client: apiClient)),
-        RepositoryProvider(create: (_) => SuggestionRepository(client: apiClient)),
+        RepositoryProvider(
+          create: (_) => SuggestionRepository(client: apiClient),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -56,14 +58,12 @@ class BudgetApp extends StatelessWidget {
                 AuthBloc(authService: authService)..add(AuthCheckRequested()),
           ),
           BlocProvider<AccountBloc>(
-            create: (context) => AccountBloc(
-              repository: context.read<AccountRepository>(),
-            ),
+            create: (context) =>
+                AccountBloc(repository: context.read<AccountRepository>()),
           ),
           BlocProvider<BudgetBloc>(
-            create: (context) => BudgetBloc(
-              repository: context.read<BudgetRepository>(),
-            ),
+            create: (context) =>
+                BudgetBloc(repository: context.read<BudgetRepository>()),
           ),
           BlocProvider<DashboardBloc>(
             create: (context) => DashboardBloc(

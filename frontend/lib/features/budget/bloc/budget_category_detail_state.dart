@@ -35,11 +35,5 @@ class BudgetCategoryDetailState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-    category,
-    expenses,
-    income,
-    isLoading,
-    error,
-  ];
+  List<Object?> get props => [category, expenses, income, isLoading, error];
 }

@@ -8,15 +8,15 @@ class AuthInterceptor extends QueuedInterceptor {
     required this.tokenStore,
     required this.onUnauthenticated,
   }) : _refreshDio = Dio(
-          BaseOptions(
-            baseUrl: dio.options.baseUrl,
-            connectTimeout: dio.options.connectTimeout,
-            receiveTimeout: dio.options.receiveTimeout,
-            headers: Map.of(dio.options.headers),
-            contentType: dio.options.contentType,
-            responseType: dio.options.responseType,
-          ),
-        ) {
+         BaseOptions(
+           baseUrl: dio.options.baseUrl,
+           connectTimeout: dio.options.connectTimeout,
+           receiveTimeout: dio.options.receiveTimeout,
+           headers: Map.of(dio.options.headers),
+           contentType: dio.options.contentType,
+           responseType: dio.options.responseType,
+         ),
+       ) {
     // Share the same adapter so tests can mock the refresh endpoint too.
     _refreshDio.httpClientAdapter = dio.httpClientAdapter;
   }

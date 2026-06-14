@@ -19,8 +19,9 @@ class BudgetRepository {
   /// Emits the current list immediately, then every 30 seconds.
   Stream<List<BudgetCategory>> getBudgetCategoriesStream() async* {
     yield await getBudgetCategories();
-    yield* Stream.periodic(const Duration(seconds: 30))
-        .asyncMap((_) => getBudgetCategories());
+    yield* Stream.periodic(
+      const Duration(seconds: 30),
+    ).asyncMap((_) => getBudgetCategories());
   }
 
   Future<List<Expense>> getExpenses() async {
@@ -30,8 +31,7 @@ class BudgetRepository {
         .toList();
   }
 
-  Future<void> deleteExpense(String id) =>
-      client.delete<void>('/expenses/$id');
+  Future<void> deleteExpense(String id) => client.delete<void>('/expenses/$id');
 
   Future<BudgetCategory> addBudgetCategory(
     String name,

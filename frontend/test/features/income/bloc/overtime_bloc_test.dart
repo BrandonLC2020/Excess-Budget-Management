@@ -9,6 +9,7 @@ import 'package:frontend/features/income/models/overtime_settings.dart';
 import 'package:frontend/features/income/repositories/income_repository.dart';
 
 class MockIncomeRepository extends Mock implements IncomeRepository {}
+
 class MockGoalRepository extends Mock implements GoalRepository {}
 
 void main() {
@@ -72,15 +73,19 @@ void main() {
   blocTest<OvertimeBloc, OvertimeState>(
     'FetchOvertimeData loads settings and goals, then triggers projection',
     build: () {
-      when(() => mockIncomeRepository.getOvertimeSettings())
-          .thenAnswer((_) async => testSettings);
-      when(() => mockGoalRepository.getGoals())
-          .thenAnswer((_) async => testGoals);
-      when(() => mockIncomeRepository.getOvertimeProjection(
-            overtimeHoursPerWeek: 0.0,
-            standardContribution: 0.0,
-            goalId: 'goal-1',
-          )).thenAnswer((_) async => testProjection);
+      when(
+        () => mockIncomeRepository.getOvertimeSettings(),
+      ).thenAnswer((_) async => testSettings);
+      when(
+        () => mockGoalRepository.getGoals(),
+      ).thenAnswer((_) async => testGoals);
+      when(
+        () => mockIncomeRepository.getOvertimeProjection(
+          overtimeHoursPerWeek: 0.0,
+          standardContribution: 0.0,
+          goalId: 'goal-1',
+        ),
+      ).thenAnswer((_) async => testProjection);
       return overtimeBloc;
     },
     act: (bloc) => bloc.add(FetchOvertimeData()),
@@ -94,7 +99,11 @@ void main() {
           .having((s) => s.goals, 'goals', testGoals)
           .having((s) => s.selectedGoalId, 'selectedGoalId', 'goal-1'),
       // 3. Triggers calculation
-      isA<OvertimeState>().having((s) => s.isCalculating, 'isCalculating', true),
+      isA<OvertimeState>().having(
+        (s) => s.isCalculating,
+        'isCalculating',
+        true,
+      ),
       // 4. Receives projection
       isA<OvertimeState>()
           .having((s) => s.isCalculating, 'isCalculating', false)
@@ -106,18 +115,22 @@ void main() {
     'UpdateOvertimeHours triggers projection calculation',
     build: () {
       // Seed state
-      overtimeBloc.emit(OvertimeState(
-        settings: testSettings,
-        goals: testGoals,
-        selectedGoalId: 'goal-1',
-        overtimeHoursPerWeek: 0.0,
-      ));
-      
-      when(() => mockIncomeRepository.getOvertimeProjection(
-            overtimeHoursPerWeek: 10.0,
-            standardContribution: 0.0,
-            goalId: 'goal-1',
-          )).thenAnswer((_) async => testProjection);
+      overtimeBloc.emit(
+        OvertimeState(
+          settings: testSettings,
+          goals: testGoals,
+          selectedGoalId: 'goal-1',
+          overtimeHoursPerWeek: 0.0,
+        ),
+      );
+
+      when(
+        () => mockIncomeRepository.getOvertimeProjection(
+          overtimeHoursPerWeek: 10.0,
+          standardContribution: 0.0,
+          goalId: 'goal-1',
+        ),
+      ).thenAnswer((_) async => testProjection);
       return overtimeBloc;
     },
     act: (bloc) => bloc.add(UpdateOvertimeHours(10.0)),

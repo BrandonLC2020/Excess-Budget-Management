@@ -17,13 +17,15 @@ class _QueueAdapter implements HttpClientAdapter {
   final _queue = <ResponseBody>[];
 
   void enqueue(int status, Object? body) {
-    _queue.add(ResponseBody.fromString(
-      body != null ? jsonEncode(body) : '',
-      status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    ));
+    _queue.add(
+      ResponseBody.fromString(
+        body != null ? jsonEncode(body) : '',
+        status,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      ),
+    );
   }
 
   @override
@@ -43,27 +45,27 @@ class _QueueAdapter implements HttpClientAdapter {
 Map<String, dynamic> _suggestionResultJson({
   List<Map<String, dynamic>>? allocations,
   double totalAllocated = 500.0,
-}) =>
-    {
-      'allocations': allocations ??
-          [
-            {
-              'type': 'goal',
-              'id': 'goal-1',
-              'name': 'Emergency Fund',
-              'amount': 300.0,
-              'reason': 'Build safety net',
-            },
-            {
-              'type': 'goal',
-              'id': 'goal-2',
-              'name': 'Vacation',
-              'amount': 200.0,
-              'reason': 'Save for trip',
-            },
-          ],
-      'totalAllocated': totalAllocated,
-    };
+}) => {
+  'allocations':
+      allocations ??
+      [
+        {
+          'type': 'goal',
+          'id': 'goal-1',
+          'name': 'Emergency Fund',
+          'amount': 300.0,
+          'reason': 'Build safety net',
+        },
+        {
+          'type': 'goal',
+          'id': 'goal-2',
+          'name': 'Vacation',
+          'amount': 200.0,
+          'reason': 'Save for trip',
+        },
+      ],
+  'totalAllocated': totalAllocated,
+};
 
 void main() {
   late _QueueAdapter adapter;
@@ -93,18 +95,21 @@ void main() {
   });
 
   group('SuggestionRepository.getSuggestions', () {
-    test('happy path: issues POST /suggestions/generate and returns SuggestionResult', () async {
-      adapter.enqueue(200, _suggestionResultJson(totalAllocated: 500.0));
+    test(
+      'happy path: issues POST /suggestions/generate and returns SuggestionResult',
+      () async {
+        adapter.enqueue(200, _suggestionResultJson(totalAllocated: 500.0));
 
-      final result = await repository.getSuggestions(excessFunds: 500.0);
+        final result = await repository.getSuggestions(excessFunds: 500.0);
 
-      expect(result.totalAllocated, 500.0);
-      expect(result.allocations.length, 2);
-      expect(result.allocations[0].id, 'goal-1');
-      expect(result.allocations[0].name, 'Emergency Fund');
-      expect(result.allocations[0].amount, 300.0);
-      expect(result.allocations[1].id, 'goal-2');
-    });
+        expect(result.totalAllocated, 500.0);
+        expect(result.allocations.length, 2);
+        expect(result.allocations[0].id, 'goal-1');
+        expect(result.allocations[0].name, 'Emergency Fund');
+        expect(result.allocations[0].amount, 300.0);
+        expect(result.allocations[1].id, 'goal-2');
+      },
+    );
 
     test('502 response throws ApiUpstreamException', () async {
       adapter.enqueue(502, {'detail': 'Bad Gateway'});

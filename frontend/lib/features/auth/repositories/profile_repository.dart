@@ -12,11 +12,14 @@ class ProfileRepository {
   }
 
   Future<void> updateProfile(UserProfile profile) async {
-    await client.patch<Map<String, dynamic>>('/auth/me', body: {
-      'full_name': profile.fullName,
-      'avatar_url': profile.avatarUrl,
-      'default_savings_ratio': profile.defaultSavingsRatio,
-    });
+    await client.patch<Map<String, dynamic>>(
+      '/auth/me',
+      body: {
+        'full_name': profile.fullName,
+        'avatar_url': profile.avatarUrl,
+        'default_savings_ratio': profile.defaultSavingsRatio,
+      },
+    );
   }
 
   Future<String> uploadAvatar(XFile file) async {
@@ -33,7 +36,9 @@ class ProfileRepository {
   }
 
   Future<void> updateDefaultSavingsRatio(double ratio) async {
-    await client.patch<Map<String, dynamic>>('/auth/me',
-        body: {'default_savings_ratio': ratio});
+    await client.patch<Map<String, dynamic>>(
+      '/auth/me',
+      body: {'default_savings_ratio': ratio},
+    );
   }
 }

@@ -16,13 +16,15 @@ class _QueueAdapter implements HttpClientAdapter {
   final _queue = <ResponseBody>[];
 
   void enqueue(int status, Object? body) {
-    _queue.add(ResponseBody.fromString(
-      body != null ? jsonEncode(body) : '',
-      status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    ));
+    _queue.add(
+      ResponseBody.fromString(
+        body != null ? jsonEncode(body) : '',
+        status,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      ),
+    );
   }
 
   @override
@@ -48,17 +50,16 @@ Map<String, dynamic> _incomeJson({
   String createdAt = '2024-03-20T09:00:00Z',
   String? accountId,
   String? budgetCategoryId,
-}) =>
-    {
-      'id': id,
-      'user_id': userId,
-      'amount': amount,
-      'description': description,
-      'date_received': dateReceived,
-      'created_at': createdAt,
-      'account_id': accountId,
-      'budget_category_id': budgetCategoryId,
-    };
+}) => {
+  'id': id,
+  'user_id': userId,
+  'amount': amount,
+  'description': description,
+  'date_received': dateReceived,
+  'created_at': createdAt,
+  'account_id': accountId,
+  'budget_category_id': budgetCategoryId,
+};
 
 void main() {
   late _QueueAdapter adapter;
@@ -140,10 +141,7 @@ void main() {
       ];
 
       // Should complete without throwing (uses up both queued responses)
-      await expectLater(
-        repository.bulkInsertExtraIncome(entries),
-        completes,
-      );
+      await expectLater(repository.bulkInsertExtraIncome(entries), completes);
     });
   });
 }

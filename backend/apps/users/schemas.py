@@ -13,6 +13,10 @@ class LoginIn(Schema):
     password: str
 
 
+class Auth0LoginIn(Schema):
+    token: str
+
+
 class RefreshIn(Schema):
     refresh: str
 

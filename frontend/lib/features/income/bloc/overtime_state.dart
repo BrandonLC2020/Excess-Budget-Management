@@ -44,11 +44,17 @@ class OvertimeState {
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       isCalculating: isCalculating ?? this.isCalculating,
-      errorMessage: errorMessage != null ? errorMessage.value : this.errorMessage,
+      errorMessage: errorMessage != null
+          ? errorMessage.value
+          : this.errorMessage,
       settings: settings ?? this.settings,
       goals: goals ?? this.goals,
-      selectedGoalId: selectedGoalId != null ? selectedGoalId.value : this.selectedGoalId,
-      selectedSubgoalId: selectedSubgoalId != null ? selectedSubgoalId.value : this.selectedSubgoalId,
+      selectedGoalId: selectedGoalId != null
+          ? selectedGoalId.value
+          : this.selectedGoalId,
+      selectedSubgoalId: selectedSubgoalId != null
+          ? selectedSubgoalId.value
+          : this.selectedSubgoalId,
       overtimeHoursPerWeek: overtimeHoursPerWeek ?? this.overtimeHoursPerWeek,
       standardContribution: standardContribution ?? this.standardContribution,
       projection: projection != null ? projection.value : this.projection,

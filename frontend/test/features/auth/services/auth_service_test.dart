@@ -19,13 +19,15 @@ class _QueueAdapter implements HttpClientAdapter {
   final _queue = <ResponseBody>[];
 
   void enqueue(int status, Object? body) {
-    _queue.add(ResponseBody.fromString(
-      body != null ? jsonEncode(body) : '',
-      status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    ));
+    _queue.add(
+      ResponseBody.fromString(
+        body != null ? jsonEncode(body) : '',
+        status,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      ),
+    );
   }
 
   @override
@@ -70,56 +72,98 @@ void main() {
   });
 
   group('AuthService.signIn', () {
-    test('happy path: POSTs to /auth/login, persists tokens, returns UserProfile',
-        () async {
-      adapter.enqueue(200, {
-        'access': 'access-abc',
-        'refresh': 'refresh-xyz',
-        'user': {
-          'id': 'user-1',
-          'email': 'alice@example.com',
-          'full_name': 'Alice',
-          'avatar_url': null,
-          'default_savings_ratio': 0.3,
-          'date_joined': '2024-01-01T00:00:00Z',
-        },
-      });
+    test(
+      'happy path: POSTs to /auth/login, persists tokens, returns UserProfile',
+      () async {
+        adapter.enqueue(200, {
+          'access': 'access-abc',
+          'refresh': 'refresh-xyz',
+          'user': {
+            'id': 'user-1',
+            'email': 'alice@example.com',
+            'full_name': 'Alice',
+            'avatar_url': null,
+            'default_savings_ratio': 0.3,
+            'date_joined': '2024-01-01T00:00:00Z',
+          },
+        });
 
-      final profile = await authService.signIn('alice@example.com', 'password1');
+        final profile = await authService.signIn(
+          'alice@example.com',
+          'password1',
+        );
 
-      expect(profile.id, 'user-1');
-      expect(profile.email, 'alice@example.com');
-      expect(profile.fullName, 'Alice');
-      expect(profile.defaultSavingsRatio, 0.3);
+        expect(profile.id, 'user-1');
+        expect(profile.email, 'alice@example.com');
+        expect(profile.fullName, 'Alice');
+        expect(profile.defaultSavingsRatio, 0.3);
 
-      verify(() => tokenStore.write('access-abc', 'refresh-xyz')).called(1);
-    });
+        verify(() => tokenStore.write('access-abc', 'refresh-xyz')).called(1);
+      },
+    );
+  });
+
+  group('AuthService.signInWithAuth0', () {
+    test(
+      'happy path: POSTs to /auth/auth0, persists tokens, returns UserProfile',
+      () async {
+        adapter.enqueue(200, {
+          'access': 'access-auth0',
+          'refresh': 'refresh-auth0',
+          'user': {
+            'id': 'user-auth0',
+            'email': 'auth0@example.com',
+            'full_name': 'Auth0 User',
+            'avatar_url': 'https://example.com/avatar.png',
+            'default_savings_ratio': 0.5,
+            'date_joined': '2024-01-01T00:00:00Z',
+          },
+        });
+
+        final profile = await authService.signInWithAuth0('auth0-token-123');
+
+        expect(profile.id, 'user-auth0');
+        expect(profile.email, 'auth0@example.com');
+        expect(profile.fullName, 'Auth0 User');
+        expect(profile.avatarUrl, 'https://example.com/avatar.png');
+        expect(profile.defaultSavingsRatio, 0.5);
+
+        verify(
+          () => tokenStore.write('access-auth0', 'refresh-auth0'),
+        ).called(1);
+      },
+    );
   });
 
   group('AuthService.signUp', () {
-    test('happy path: POSTs to /auth/signup, persists tokens, returns UserProfile',
-        () async {
-      adapter.enqueue(201, {
-        'access': 'access-new',
-        'refresh': 'refresh-new',
-        'user': {
-          'id': 'user-2',
-          'email': 'bob@example.com',
-          'full_name': '',
-          'avatar_url': null,
-          'default_savings_ratio': 0.5,
-          'date_joined': '2024-01-01T00:00:00Z',
-        },
-      });
+    test(
+      'happy path: POSTs to /auth/signup, persists tokens, returns UserProfile',
+      () async {
+        adapter.enqueue(201, {
+          'access': 'access-new',
+          'refresh': 'refresh-new',
+          'user': {
+            'id': 'user-2',
+            'email': 'bob@example.com',
+            'full_name': '',
+            'avatar_url': null,
+            'default_savings_ratio': 0.5,
+            'date_joined': '2024-01-01T00:00:00Z',
+          },
+        });
 
-      final profile = await authService.signUp('bob@example.com', 'password2');
+        final profile = await authService.signUp(
+          'bob@example.com',
+          'password2',
+        );
 
-      expect(profile.id, 'user-2');
-      expect(profile.email, 'bob@example.com');
-      expect(profile.defaultSavingsRatio, 0.5);
+        expect(profile.id, 'user-2');
+        expect(profile.email, 'bob@example.com');
+        expect(profile.defaultSavingsRatio, 0.5);
 
-      verify(() => tokenStore.write('access-new', 'refresh-new')).called(1);
-    });
+        verify(() => tokenStore.write('access-new', 'refresh-new')).called(1);
+      },
+    );
   });
 
   group('AuthService.currentUser', () {
@@ -142,8 +186,12 @@ void main() {
 
     test('returns null when /auth/me returns 401', () async {
       // Two 401s because the AuthInterceptor will also attempt a refresh
-      adapter.enqueue(401, {'error': {'code': 'auth_error', 'message': 'no token'}});
-      adapter.enqueue(401, {'error': {'code': 'auth_error', 'message': 'no refresh'}});
+      adapter.enqueue(401, {
+        'error': {'code': 'auth_error', 'message': 'no token'},
+      });
+      adapter.enqueue(401, {
+        'error': {'code': 'auth_error', 'message': 'no refresh'},
+      });
 
       final profile = await authService.currentUser();
 

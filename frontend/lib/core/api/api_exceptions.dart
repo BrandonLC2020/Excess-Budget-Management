@@ -8,7 +8,8 @@ sealed class ApiException implements Exception {
 }
 
 class ApiValidationException extends ApiException {
-  const ApiValidationException(String m, [Object? d]) : super('validation_error', m, d);
+  const ApiValidationException(String m, [Object? d])
+    : super('validation_error', m, d);
 }
 
 class ApiAuthException extends ApiException {
@@ -28,7 +29,8 @@ class ApiConflictException extends ApiException {
 }
 
 class ApiUpstreamException extends ApiException {
-  const ApiUpstreamException(String m, [Object? d]) : super('upstream_error', m, d);
+  const ApiUpstreamException(String m, [Object? d])
+    : super('upstream_error', m, d);
 }
 
 class ApiNetworkException extends ApiException {

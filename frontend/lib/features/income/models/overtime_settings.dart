@@ -15,11 +15,18 @@ class OvertimeSettings {
 
   factory OvertimeSettings.fromJson(Map<String, dynamic> json) {
     return OvertimeSettings(
-      hourlyBaseRate: double.tryParse(json['hourly_base_rate'].toString()) ?? 0.0,
-      overtimeMultiplier: double.tryParse(json['overtime_multiplier'].toString()) ?? 1.5,
-      estimatedTaxRate: double.tryParse(json['estimated_tax_rate'].toString()) ?? 0.25,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'].toString()) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'].toString()) : null,
+      hourlyBaseRate:
+          double.tryParse(json['hourly_base_rate'].toString()) ?? 0.0,
+      overtimeMultiplier:
+          double.tryParse(json['overtime_multiplier'].toString()) ?? 1.5,
+      estimatedTaxRate:
+          double.tryParse(json['estimated_tax_rate'].toString()) ?? 0.25,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'].toString())
+          : null,
     );
   }
 

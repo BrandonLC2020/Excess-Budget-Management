@@ -60,8 +60,9 @@ class _BulkExpenseTabState extends State<BulkExpenseTab> {
                               children: [
                                 Text(
                                   'Expense ${index + 1}',
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                 ),
                                 const Spacer(),
                                 IconButton(
@@ -69,10 +70,9 @@ class _BulkExpenseTabState extends State<BulkExpenseTab> {
                                     Icons.delete_outline,
                                     color: Colors.red,
                                   ),
-                                  onPressed:
-                                      () => context
-                                          .read<BulkExpensesBloc>()
-                                          .add(RemoveExpenseRow(row.id)),
+                                  onPressed: () => context
+                                      .read<BulkExpensesBloc>()
+                                      .add(RemoveExpenseRow(row.id)),
                                 ),
                               ],
                             ),
@@ -91,18 +91,15 @@ class _BulkExpenseTabState extends State<BulkExpenseTab> {
                                           decimal: true,
                                         ),
                                     validator: ValidationUtils.validateAmount,
-                                    onChanged:
-                                        (val) =>
-                                            context
-                                                .read<BulkExpensesBloc>()
-                                                .add(
-                                                  UpdateExpenseRow(
-                                                    rowId: row.id,
-                                                    amount: Wrapped(
-                                                      double.tryParse(val),
-                                                    ),
-                                                  ),
-                                                ),
+                                    onChanged: (val) =>
+                                        context.read<BulkExpensesBloc>().add(
+                                          UpdateExpenseRow(
+                                            rowId: row.id,
+                                            amount: Wrapped(
+                                              double.tryParse(val),
+                                            ),
+                                          ),
+                                        ),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -119,33 +116,27 @@ class _BulkExpenseTabState extends State<BulkExpenseTab> {
                                         decoration: const InputDecoration(
                                           labelText: 'Category',
                                         ),
-                                        validator:
-                                            (val) =>
-                                                ValidationUtils.validateSelection(
-                                                  val,
-                                                  'Category',
-                                                ),
-                                        items:
-                                            categories
-                                                .map(
-                                                  (c) => DropdownMenuItem(
-                                                    value: c.id,
-                                                    child: Text(c.name),
-                                                  ),
-                                                )
-                                                .toList(),
-                                        onChanged:
-                                            (val) =>
-                                                context
-                                                    .read<BulkExpensesBloc>()
-                                                    .add(
-                                                      UpdateExpenseRow(
-                                                        rowId: row.id,
-                                                        budgetCategoryId: Wrapped(
-                                                          val,
-                                                        ),
-                                                      ),
-                                                    ),
+                                        validator: (val) =>
+                                            ValidationUtils.validateSelection(
+                                              val,
+                                              'Category',
+                                            ),
+                                        items: categories
+                                            .map(
+                                              (c) => DropdownMenuItem(
+                                                value: c.id,
+                                                child: Text(c.name),
+                                              ),
+                                            )
+                                            .toList(),
+                                        onChanged: (val) => context
+                                            .read<BulkExpensesBloc>()
+                                            .add(
+                                              UpdateExpenseRow(
+                                                rowId: row.id,
+                                                budgetCategoryId: Wrapped(val),
+                                              ),
+                                            ),
                                       );
                                     },
                                   ),
@@ -182,16 +173,13 @@ class _BulkExpenseTabState extends State<BulkExpenseTab> {
                                       ),
                                     ),
                                   ],
-                                  onChanged:
-                                      (val) =>
-                                          context
-                                              .read<BulkExpensesBloc>()
-                                              .add(
-                                                UpdateExpenseRow(
-                                                  rowId: row.id,
-                                                  accountId: Wrapped(val),
-                                                ),
-                                              ),
+                                  onChanged: (val) =>
+                                      context.read<BulkExpensesBloc>().add(
+                                        UpdateExpenseRow(
+                                          rowId: row.id,
+                                          accountId: Wrapped(val),
+                                        ),
+                                      ),
                                 );
                               },
                             ),
@@ -204,22 +192,18 @@ class _BulkExpenseTabState extends State<BulkExpenseTab> {
                                     decoration: const InputDecoration(
                                       labelText: 'Description',
                                     ),
-                                    validator:
-                                        (val) =>
-                                            ValidationUtils.validateRequired(
-                                              val,
-                                              'Description',
-                                            ),
-                                    onChanged:
-                                        (val) =>
-                                            context
-                                                .read<BulkExpensesBloc>()
-                                                .add(
-                                                  UpdateExpenseRow(
-                                                    rowId: row.id,
-                                                    description: Wrapped(val),
-                                                  ),
-                                                ),
+                                    validator: (val) =>
+                                        ValidationUtils.validateRequired(
+                                          val,
+                                          'Description',
+                                        ),
+                                    onChanged: (val) =>
+                                        context.read<BulkExpensesBloc>().add(
+                                          UpdateExpenseRow(
+                                            rowId: row.id,
+                                            description: Wrapped(val),
+                                          ),
+                                        ),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -275,35 +259,29 @@ class _BulkExpenseTabState extends State<BulkExpenseTab> {
                 child: Row(
                   children: [
                     OutlinedButton.icon(
-                      onPressed:
-                          () => context
-                              .read<BulkExpensesBloc>()
-                              .add(AddExpenseRow()),
+                      onPressed: () =>
+                          context.read<BulkExpensesBloc>().add(AddExpenseRow()),
                       icon: const Icon(Icons.add),
                       label: const Text('Add Row'),
                     ),
                     const Spacer(),
                     FilledButton.icon(
-                      onPressed:
-                          state.isSubmitting
-                              ? null
-                              : () {
-                                if (_formKey.currentState!.validate()) {
-                                  context.read<BulkExpensesBloc>().add(
-                                    SubmitBulkExpenses(),
-                                  );
-                                }
-                              },
-                      icon:
-                          state.isSubmitting
-                              ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : const Icon(Icons.save),
+                      onPressed: state.isSubmitting
+                          ? null
+                          : () {
+                              if (_formKey.currentState!.validate()) {
+                                context.read<BulkExpensesBloc>().add(
+                                  SubmitBulkExpenses(),
+                                );
+                              }
+                            },
+                      icon: state.isSubmitting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save),
                       label: const Text('Save All Expenses'),
                     ),
                   ],

@@ -25,13 +25,15 @@ class _QueueAdapter implements HttpClientAdapter {
   final _queue = <ResponseBody>[];
 
   void enqueue(int status, Object? body) {
-    _queue.add(ResponseBody.fromString(
-      body != null ? jsonEncode(body) : '',
-      status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    ));
+    _queue.add(
+      ResponseBody.fromString(
+        body != null ? jsonEncode(body) : '',
+        status,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      ),
+    );
   }
 
   @override
@@ -67,23 +69,25 @@ void main() {
     when(() => store.write(any(), any())).thenAnswer((_) async {});
     when(() => store.clear()).thenAnswer((_) async {});
 
-    dio.interceptors.add(AuthInterceptor(
-      dio: dio,
-      tokenStore: store,
-      onUnauthenticated: () async {
-        onUnauthCalls++;
-      },
-    ));
+    dio.interceptors.add(
+      AuthInterceptor(
+        dio: dio,
+        tokenStore: store,
+        onUnauthenticated: () async {
+          onUnauthCalls++;
+        },
+      ),
+    );
   });
 
   test('refreshes once on 401, retries original request', () async {
     // Queue: original /accounts → 401, /auth/refresh → 200, retry /accounts → 200
     adapter.enqueue(401, {
-      'error': {'code': 'auth_error', 'message': 'expired'}
+      'error': {'code': 'auth_error', 'message': 'expired'},
     });
     adapter.enqueue(200, {'access': 'new-access', 'refresh': 'r2'});
     adapter.enqueue(200, [
-      {'id': '1'}
+      {'id': '1'},
     ]);
 
     final r = await dio.get('/accounts');
@@ -93,17 +97,17 @@ void main() {
     expect(onUnauthCalls, 0);
   });
 
-  test('clears tokens and signals unauthenticated when refresh fails', () async {
-    // Queue: original /accounts → 401, /auth/refresh → 401
-    adapter.enqueue(401, {'error': 'auth_error'});
-    adapter.enqueue(401, {'error': 'auth_error'});
+  test(
+    'clears tokens and signals unauthenticated when refresh fails',
+    () async {
+      // Queue: original /accounts → 401, /auth/refresh → 401
+      adapter.enqueue(401, {'error': 'auth_error'});
+      adapter.enqueue(401, {'error': 'auth_error'});
 
-    await expectLater(
-      dio.get('/accounts'),
-      throwsA(isA<DioException>()),
-    );
+      await expectLater(dio.get('/accounts'), throwsA(isA<DioException>()));
 
-    verify(() => store.clear()).called(1);
-    expect(onUnauthCalls, 1);
-  });
+      verify(() => store.clear()).called(1);
+      expect(onUnauthCalls, 1);
+    },
+  );
 }

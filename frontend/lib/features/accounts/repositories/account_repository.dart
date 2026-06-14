@@ -10,15 +10,18 @@ class AccountRepository {
 
   Future<List<Account>> getAccounts() async {
     final r = await client.get<List<dynamic>>('/accounts');
-    return r.data!.map((e) => Account.fromJson(e as Map<String, dynamic>)).toList();
+    return r.data!
+        .map((e) => Account.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Polled replacement for the old Supabase realtime stream.
   /// Emits the current account list immediately, then every 30 seconds.
   Stream<List<Account>> getAccountsStream() async* {
     yield await getAccounts();
-    yield* Stream.periodic(const Duration(seconds: 30))
-        .asyncMap((_) => getAccounts());
+    yield* Stream.periodic(
+      const Duration(seconds: 30),
+    ).asyncMap((_) => getAccounts());
   }
 
   Future<Account> addAccount(String name, double balance) async {
@@ -45,15 +48,16 @@ class AccountRepository {
     return Account.fromJson(r.data!);
   }
 
-  Future<void> deleteAccount(String id) =>
-      client.delete<void>('/accounts/$id');
+  Future<void> deleteAccount(String id) => client.delete<void>('/accounts/$id');
 
   Future<List<Expense>> getAccountExpenses(String accountId) async {
     final r = await client.get<List<dynamic>>(
       '/expenses',
       query: {'account_id': accountId},
     );
-    return r.data!.map((e) => Expense.fromJson(e as Map<String, dynamic>)).toList();
+    return r.data!
+        .map((e) => Expense.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<Income>> getAccountIncome(String accountId) async {
@@ -61,6 +65,8 @@ class AccountRepository {
       '/income/extra',
       query: {'account_id': accountId},
     );
-    return r.data!.map((e) => Income.fromJson(e as Map<String, dynamic>)).toList();
+    return r.data!
+        .map((e) => Income.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

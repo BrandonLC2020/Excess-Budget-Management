@@ -32,28 +32,27 @@ class Goal extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        name,
-        targetAmount,
-        currentAmount,
-        targetDate,
-        type,
-        category,
-        createdAt,
-        subGoals,
-        accountIds,
-      ];
+    id,
+    userId,
+    name,
+    targetAmount,
+    currentAmount,
+    targetDate,
+    type,
+    category,
+    createdAt,
+    subGoals,
+    accountIds,
+  ];
 
   factory Goal.fromJson(Map<String, dynamic> json) {
     // goal_accounts is Supabase-only join syntax; Django API uses a flat list
     // under the same key populated via GoalOut (not present yet) or omitted.
     List<String> parsedAccountIds = [];
     if (json['goal_accounts'] != null) {
-      parsedAccountIds =
-          (json['goal_accounts'] as List)
-              .map((e) => e['account_id'] as String)
-              .toList();
+      parsedAccountIds = (json['goal_accounts'] as List)
+          .map((e) => e['account_id'] as String)
+          .toList();
     }
 
     return Goal(
@@ -63,10 +62,9 @@ class Goal extends Equatable {
       name: json['name'] as String,
       targetAmount: (json['target_amount'] as num).toDouble(),
       currentAmount: (json['current_amount'] as num).toDouble(),
-      targetDate:
-          json['target_date'] != null
-              ? DateTime.parse(json['target_date'] as String)
-              : null,
+      targetDate: json['target_date'] != null
+          ? DateTime.parse(json['target_date'] as String)
+          : null,
       type: json['type'] as String,
       category: json['category'] as String? ?? 'savings',
       createdAt: DateTime.parse(json['created_at'] as String),

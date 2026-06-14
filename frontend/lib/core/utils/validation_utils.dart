@@ -10,7 +10,7 @@ class ValidationUtils {
     if (amount <= 0) {
       return 'Amount must be greater than zero';
     }
-    
+
     // Check for more than 2 decimal places
     if (value.contains('.')) {
       final decimals = value.split('.')[1];
@@ -18,7 +18,7 @@ class ValidationUtils {
         return 'Maximum 2 decimal places allowed';
       }
     }
-    
+
     return null;
   }
 

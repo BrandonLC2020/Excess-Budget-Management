@@ -30,6 +30,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError(e.message));
       }
     });
+    on<AuthAuth0LoginRequested>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        final user = await authService.signInWithAuth0(event.token);
+        emit(AuthAuthenticated(user));
+      } on ApiException catch (e) {
+        emit(AuthError(e.message));
+      }
+    });
     on<AuthLogoutRequested>((event, emit) async {
       emit(AuthLoading());
       await authService.signOut();

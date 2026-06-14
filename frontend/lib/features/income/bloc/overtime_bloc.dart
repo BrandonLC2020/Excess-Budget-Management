@@ -13,10 +13,8 @@ class OvertimeBloc extends Bloc<OvertimeEvent, OvertimeState> {
   final IncomeRepository incomeRepository;
   final GoalRepository goalRepository;
 
-  OvertimeBloc({
-    required this.incomeRepository,
-    required this.goalRepository,
-  }) : super(OvertimeState()) {
+  OvertimeBloc({required this.incomeRepository, required this.goalRepository})
+    : super(OvertimeState()) {
     on<FetchOvertimeData>(_onFetchOvertimeData);
     on<UpdateOvertimeSettingsField>(_onUpdateOvertimeSettingsField);
     on<UpdateOvertimeHours>(_onUpdateOvertimeHours);
@@ -46,19 +44,20 @@ class OvertimeBloc extends Bloc<OvertimeEvent, OvertimeState> {
         }
       }
 
-      emit(state.copyWith(
-        isLoading: false,
-        settings: settings,
-        goals: goals,
-        selectedGoalId: Wrapped(defaultGoalId),
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          settings: settings,
+          goals: goals,
+          selectedGoalId: Wrapped(defaultGoalId),
+        ),
+      );
 
       add(_CalculateProjections());
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: Wrapped(e.toString()),
-      ));
+      emit(
+        state.copyWith(isLoading: false, errorMessage: Wrapped(e.toString())),
+      );
     }
   }
 
@@ -67,7 +66,7 @@ class OvertimeBloc extends Bloc<OvertimeEvent, OvertimeState> {
     Emitter<OvertimeState> emit,
   ) {
     if (state.settings == null) return;
-    
+
     final newSettings = state.settings!.copyWith(
       hourlyBaseRate: event.hourlyBaseRate,
       overtimeMultiplier: event.overtimeMultiplier,
@@ -98,10 +97,12 @@ class OvertimeBloc extends Bloc<OvertimeEvent, OvertimeState> {
     SelectGoalOrSubgoal event,
     Emitter<OvertimeState> emit,
   ) {
-    emit(state.copyWith(
-      selectedGoalId: Wrapped(event.goalId),
-      selectedSubgoalId: Wrapped(event.subgoalId),
-    ));
+    emit(
+      state.copyWith(
+        selectedGoalId: Wrapped(event.goalId),
+        selectedSubgoalId: Wrapped(event.subgoalId),
+      ),
+    );
     add(_CalculateProjections());
   }
 
@@ -110,17 +111,18 @@ class OvertimeBloc extends Bloc<OvertimeEvent, OvertimeState> {
     Emitter<OvertimeState> emit,
   ) async {
     if (state.settings == null) return;
-    
+
     emit(state.copyWith(isSaving: true, errorMessage: const Wrapped(null)));
     try {
-      final savedSettings = await incomeRepository.updateOvertimeSettings(state.settings!);
+      final savedSettings = await incomeRepository.updateOvertimeSettings(
+        state.settings!,
+      );
       emit(state.copyWith(isSaving: false, settings: savedSettings));
       add(_CalculateProjections());
     } catch (e) {
-      emit(state.copyWith(
-        isSaving: false,
-        errorMessage: Wrapped(e.toString()),
-      ));
+      emit(
+        state.copyWith(isSaving: false, errorMessage: Wrapped(e.toString())),
+      );
     }
   }
 
@@ -129,7 +131,7 @@ class OvertimeBloc extends Bloc<OvertimeEvent, OvertimeState> {
     Emitter<OvertimeState> emit,
   ) async {
     if (state.settings == null) return;
-    
+
     emit(state.copyWith(isCalculating: true));
     try {
       final projection = await incomeRepository.getOvertimeProjection(
@@ -138,15 +140,16 @@ class OvertimeBloc extends Bloc<OvertimeEvent, OvertimeState> {
         goalId: state.selectedGoalId,
         subgoalId: state.selectedSubgoalId,
       );
-      emit(state.copyWith(
-        isCalculating: false,
-        projection: Wrapped(projection),
-      ));
+      emit(
+        state.copyWith(isCalculating: false, projection: Wrapped(projection)),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isCalculating: false,
-        errorMessage: Wrapped(e.toString()),
-      ));
+      emit(
+        state.copyWith(
+          isCalculating: false,
+          errorMessage: Wrapped(e.toString()),
+        ),
+      );
     }
   }
 }

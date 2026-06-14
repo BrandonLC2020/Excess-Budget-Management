@@ -18,8 +18,9 @@ class GoalRepository {
   /// Emits the current list immediately, then every 30 seconds.
   Stream<List<Goal>> getGoalsStream() async* {
     yield await getGoals();
-    yield* Stream.periodic(const Duration(seconds: 30))
-        .asyncMap((_) => getGoals());
+    yield* Stream.periodic(
+      const Duration(seconds: 30),
+    ).asyncMap((_) => getGoals());
   }
 
   Future<void> addSubGoal(
@@ -29,10 +30,7 @@ class GoalRepository {
   ) async {
     await client.post<Map<String, dynamic>>(
       '/goals/$goalId/subgoals',
-      body: {
-        'name': name,
-        'target_amount': targetAmount.toStringAsFixed(2),
-      },
+      body: {'name': name, 'target_amount': targetAmount.toStringAsFixed(2)},
     );
   }
 
@@ -46,9 +44,7 @@ class GoalRepository {
     // direct call to avoid the extra round-trip (tracked as future improvement).
     final goals = await getGoals();
     for (final goal in goals) {
-      final sub = goal.subGoals
-          .where((s) => s.id == subGoalId)
-          .firstOrNull;
+      final sub = goal.subGoals.where((s) => s.id == subGoalId).firstOrNull;
       if (sub != null) {
         await client.patch<Map<String, dynamic>>(
           '/goals/${goal.id}/subgoals/$subGoalId',
@@ -109,11 +105,16 @@ class GoalRepository {
     );
   }
 
-  Future<void> updateGoalAccounts(String goalId, List<String> accountIds) async {
+  Future<void> updateGoalAccounts(
+    String goalId,
+    List<String> accountIds,
+  ) async {
     // 1. Fetch current linked accounts
     final goals = await getGoals();
-    final goal = goals.firstWhere((g) => g.id == goalId,
-        orElse: () => throw StateError('Goal $goalId not found'));
+    final goal = goals.firstWhere(
+      (g) => g.id == goalId,
+      orElse: () => throw StateError('Goal $goalId not found'),
+    );
 
     // 2. Unlink all current accounts
     for (final accId in goal.accountIds) {
@@ -169,8 +170,7 @@ class GoalRepository {
     return Goal.fromJson(r.data!);
   }
 
-  Future<void> deleteGoal(String id) =>
-      client.delete<void>('/goals/$id');
+  Future<void> deleteGoal(String id) => client.delete<void>('/goals/$id');
 
   Future<List<Goal>> getSubgoals(String goalId) async {
     // The backend returns subgoals nested in goal; we can also GET them directly.
@@ -179,8 +179,10 @@ class GoalRepository {
     // by re-fetching the parent goal. For most use cases callers just need the
     // subgoals list from the Goal object itself, so we re-fetch:
     final goals = await getGoals();
-    final goal = goals.firstWhere((g) => g.id == goalId,
-        orElse: () => throw StateError('Goal $goalId not found'));
+    final goal = goals.firstWhere(
+      (g) => g.id == goalId,
+      orElse: () => throw StateError('Goal $goalId not found'),
+    );
     return [goal]; // Returns parent with nested subGoals
   }
 }

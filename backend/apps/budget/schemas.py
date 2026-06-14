@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from decimal import Decimal
 from typing import Literal
 from pydantic import Field, condecimal
 from ninja import Schema

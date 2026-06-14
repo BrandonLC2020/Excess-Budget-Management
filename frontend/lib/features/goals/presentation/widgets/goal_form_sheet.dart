@@ -83,10 +83,8 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Goal Name'),
-                validator: (value) => ValidationUtils.validateRequired(
-                  value,
-                  'Goal Name',
-                ),
+                validator: (value) =>
+                    ValidationUtils.validateRequired(value, 'Goal Name'),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -154,25 +152,22 @@ class _GoalFormSheetState extends State<GoalFormSheet> {
                         Wrap(
                           spacing: 8.0,
                           runSpacing: 4.0,
-                          children:
-                              state.accounts.map((account) {
-                                final isSelected = _accountIds.contains(
-                                  account.id,
-                                );
-                                return FilterChip(
-                                  label: Text(account.name),
-                                  selected: isSelected,
-                                  onSelected: (bool selected) {
-                                    setState(() {
-                                      if (selected) {
-                                        _accountIds.add(account.id);
-                                      } else {
-                                        _accountIds.remove(account.id);
-                                      }
-                                    });
-                                  },
-                                );
-                              }).toList(),
+                          children: state.accounts.map((account) {
+                            final isSelected = _accountIds.contains(account.id);
+                            return FilterChip(
+                              label: Text(account.name),
+                              selected: isSelected,
+                              onSelected: (bool selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _accountIds.add(account.id);
+                                  } else {
+                                    _accountIds.remove(account.id);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
                         ),
                         if (_accountIds.isNotEmpty) ...[
                           const SizedBox(height: 8),

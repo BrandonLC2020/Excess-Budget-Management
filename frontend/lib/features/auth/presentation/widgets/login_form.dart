@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../bloc/auth_event.dart';
 import '../../bloc/auth_state.dart';
+import 'auth0_mock_sheet.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -33,6 +34,21 @@ class _LoginFormState extends State<LoginForm> {
     }
     context.read<AuthBloc>().add(
       AuthLoginRequested(_emailController.text, _passwordController.text),
+    );
+  }
+
+  void _loginWithAuth0() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Auth0MockSheet(
+          onLogin: (token) {
+            context.read<AuthBloc>().add(AuthAuth0LoginRequested(token));
+          },
+        );
+      },
     );
   }
 
@@ -137,6 +153,40 @@ class _LoginFormState extends State<LoginForm> {
                         ),
                       )
                     : const Text('Login', style: TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: isLoading ? null : _loginWithAuth0,
+                icon: const Icon(
+                  Icons.security,
+                  size: 20,
+                  color: Color(0xFFEB5424),
+                ),
+                label: const Text('Continue with Auth0'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: Colors.grey.shade300),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               Wrap(

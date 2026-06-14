@@ -18,13 +18,15 @@ class _QueueAdapter implements HttpClientAdapter {
   final _queue = <ResponseBody>[];
 
   void enqueue(int status, Object? body) {
-    _queue.add(ResponseBody.fromString(
-      body != null ? jsonEncode(body) : '',
-      status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    ));
+    _queue.add(
+      ResponseBody.fromString(
+        body != null ? jsonEncode(body) : '',
+        status,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      ),
+    );
   }
 
   @override
@@ -48,14 +50,13 @@ Map<String, dynamic> _accountJson({
   String name = 'Checking',
   String balance = '1500.00',
   String createdAt = '2024-01-01T00:00:00Z',
-}) =>
-    {
-      'id': id,
-      'user_id': userId,
-      'name': name,
-      'balance': double.parse(balance),
-      'created_at': createdAt,
-    };
+}) => {
+  'id': id,
+  'user_id': userId,
+  'name': name,
+  'balance': double.parse(balance),
+  'created_at': createdAt,
+};
 
 void main() {
   late _QueueAdapter adapter;
@@ -113,20 +114,21 @@ void main() {
   });
 
   group('AccountRepository.addAccount', () {
-    test('issues POST /accounts with name and balance, returns parsed Account',
-        () async {
-      adapter.enqueue(201, _accountJson(
-        id: 'acc-new',
-        name: 'Travel Fund',
-        balance: '500.00',
-      ));
+    test(
+      'issues POST /accounts with name and balance, returns parsed Account',
+      () async {
+        adapter.enqueue(
+          201,
+          _accountJson(id: 'acc-new', name: 'Travel Fund', balance: '500.00'),
+        );
 
-      final account = await repository.addAccount('Travel Fund', 500.0);
+        final account = await repository.addAccount('Travel Fund', 500.0);
 
-      expect(account.id, 'acc-new');
-      expect(account.name, 'Travel Fund');
-      expect(account.balance, 500.0);
-    });
+        expect(account.id, 'acc-new');
+        expect(account.name, 'Travel Fund');
+        expect(account.balance, 500.0);
+      },
+    );
 
     test('sends balance as fixed-point string with 2 decimal places', () async {
       // We capture the request by inspecting the interceptor chain via
@@ -159,33 +161,43 @@ void main() {
   });
 
   group('AccountRepository.updateAccount', () {
-    test('issues PATCH /accounts/:id with name and balance, returns Account',
-        () async {
-      adapter.enqueue(200, _accountJson(
-        id: 'acc-1',
-        name: 'Updated Checking',
-        balance: '2000.00',
-      ));
+    test(
+      'issues PATCH /accounts/:id with name and balance, returns Account',
+      () async {
+        adapter.enqueue(
+          200,
+          _accountJson(
+            id: 'acc-1',
+            name: 'Updated Checking',
+            balance: '2000.00',
+          ),
+        );
 
-      final account =
-          await repository.updateAccount('acc-1', 'Updated Checking', 2000.0);
+        final account = await repository.updateAccount(
+          'acc-1',
+          'Updated Checking',
+          2000.0,
+        );
 
-      expect(account.id, 'acc-1');
-      expect(account.name, 'Updated Checking');
-      expect(account.balance, 2000.0);
-    });
+        expect(account.id, 'acc-1');
+        expect(account.name, 'Updated Checking');
+        expect(account.balance, 2000.0);
+      },
+    );
   });
 
   group('AccountRepository.updateAccountBalance', () {
-    test('issues PATCH /accounts/:id with balance only, returns Account',
-        () async {
-      adapter.enqueue(200, _accountJson(id: 'acc-1', balance: '999.99'));
+    test(
+      'issues PATCH /accounts/:id with balance only, returns Account',
+      () async {
+        adapter.enqueue(200, _accountJson(id: 'acc-1', balance: '999.99'));
 
-      final account = await repository.updateAccountBalance('acc-1', 999.99);
+        final account = await repository.updateAccountBalance('acc-1', 999.99);
 
-      expect(account.id, 'acc-1');
-      expect(account.balance, 999.99);
-    });
+        expect(account.id, 'acc-1');
+        expect(account.balance, 999.99);
+      },
+    );
   });
 
   group('AccountRepository.deleteAccount', () {
@@ -198,68 +210,74 @@ void main() {
   });
 
   group('AccountRepository.getAccountExpenses', () {
-    test('issues GET /expenses?account_id=<id> and maps response to List<Expense>',
-        () async {
-      adapter.enqueue(200, [
-        {
-          'id': 'exp-1',
-          'user_id': 'user-1',
-          'budget_category_id': 'cat-1',
-          'amount': 45.50,
-          'description': 'Groceries',
-          'date': '2024-03-15',
-          'created_at': '2024-03-15T10:00:00Z',
-          'account_id': 'acc-1',
-        },
-      ]);
+    test(
+      'issues GET /expenses?account_id=<id> and maps response to List<Expense>',
+      () async {
+        adapter.enqueue(200, [
+          {
+            'id': 'exp-1',
+            'user_id': 'user-1',
+            'budget_category_id': 'cat-1',
+            'amount': 45.50,
+            'description': 'Groceries',
+            'date': '2024-03-15',
+            'created_at': '2024-03-15T10:00:00Z',
+            'account_id': 'acc-1',
+          },
+        ]);
 
-      final expenses = await repository.getAccountExpenses('acc-1');
+        final expenses = await repository.getAccountExpenses('acc-1');
 
-      expect(expenses.length, 1);
-      expect(expenses[0].id, 'exp-1');
-      expect(expenses[0].amount, 45.50);
-      expect(expenses[0].accountId, 'acc-1');
-    });
+        expect(expenses.length, 1);
+        expect(expenses[0].id, 'exp-1');
+        expect(expenses[0].amount, 45.50);
+        expect(expenses[0].accountId, 'acc-1');
+      },
+    );
   });
 
   group('AccountRepository.getAccountIncome', () {
-    test('issues GET /income/extra?account_id=<id> and maps response to List<Income>',
-        () async {
-      adapter.enqueue(200, [
-        {
-          'id': 'inc-1',
-          'user_id': 'user-1',
-          'amount': 200.00,
-          'description': 'Freelance payment',
-          'date_received': '2024-03-20',
-          'created_at': '2024-03-20T09:00:00Z',
-          'account_id': 'acc-1',
-          'budget_category_id': null,
-        },
-      ]);
+    test(
+      'issues GET /income/extra?account_id=<id> and maps response to List<Income>',
+      () async {
+        adapter.enqueue(200, [
+          {
+            'id': 'inc-1',
+            'user_id': 'user-1',
+            'amount': 200.00,
+            'description': 'Freelance payment',
+            'date_received': '2024-03-20',
+            'created_at': '2024-03-20T09:00:00Z',
+            'account_id': 'acc-1',
+            'budget_category_id': null,
+          },
+        ]);
 
-      final income = await repository.getAccountIncome('acc-1');
+        final income = await repository.getAccountIncome('acc-1');
 
-      expect(income.length, 1);
-      expect(income[0].id, 'inc-1');
-      expect(income[0].amount, 200.00);
-      expect(income[0].accountId, 'acc-1');
-    });
+        expect(income.length, 1);
+        expect(income[0].id, 'inc-1');
+        expect(income[0].amount, 200.00);
+        expect(income[0].accountId, 'acc-1');
+      },
+    );
   });
 
   group('AccountRepository.getAccountsStream', () {
-    test('emits first value immediately without waiting for the 30s period',
-        () async {
-      adapter.enqueue(200, [
-        _accountJson(id: 'acc-1', name: 'Checking', balance: '1000.00'),
-      ]);
+    test(
+      'emits first value immediately without waiting for the 30s period',
+      () async {
+        adapter.enqueue(200, [
+          _accountJson(id: 'acc-1', name: 'Checking', balance: '1000.00'),
+        ]);
 
-      final stream = repository.getAccountsStream();
-      final first = await stream.first;
+        final stream = repository.getAccountsStream();
+        final first = await stream.first;
 
-      expect(first.length, 1);
-      expect(first[0].id, 'acc-1');
-    });
+        expect(first.length, 1);
+        expect(first[0].id, 'acc-1');
+      },
+    );
   });
 }
 

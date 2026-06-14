@@ -19,14 +19,12 @@ class BulkEntryScreen extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => BulkExpensesBloc(
-            repository: BudgetRepository(client: apiClient),
-          ),
+          create: (context) =>
+              BulkExpensesBloc(repository: BudgetRepository(client: apiClient)),
         ),
         BlocProvider(
-          create: (context) => BulkIncomeBloc(
-            repository: IncomeRepository(client: apiClient),
-          ),
+          create: (context) =>
+              BulkIncomeBloc(repository: IncomeRepository(client: apiClient)),
         ),
         // Ensure BudgetBloc is loaded so the category dropdown works
         BlocProvider.value(

@@ -9,6 +9,7 @@ import 'package:frontend/features/accounts/repositories/account_repository.dart'
 import 'package:frontend/features/accounts/presentation/widgets/account_detail_view.dart';
 
 class MockAccountBloc extends Mock implements AccountBloc {}
+
 class MockAccountRepository extends Mock implements AccountRepository {}
 
 void main() {
@@ -38,16 +39,18 @@ void main() {
   Widget createWidgetUnderTest() {
     mockAccountRepository = MockAccountRepository();
     // Stub methods if needed
-    when(() => mockAccountRepository.getAccountExpenses(any())).thenAnswer((_) async => []);
-    when(() => mockAccountRepository.getAccountIncome(any())).thenAnswer((_) async => []);
-    
+    when(
+      () => mockAccountRepository.getAccountExpenses(any()),
+    ).thenAnswer((_) async => []);
+    when(
+      () => mockAccountRepository.getAccountIncome(any()),
+    ).thenAnswer((_) async => []);
+
     return RepositoryProvider<AccountRepository>.value(
       value: mockAccountRepository,
       child: BlocProvider<AccountBloc>.value(
         value: mockAccountBloc,
-        child: const MaterialApp(
-          home: AccountsScreen(),
-        ),
+        child: const MaterialApp(home: AccountsScreen()),
       ),
     );
   }
@@ -58,18 +61,21 @@ void main() {
     expect(find.text('\$100.00'), findsOneWidget);
   });
 
-  testWidgets('In compact mode, tapping account opens bottom sheet with details', (tester) async {
-    tester.view.physicalSize = const Size(400, 800);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() => tester.view.resetPhysicalSize());
+  testWidgets(
+    'In compact mode, tapping account opens bottom sheet with details',
+    (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    await tester.tap(find.text('Test Account'));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.tap(find.text('Test Account'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(AccountDetailView), findsOneWidget);
-    expect(find.byType(AlertDialog), findsNothing);
-  });
+      expect(find.byType(AccountDetailView), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+    },
+  );
 
   testWidgets(
     'In expanded mode, tapping account shows detail view in right pane',

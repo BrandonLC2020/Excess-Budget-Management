@@ -364,10 +364,8 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
                   ),
                   filled: true,
                 ),
-                validator: (value) => ValidationUtils.validateRequired(
-                  value,
-                  'Category Name',
-                ),
+                validator: (value) =>
+                    ValidationUtils.validateRequired(value, 'Category Name'),
               ),
               const SizedBox(height: 16),
               TextFormField(

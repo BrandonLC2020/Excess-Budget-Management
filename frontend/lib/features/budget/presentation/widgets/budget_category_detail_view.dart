@@ -28,9 +28,9 @@ class BudgetCategoryDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => BudgetCategoryDetailBloc(
-        repository: context.read<BudgetRepository>(),
-      )..add(LoadBudgetCategoryDetail(category)),
+      create: (context) =>
+          BudgetCategoryDetailBloc(repository: context.read<BudgetRepository>())
+            ..add(LoadBudgetCategoryDetail(category)),
       child: BlocBuilder<BudgetCategoryDetailBloc, BudgetCategoryDetailState>(
         builder: (context, state) {
           final currentCategory = state.category ?? category;
@@ -54,16 +54,23 @@ class BudgetCategoryDetailView extends StatelessWidget {
                   onPressed: () => _showEditForm(context, currentCategory),
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete_outline,
-                      color: Theme.of(context).colorScheme.error),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   onPressed: () => _showDeleteDialog(context, currentCategory),
                 ),
               ],
             ),
             body: state.isLoading && state.category == null
                 ? const Center(child: CircularProgressIndicator())
-                : _buildContent(context, state, currentCategory, categoryColor,
-                    categoryIcon),
+                : _buildContent(
+                    context,
+                    state,
+                    currentCategory,
+                    categoryColor,
+                    categoryIcon,
+                  ),
           );
         },
       ),
@@ -106,17 +113,17 @@ class BudgetCategoryDetailView extends StatelessWidget {
                 Text(
                   category.name,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Outfit',
-                      ),
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Outfit',
+                  ),
                 ),
                 Text(
                   category.type == BudgetCategoryType.income
                       ? 'Income Category'
                       : 'Expense Category',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                 ),
               ],
             ),
@@ -128,9 +135,9 @@ class BudgetCategoryDetailView extends StatelessWidget {
             category.type == BudgetCategoryType.income
                 ? 'Saving Progress'
                 : 'Budget Spending',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           _buildProgressCard(context, category, percent, color, formatCurrency),
@@ -142,9 +149,9 @@ class BudgetCategoryDetailView extends StatelessWidget {
             children: [
               Text(
                 'Recent Transactions',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               if (state.isLoading)
                 const SizedBox(
@@ -197,16 +204,13 @@ class BudgetCategoryDetailView extends StatelessWidget {
                           ? 'Saved'
                           : 'Spent',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                     Text(
                       format.format(category.spentAmount),
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold, color: color),
                     ),
                   ],
                 ),
@@ -216,15 +220,13 @@ class BudgetCategoryDetailView extends StatelessWidget {
                     Text(
                       'Goal / Limit',
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                     Text(
                       format.format(category.limitAmount),
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -237,7 +239,9 @@ class BudgetCategoryDetailView extends StatelessWidget {
                   height: 12,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -249,8 +253,8 @@ class BudgetCategoryDetailView extends StatelessWidget {
                     color: category.type == BudgetCategoryType.income
                         ? (percent >= 1.0 ? Colors.green : color)
                         : (percent >= 1.0
-                            ? Theme.of(context).colorScheme.error
-                            : color),
+                              ? Theme.of(context).colorScheme.error
+                              : color),
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
@@ -267,11 +271,11 @@ class BudgetCategoryDetailView extends StatelessWidget {
                 Text(
                   category.type == BudgetCategoryType.income
                       ? (remaining <= 0
-                          ? 'Goal Reached!'
-                          : '${format.format(remaining)} remaining')
+                            ? 'Goal Reached!'
+                            : '${format.format(remaining)} remaining')
                       : (remaining < 0
-                          ? '${format.format(remaining.abs())} over budget'
-                          : '${format.format(remaining)} remaining'),
+                            ? '${format.format(remaining.abs())} over budget'
+                            : '${format.format(remaining)} remaining'),
                   style: TextStyle(
                     color: isOver
                         ? Theme.of(context).colorScheme.error
@@ -315,9 +319,7 @@ class BudgetCategoryDetailView extends StatelessWidget {
             Text(
               'No transactions found for this category',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.outline),
             ),
           ],
         ),
@@ -348,9 +350,11 @@ class BudgetCategoryDetailView extends StatelessWidget {
               size: 18,
             ),
           ),
-          title: Text(desc?.isNotEmpty == true
-              ? desc!
-              : (isExpense ? 'Expense' : 'Income')),
+          title: Text(
+            desc?.isNotEmpty == true
+                ? desc!
+                : (isExpense ? 'Expense' : 'Income'),
+          ),
           subtitle: Text(DateFormat.yMMMd().format(date)),
           trailing: Text(
             (isExpense ? '-' : '+') + format.format(amount),
@@ -379,7 +383,8 @@ class BudgetCategoryDetailView extends StatelessWidget {
       // After editing, refresh details
       if (context.mounted) {
         context.read<BudgetCategoryDetailBloc>().add(
-            RefreshBudgetCategoryDetail(category.id, category.type));
+          RefreshBudgetCategoryDetail(category.id, category.type),
+        );
       }
     });
   }
@@ -391,7 +396,8 @@ class BudgetCategoryDetailView extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Delete Category'),
         content: Text(
-            'Are you sure you want to delete "${category.name}"? This will not delete the associated transactions but they will no longer be linked to this category.'),
+          'Are you sure you want to delete "${category.name}"? This will not delete the associated transactions but they will no longer be linked to this category.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

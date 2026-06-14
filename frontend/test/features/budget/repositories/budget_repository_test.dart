@@ -17,13 +17,15 @@ class _QueueAdapter implements HttpClientAdapter {
   final _queue = <ResponseBody>[];
 
   void enqueue(int status, Object? body) {
-    _queue.add(ResponseBody.fromString(
-      body != null ? jsonEncode(body) : '',
-      status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    ));
+    _queue.add(
+      ResponseBody.fromString(
+        body != null ? jsonEncode(body) : '',
+        status,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      ),
+    );
   }
 
   @override
@@ -48,18 +50,17 @@ Map<String, dynamic> _categoryJson({
   String spentAmount = '0.00',
   String categoryType = 'expense',
   String createdAt = '2024-01-01T00:00:00Z',
-}) =>
-    {
-      'id': id,
-      'user_id': userId,
-      'name': name,
-      'limit_amount': double.parse(limitAmount),
-      'spent_amount': double.parse(spentAmount),
-      'category_type': categoryType,
-      'icon_code': null,
-      'color_hex': null,
-      'created_at': createdAt,
-    };
+}) => {
+  'id': id,
+  'user_id': userId,
+  'name': name,
+  'limit_amount': double.parse(limitAmount),
+  'spent_amount': double.parse(spentAmount),
+  'category_type': categoryType,
+  'icon_code': null,
+  'color_hex': null,
+  'created_at': createdAt,
+};
 
 Map<String, dynamic> _expenseJson({
   String id = 'exp-1',
@@ -68,17 +69,16 @@ Map<String, dynamic> _expenseJson({
   double amount = 45.0,
   String date = '2024-03-15',
   String createdAt = '2024-03-15T10:00:00Z',
-}) =>
-    {
-      'id': id,
-      'user_id': userId,
-      'budget_category_id': budgetCategoryId,
-      'amount': amount,
-      'description': null,
-      'date': date,
-      'created_at': createdAt,
-      'account_id': null,
-    };
+}) => {
+  'id': id,
+  'user_id': userId,
+  'budget_category_id': budgetCategoryId,
+  'amount': amount,
+  'description': null,
+  'date': date,
+  'created_at': createdAt,
+  'account_id': null,
+};
 
 void main() {
   late _QueueAdapter adapter;
@@ -108,22 +108,29 @@ void main() {
   });
 
   group('BudgetRepository.getBudgetCategories', () {
-    test('issues GET /budget/categories and maps to List<BudgetCategory>', () async {
-      adapter.enqueue(200, [
-        _categoryJson(id: 'cat-1', name: 'Groceries', limitAmount: '300.00'),
-        _categoryJson(id: 'cat-2', name: 'Transport', limitAmount: '100.00',
-            categoryType: 'expense'),
-      ]);
+    test(
+      'issues GET /budget/categories and maps to List<BudgetCategory>',
+      () async {
+        adapter.enqueue(200, [
+          _categoryJson(id: 'cat-1', name: 'Groceries', limitAmount: '300.00'),
+          _categoryJson(
+            id: 'cat-2',
+            name: 'Transport',
+            limitAmount: '100.00',
+            categoryType: 'expense',
+          ),
+        ]);
 
-      final categories = await repository.getBudgetCategories();
+        final categories = await repository.getBudgetCategories();
 
-      expect(categories.length, 2);
-      expect(categories[0].id, 'cat-1');
-      expect(categories[0].name, 'Groceries');
-      expect(categories[0].limitAmount, 300.0);
-      expect(categories[0].type, BudgetCategoryType.expense);
-      expect(categories[1].id, 'cat-2');
-    });
+        expect(categories.length, 2);
+        expect(categories[0].id, 'cat-1');
+        expect(categories[0].name, 'Groceries');
+        expect(categories[0].limitAmount, 300.0);
+        expect(categories[0].type, BudgetCategoryType.expense);
+        expect(categories[1].id, 'cat-2');
+      },
+    );
 
     test('returns empty list when server responds with empty array', () async {
       adapter.enqueue(200, <dynamic>[]);
@@ -135,69 +142,84 @@ void main() {
   });
 
   group('BudgetRepository.addBudgetCategory', () {
-    test('issues POST /budget/categories and returns parsed BudgetCategory', () async {
-      adapter.enqueue(201, _categoryJson(
-        id: 'cat-new',
-        name: 'Entertainment',
-        limitAmount: '150.00',
-        categoryType: 'expense',
-      ));
+    test(
+      'issues POST /budget/categories and returns parsed BudgetCategory',
+      () async {
+        adapter.enqueue(
+          201,
+          _categoryJson(
+            id: 'cat-new',
+            name: 'Entertainment',
+            limitAmount: '150.00',
+            categoryType: 'expense',
+          ),
+        );
 
-      final category = await repository.addBudgetCategory(
-        'Entertainment',
-        150.0,
-        type: BudgetCategoryType.expense,
-      );
+        final category = await repository.addBudgetCategory(
+          'Entertainment',
+          150.0,
+          type: BudgetCategoryType.expense,
+        );
 
-      expect(category.id, 'cat-new');
-      expect(category.name, 'Entertainment');
-      expect(category.limitAmount, 150.0);
-      expect(category.type, BudgetCategoryType.expense);
-    });
+        expect(category.id, 'cat-new');
+        expect(category.name, 'Entertainment');
+        expect(category.limitAmount, 150.0);
+        expect(category.type, BudgetCategoryType.expense);
+      },
+    );
 
-    test('sends limit_amount as fixed-point string with 2 decimal places', () async {
-      RequestOptions? captured;
+    test(
+      'sends limit_amount as fixed-point string with 2 decimal places',
+      () async {
+        RequestOptions? captured;
 
-      final capturingAdapter = _CapturingAdapter(
-        delegate: adapter,
-        onFetch: (opts) => captured = opts,
-      );
-      final captureDio = Dio(BaseOptions(baseUrl: 'http://test'));
-      captureDio.httpClientAdapter = capturingAdapter;
-      final captureClient = ApiClient(
-        dio: captureDio,
-        tokenStore: tokenStore,
-        onUnauthenticated: () async {},
-      );
-      final captureRepo = BudgetRepository(client: captureClient);
+        final capturingAdapter = _CapturingAdapter(
+          delegate: adapter,
+          onFetch: (opts) => captured = opts,
+        );
+        final captureDio = Dio(BaseOptions(baseUrl: 'http://test'));
+        captureDio.httpClientAdapter = capturingAdapter;
+        final captureClient = ApiClient(
+          dio: captureDio,
+          tokenStore: tokenStore,
+          onUnauthenticated: () async {},
+        );
+        final captureRepo = BudgetRepository(client: captureClient);
 
-      adapter.enqueue(201, _categoryJson(name: 'Bills', limitAmount: '299.99'));
+        adapter.enqueue(
+          201,
+          _categoryJson(name: 'Bills', limitAmount: '299.99'),
+        );
 
-      await captureRepo.addBudgetCategory('Bills', 299.99);
+        await captureRepo.addBudgetCategory('Bills', 299.99);
 
-      expect(captured, isNotNull);
-      final body = captured!.data as Map<String, dynamic>;
-      expect(body['name'], 'Bills');
-      expect(body['limit_amount'], '299.99');
-      expect(body['category_type'], 'expense');
-    });
+        expect(captured, isNotNull);
+        final body = captured!.data as Map<String, dynamic>;
+        expect(body['name'], 'Bills');
+        expect(body['limit_amount'], '299.99');
+        expect(body['category_type'], 'expense');
+      },
+    );
   });
 
   group('BudgetRepository.getCategoryExpenses', () {
-    test('issues GET /expenses?budget_category_id=<id> and maps to List<Expense>', () async {
-      adapter.enqueue(200, [
-        _expenseJson(id: 'exp-1', budgetCategoryId: 'cat-1', amount: 45.0),
-        _expenseJson(id: 'exp-2', budgetCategoryId: 'cat-1', amount: 20.0),
-      ]);
+    test(
+      'issues GET /expenses?budget_category_id=<id> and maps to List<Expense>',
+      () async {
+        adapter.enqueue(200, [
+          _expenseJson(id: 'exp-1', budgetCategoryId: 'cat-1', amount: 45.0),
+          _expenseJson(id: 'exp-2', budgetCategoryId: 'cat-1', amount: 20.0),
+        ]);
 
-      final expenses = await repository.getCategoryExpenses('cat-1');
+        final expenses = await repository.getCategoryExpenses('cat-1');
 
-      expect(expenses.length, 2);
-      expect(expenses[0].id, 'exp-1');
-      expect(expenses[0].amount, 45.0);
-      expect(expenses[0].budgetCategoryId, 'cat-1');
-      expect(expenses[1].amount, 20.0);
-    });
+        expect(expenses.length, 2);
+        expect(expenses[0].id, 'exp-1');
+        expect(expenses[0].amount, 45.0);
+        expect(expenses[0].budgetCategoryId, 'cat-1');
+        expect(expenses[1].amount, 20.0);
+      },
+    );
   });
 }
 

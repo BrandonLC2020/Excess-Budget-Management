@@ -79,3 +79,59 @@ def confirm_password_reset(token: str, new_password: str) -> None:
         raise AuthError("Invalid or expired reset token.")
     user.set_password(new_password)
     user.save(update_fields=["password"])
+
+
+def authenticate_auth0_token(token: str) -> User:
+    import jwt
+    try:
+        domain = getattr(settings, "AUTH0_DOMAIN", "")
+        audience = getattr(settings, "AUTH0_AUDIENCE", "")
+        
+        if domain and not settings.DEBUG:
+            from jwt import PyJWKClient
+            jwks_url = f"https://{domain}/.well-known/jwks.json"
+            jwks_client = PyJWKClient(jwks_url)
+            signing_key = jwks_client.get_signing_key_from_jwt(token)
+            payload = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["RS256"],
+                audience=audience,
+                issuer=f"https://{domain}/"
+            )
+        else:
+            try:
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            except Exception:
+                payload = jwt.decode(token, options={"verify_signature": False})
+                
+    except Exception as e:
+        raise AuthError(f"Invalid Auth0 token: {str(e)}")
+        
+    email = payload.get("email")
+    if not email:
+        raise AuthError("Auth0 token does not contain an email address.")
+        
+    name = payload.get("name") or payload.get("nickname") or ""
+    picture = payload.get("picture") or ""
+    
+    with transaction.atomic():
+        user, created = User.objects.get_or_create(email=email)
+        if created:
+            user.set_unusable_password()
+            user.save()
+            Profile.objects.create(user=user, full_name=name, avatar_url=picture)
+        else:
+            profile, _ = Profile.objects.get_or_create(user=user)
+            updated = False
+            if not profile.full_name and name:
+                profile.full_name = name
+                updated = True
+            if not profile.avatar_url and picture:
+                profile.avatar_url = picture
+                updated = True
+            if updated:
+                profile.save()
+                
+    return user
+

@@ -124,10 +124,9 @@ class AccountDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create:
-          (context) => AccountDetailBloc(
-            repository: context.read<AccountRepository>(),
-          )..add(LoadAccountDetail(account)),
+      create: (context) =>
+          AccountDetailBloc(repository: context.read<AccountRepository>())
+            ..add(LoadAccountDetail(account)),
       child: BlocBuilder<AccountDetailBloc, AccountDetailState>(
         builder: (context, state) {
           if (state.isLoading && state.account == null) {
@@ -179,13 +178,17 @@ class AccountDetailView extends StatelessWidget {
           AccountForm(
             account: state.account ?? account,
             onSaved: () {
-              context.read<AccountDetailBloc>().add(const ToggleEditMode(false));
+              context.read<AccountDetailBloc>().add(
+                const ToggleEditMode(false),
+              );
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text('Account updated')));
             },
             onCancel: () {
-              context.read<AccountDetailBloc>().add(const ToggleEditMode(false));
+              context.read<AccountDetailBloc>().add(
+                const ToggleEditMode(false),
+              );
             },
           ),
         ],
@@ -221,7 +224,9 @@ class AccountDetailView extends StatelessWidget {
             IconButton.filledTonal(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () {
-                context.read<AccountDetailBloc>().add(const ToggleEditMode(true));
+                context.read<AccountDetailBloc>().add(
+                  const ToggleEditMode(true),
+                );
               },
               tooltip: 'Edit Account',
             ),
@@ -244,9 +249,9 @@ class AccountDetailView extends StatelessWidget {
   ) {
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
-        alpha: 0.3,
-      ),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
@@ -296,9 +301,9 @@ class AccountDetailView extends StatelessWidget {
       children: [
         Text(
           'Recent Transactions',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         if (transactions.isEmpty)
@@ -334,22 +339,27 @@ class AccountDetailView extends StatelessWidget {
               final isExpense = tx is Expense;
               final amount = isExpense ? tx.amount : (tx as Income).amount;
               final date = isExpense ? tx.date : (tx as Income).dateReceived;
-              final desc = isExpense ? tx.description : (tx as Income).description;
+              final desc = isExpense
+                  ? tx.description
+                  : (tx as Income).description;
 
               return ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(
-                  backgroundColor:
-                      isExpense
-                          ? Colors.red.withValues(alpha: 0.1)
-                          : Colors.green.withValues(alpha: 0.1),
+                  backgroundColor: isExpense
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : Colors.green.withValues(alpha: 0.1),
                   child: Icon(
                     isExpense ? Icons.remove : Icons.add,
                     color: isExpense ? Colors.red : Colors.green,
                     size: 18,
                   ),
                 ),
-                title: Text(desc?.isNotEmpty == true ? desc! : (isExpense ? 'Expense' : 'Income')),
+                title: Text(
+                  desc?.isNotEmpty == true
+                      ? desc!
+                      : (isExpense ? 'Expense' : 'Income'),
+                ),
                 subtitle: Text(DateFormat.yMMMd().format(date)),
                 trailing: Text(
                   (isExpense ? '-' : '+') + format.format(amount),
@@ -371,9 +381,9 @@ class AccountDetailView extends StatelessWidget {
       children: [
         Text(
           'History',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         _buildTimelineItem(
@@ -471,25 +481,24 @@ class AccountDetailView extends StatelessWidget {
     final accountBloc = context.read<AccountBloc>();
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Account'),
-            content: Text('Are you sure you want to delete "${account.name}"?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  accountBloc.add(DeleteAccount(account.id));
-                  Navigator.pop(context);
-                  onDelete?.call();
-                },
-                child: const Text('Delete', style: TextStyle(color: Colors.red)),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: Text('Are you sure you want to delete "${account.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () {
+              accountBloc.add(DeleteAccount(account.id));
+              Navigator.pop(context);
+              onDelete?.call();
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 }

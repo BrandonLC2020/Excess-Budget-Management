@@ -9,21 +9,24 @@ class ApiClient {
     Dio? dio,
     AuthTokenStore? tokenStore,
     required Future<void> Function() onUnauthenticated,
-  })  : tokenStore = tokenStore ?? AuthTokenStore(),
-        dio = dio ??
-            Dio(BaseOptions(
-              baseUrl: Constants.apiBaseUrl,
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 30),
-              headers: {'Content-Type': 'application/json'},
-            )) {
+  }) : tokenStore = tokenStore ?? AuthTokenStore(),
+       dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: Constants.apiBaseUrl,
+               connectTimeout: const Duration(seconds: 10),
+               receiveTimeout: const Duration(seconds: 30),
+               headers: {'Content-Type': 'application/json'},
+             ),
+           ) {
     this.dio.interceptors.add(
-          AuthInterceptor(
-            dio: this.dio,
-            tokenStore: this.tokenStore,
-            onUnauthenticated: onUnauthenticated,
-          ),
-        );
+      AuthInterceptor(
+        dio: this.dio,
+        tokenStore: this.tokenStore,
+        onUnauthenticated: onUnauthenticated,
+      ),
+    );
   }
 
   final Dio dio;
@@ -51,7 +54,8 @@ class ApiClient {
     if (resp == null) return ApiNetworkException(e.message ?? 'Network error');
     final body = resp.data is Map ? resp.data as Map : null;
     final err = body?['error'] is Map ? body!['error'] as Map : null;
-    final msg = (err?['message'] ?? body?['detail'] ?? 'Request failed').toString();
+    final msg = (err?['message'] ?? body?['detail'] ?? 'Request failed')
+        .toString();
     final det = err?['details'] ?? body?['detail'];
     switch (resp.statusCode) {
       case 401:

@@ -21,7 +21,9 @@ class BudgetCategoryDetailBloc
     emit(state.copyWith(category: event.category, isLoading: true));
     try {
       if (event.category.type == BudgetCategoryType.expense) {
-        final expenses = await repository.getCategoryExpenses(event.category.id);
+        final expenses = await repository.getCategoryExpenses(
+          event.category.id,
+        );
         emit(state.copyWith(expenses: expenses, income: [], isLoading: false));
       } else {
         final income = await repository.getCategoryIncome(event.category.id);

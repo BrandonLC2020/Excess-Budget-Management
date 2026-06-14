@@ -7,7 +7,7 @@ from .schemas import (
 )
 from .services import (
     list_goals, create_goal, get_goal, update_goal, delete_goal,
-    list_subgoals, create_subgoal, get_subgoal, update_subgoal, delete_subgoal,
+    list_subgoals, create_subgoal, update_subgoal, delete_subgoal,
     link_account, unlink_account,
 )
 
