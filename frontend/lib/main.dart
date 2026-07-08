@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'core/api/api_client.dart';
 import 'core/router.dart';
+import 'core/theme/llc_theme.dart';
+import 'core/theme/mesh_backdrop.dart';
 import 'features/accounts/bloc/account_bloc.dart';
 import 'features/accounts/repositories/account_repository.dart';
 import 'features/auth/bloc/auth_bloc.dart';
@@ -77,25 +78,11 @@ class BudgetApp extends StatelessWidget {
         ],
         child: MaterialApp.router(
           title: 'Excess Budget Management',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2C5E4B),
-              brightness: Brightness.light,
-            ),
-            textTheme: GoogleFonts.outfitTextTheme(),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2C5E4B),
-              brightness: Brightness.dark,
-            ),
-            textTheme: GoogleFonts.outfitTextTheme(
-              ThemeData(brightness: Brightness.dark).textTheme,
-            ),
-            useMaterial3: true,
-          ),
+          theme: LLCTheme.light(),
+          darkTheme: LLCTheme.dark(),
           routerConfig: goRouter,
+          builder: (context, child) =>
+              MeshBackdrop(child: child ?? const SizedBox.shrink()),
         ),
       ),
     );

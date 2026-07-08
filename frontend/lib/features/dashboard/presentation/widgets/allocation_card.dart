@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/llc_theme.dart';
+import '../../../../core/theme/refractive_glass.dart';
+import '../../../../core/theme/thermal_glow.dart';
 import '../../bloc/dashboard_bloc.dart';
 import '../../bloc/dashboard_event.dart';
 import '../../models/allocation.dart';
@@ -23,8 +26,6 @@ class AllocationCard extends StatefulWidget {
 }
 
 class _AllocationCardState extends State<AllocationCard> {
-  bool _isHovered = false;
-
   void _handleAccept(BuildContext context) {
     if (widget.allocation.type == 'goal') {
       final goal = widget.goals.firstWhere((g) => g.id == widget.allocation.id);
@@ -74,9 +75,7 @@ class _AllocationCardState extends State<AllocationCard> {
     final icon = isGoal
         ? Icons.flag_rounded
         : Icons.account_balance_wallet_rounded;
-    final color = isGoal
-        ? Colors.purpleAccent.shade400
-        : Theme.of(context).colorScheme.primary;
+    final color = Theme.of(context).colorScheme.primary;
 
     Goal? targetGoal;
     if (isGoal) {
@@ -100,101 +99,93 @@ class _AllocationCardState extends State<AllocationCard> {
           child: Opacity(opacity: value, child: child),
         );
       },
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: _isHovered ? 0.08 : 0.04),
-                blurRadius: _isHovered ? 25 : 15,
-                offset: Offset(0, _isHovered ? 12 : 8),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(icon, color: color, size: 28),
+      child: RefractiveGlass(
+        borderRadius: 20,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    widget.allocation.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.allocation.name,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                if (isCompleted) ...[
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green.shade600,
-                                    size: 16,
-                                  ),
-                                ],
+                              ),
+                              if (isCompleted) ...[
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: LLCColors.affirmMint,
+                                  size: 16,
+                                ),
                               ],
-                            ),
+                            ],
                           ),
-                          Text(
-                            '\$${widget.allocation.amount.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: color,
-                                ),
+                        ),
+                        Text(
+                          '\$${widget.allocation.amount.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isGoal ? 'Savings Goal' : 'Account Deposit',
+                      style: Theme.of(context).textTheme.labelMedium
+                          ?.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            letterSpacing: 1.2,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isGoal ? 'Savings Goal' : 'Account Deposit',
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.6),
-                              letterSpacing: 1.2,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        widget.allocation.reason,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(height: 1.5),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.allocation.reason,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ThermalGlow(
+                        borderRadius: 12,
+                        onTap: () => _handleAccept(context),
                         child: OutlinedButton.icon(
                           onPressed: () => _handleAccept(context),
                           icon: const Icon(
@@ -214,11 +205,11 @@ class _AllocationCardState extends State<AllocationCard> {
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

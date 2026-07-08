@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/llc_theme.dart';
+import '../../../../core/theme/refractive_glass.dart';
+
 class TransactionCard extends StatelessWidget {
   final String title;
   final double amount;
@@ -23,51 +26,55 @@ class TransactionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final formatCurrency = NumberFormat.simpleCurrency();
     final formatDate = DateFormat.yMMMd();
+    final colorScheme = Theme.of(context).colorScheme;
+    final statusColor = isExpense ? colorScheme.error : LLCColors.affirmMint;
+    final sign = isExpense ? '-' : '+';
 
-    return Dismissible(
-      key: ValueKey(title + date.toString() + amount.toString()),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => onDelete(),
-      background: Container(
-        color: Colors.red,
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20.0),
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: isExpense
-                ? Colors.red.withValues(alpha: 0.1)
-                : Colors.green.withValues(alpha: 0.1),
-            child: Icon(
-              isExpense ? Icons.arrow_downward : Icons.arrow_upward,
-              color: isExpense ? Colors.red : Colors.green,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Dismissible(
+        key: ValueKey(title + date.toString() + amount.toString()),
+        direction: DismissDirection.endToStart,
+        onDismissed: (_) => onDelete(),
+        background: Container(
+          decoration: BoxDecoration(
+            color: colorScheme.error,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20.0),
+          child: Icon(Icons.delete, color: LLCColors.chromeWhite),
+        ),
+        child: RefractiveGlass(
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: statusColor.withValues(alpha: 0.15),
+              child: Icon(
+                isExpense ? Icons.arrow_downward : Icons.arrow_upward,
+                color: statusColor,
+              ),
             ),
-          ),
-          title: Text(
-            title.isNotEmpty ? title : (isExpense ? 'Expense' : 'Income'),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(formatDate.format(date)),
-              if (accountId != null)
-                Text(
-                  'Account Linked',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.primary,
+            title: Text(
+              title.isNotEmpty ? title : (isExpense ? 'Expense' : 'Income'),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(formatDate.format(date)),
+                if (accountId != null)
+                  Text(
+                    'Account Linked',
+                    style: TextStyle(fontSize: 12, color: colorScheme.primary),
                   ),
-                ),
-            ],
-          ),
-          trailing: Text(
-            formatCurrency.format(amount),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isExpense ? Colors.red : Colors.green,
-              fontWeight: FontWeight.bold,
+              ],
+            ),
+            trailing: Text(
+              '$sign${formatCurrency.format(amount)}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: statusColor,
+                fontWeight: FontWeight.bold,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         ),
