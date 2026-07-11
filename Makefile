@@ -1,7 +1,7 @@
 # Excess Budget — backend developer commands.
-# Usage: `make <target>` from inside backend/, or `make -C backend <target>` from anywhere.
+# Usage: `make <target>` from the project root.
 
-COMPOSE      ?= docker compose
+COMPOSE      ?= docker compose -f backend/docker-compose.yml
 WEB          ?= web
 DB           ?= db
 HEALTH_URL   ?= http://localhost:8000/api/v1/health

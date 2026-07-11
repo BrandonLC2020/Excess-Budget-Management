@@ -162,8 +162,8 @@ GEMINI.md
 .gemini/
 
 # Agent context (private)
-agent.md
-.agent/
+agents.md
+.agents/
 AGENTS.md
 
 # Impeccable design context (private; contains proprietary design system)
