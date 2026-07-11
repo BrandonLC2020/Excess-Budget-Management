@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../breakpoints.dart';
 
 class AdaptiveScaffold extends StatefulWidget {
@@ -27,13 +28,13 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
       case 0:
         return 'Overview';
       case 1:
-        return 'Accounts';
+        return 'Transactions';
       case 2:
-        return 'Budget';
+        return 'Accounts';
       case 3:
-        return 'Goals';
+        return 'Budget';
       case 4:
-        return 'Profile';
+        return 'Goals';
       default:
         return 'Excess Budget';
     }
@@ -46,7 +47,16 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
 
     if (screenType == ScreenType.compact) {
       return Scaffold(
-        appBar: AppBar(title: Text(title)),
+        appBar: AppBar(
+          title: Text(title),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => context.push('/profile'),
+              tooltip: 'Profile Settings',
+            ),
+          ],
+        ),
         body: widget.navigationShell,
         bottomNavigationBar: NavigationBar(
           selectedIndex: widget.currentIndex,
@@ -119,7 +129,17 @@ class _AdaptiveScaffoldState extends State<AdaptiveScaffold> {
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
             child: Scaffold(
-              appBar: AppBar(title: Text(title), centerTitle: false),
+              appBar: AppBar(
+                title: Text(title),
+                centerTitle: false,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.person_outline),
+                    onPressed: () => context.push('/profile'),
+                    tooltip: 'Profile Settings',
+                  ),
+                ],
+              ),
               body: widget.navigationShell,
             ),
           ),

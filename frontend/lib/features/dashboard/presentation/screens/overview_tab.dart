@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:confetti/confetti.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/breakpoints.dart';
+import '../../../../core/theme/refractive_glass.dart';
 import '../../bloc/dashboard_bloc.dart';
 import '../../bloc/dashboard_event.dart';
 import '../../bloc/dashboard_state.dart';
@@ -23,47 +23,11 @@ class OverviewTab extends StatefulWidget {
 
 class _OverviewTabState extends State<OverviewTab> {
   final TextEditingController _amountController = TextEditingController();
-  late ConfettiController _confettiController;
-  List<Goal> _previousGoals = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _confettiController = ConfettiController(
-      duration: const Duration(seconds: 3),
-    );
-  }
 
   @override
   void dispose() {
     _amountController.dispose();
-    _confettiController.dispose();
     super.dispose();
-  }
-
-  void _checkGoalCompletions(List<Goal> newGoals) {
-    if (_previousGoals.isEmpty) {
-      _previousGoals = newGoals;
-      return;
-    }
-
-    bool transitioned = false;
-    for (final newGoal in newGoals) {
-      final oldGoal = _previousGoals.cast<Goal?>().firstWhere(
-        (g) => g?.id == newGoal.id,
-        orElse: () => null,
-      );
-
-      if (oldGoal != null && !oldGoal.isCompleted && newGoal.isCompleted) {
-        transitioned = true;
-        break;
-      }
-    }
-
-    if (transitioned) {
-      _confettiController.play();
-    }
-    _previousGoals = newGoals;
   }
 
   void _analyzeFunds() {
@@ -176,12 +140,7 @@ class _OverviewTabState extends State<OverviewTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<DashboardBloc, DashboardState>(
-      listener: (context, state) {
-        if (state is DashboardSuggestionsLoaded) {
-          _checkGoalCompletions(state.goals);
-        }
-      },
+    return BlocBuilder<DashboardBloc, DashboardState>(
       builder: (context, state) {
         final List<Goal> goals = switch (state) {
           DashboardSuggestionsLoaded s => s.goals,
@@ -198,80 +157,61 @@ class _OverviewTabState extends State<OverviewTab> {
             icon: const Icon(Icons.library_add),
             label: const Text('Bulk Entry'),
           ),
-          body: Stack(
-            children: [
-              RefreshIndicator(
-                onRefresh: () async {
-                  // Trigger a refresh of current amount if needed,
-                  // for now we just reset or re-analyze if we have an amount
-                  final val = double.tryParse(_amountController.text);
-                  if (val != null && val > 0) {
-                    context.read<DashboardBloc>().add(
-                      GenerateSuggestionsRequested(val),
-                    );
-                  } else {
-                    context.read<DashboardBloc>().add(
-                      DashboardInitialDataRequested(),
-                    );
-                  }
-                },
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(24.0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1000),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(context),
-                          const SizedBox(height: 32),
-                          _buildAnalysisInput(context, goals),
-                          const SizedBox(height: 32),
-                          if (state is DashboardLoading)
-                            const Center(child: CircularProgressIndicator())
-                          else if (state is DashboardDataLoaded) ...[
-                            _buildMetrics(context, state),
-                            const SizedBox(height: 32),
-                          ] else if (state is DashboardSuggestionsLoaded)
-                            _buildSuggestionsList(context, state)
-                          else if (state is DashboardError)
-                            Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 40,
-                                ),
-                                child: Text(
-                                  'Error: ${state.message}',
-                                  style: const TextStyle(color: Colors.red),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            )
-                          else
-                            _buildEmptyState(context),
-                        ],
-                      ),
-                    ),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              // Trigger a refresh of current amount if needed,
+              // for now we just reset or re-analyze if we have an amount
+              final val = double.tryParse(_amountController.text);
+              if (val != null && val > 0) {
+                context.read<DashboardBloc>().add(
+                  GenerateSuggestionsRequested(val),
+                );
+              } else {
+                context.read<DashboardBloc>().add(
+                  DashboardInitialDataRequested(),
+                );
+              }
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1000),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(context),
+                      const SizedBox(height: 32),
+                      _buildAnalysisInput(context, goals),
+                      const SizedBox(height: 32),
+                      if (state is DashboardLoading)
+                        const Center(child: CircularProgressIndicator())
+                      else if (state is DashboardDataLoaded) ...[
+                        _buildMetrics(context, state),
+                        const SizedBox(height: 32),
+                      ] else if (state is DashboardSuggestionsLoaded)
+                        _buildSuggestionsList(context, state)
+                      else if (state is DashboardError)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 40,
+                            ),
+                            child: Text(
+                              'Error: ${state.message}',
+                              style: const TextStyle(color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      else
+                        _buildEmptyState(context),
+                    ],
                   ),
                 ),
               ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  shouldLoop: false,
-                  colors: const [
-                    Colors.green,
-                    Colors.blue,
-                    Colors.pink,
-                    Colors.orange,
-                    Colors.purple,
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -316,118 +256,92 @@ class _OverviewTabState extends State<OverviewTab> {
   }
 
   Widget _buildAnalysisInput(BuildContext context, List<Goal> goals) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer,
-            Theme.of(context).colorScheme.secondaryContainer,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.auto_awesome,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'AI Analysis',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return RefractiveGlass(
+      borderRadius: 20,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome,
+                  color: colorScheme.primary,
+                  size: 20,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'How much do you want to allocate?',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                const SizedBox(width: 8),
+                Text(
+                  'AI Analysis',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: colorScheme.primary,
                     fontWeight: FontWeight.bold,
-                  ),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      Icons.attach_money,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                    hintText: '0.00',
-                    hintStyle: TextStyle(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.2),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
+                    letterSpacing: 1.1,
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton(
-                onPressed: _analyzeFunds,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  minimumSize: const Size(64, 64),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Icon(Icons.analytics_outlined),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextButton.icon(
-            onPressed: () => _showManualAllocation(goals),
-            icon: const Icon(Icons.add_circle_outline, size: 18),
-            label: const Text('Perform Manual Allocation'),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              'How much do you want to allocate?',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(
+                        Icons.attach_money,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      hintText: '0.00',
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: _analyzeFunds,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
+                    minimumSize: const Size(64, 64),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Icon(Icons.analytics_outlined),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () => _showManualAllocation(goals),
+              icon: const Icon(Icons.add_circle_outline, size: 18),
+              label: const Text('Perform Manual Allocation'),
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

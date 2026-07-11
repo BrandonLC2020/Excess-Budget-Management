@@ -40,7 +40,7 @@ class BudgetCategoryDetailView extends StatelessWidget {
               : Icons.category;
 
           return Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: Colors.transparent,
             appBar: AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
@@ -114,7 +114,6 @@ class BudgetCategoryDetailView extends StatelessWidget {
                   category.name,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Outfit',
                   ),
                 ),
                 Text(
@@ -251,7 +250,7 @@ class BudgetCategoryDetailView extends StatelessWidget {
                   width: (MediaQuery.of(context).size.width - 96) * percent,
                   decoration: BoxDecoration(
                     color: category.type == BudgetCategoryType.income
-                        ? (percent >= 1.0 ? Colors.green : color)
+                        ? (percent >= 1.0 ? Theme.of(context).colorScheme.tertiary : color)
                         : (percent >= 1.0
                               ? Theme.of(context).colorScheme.error
                               : color),
@@ -342,11 +341,13 @@ class BudgetCategoryDetailView extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           leading: CircleAvatar(
             backgroundColor: isExpense
-                ? Colors.red.withValues(alpha: 0.1)
-                : Colors.green.withValues(alpha: 0.1),
+                ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1)
+                : Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
             child: Icon(
               isExpense ? Icons.remove : Icons.add,
-              color: isExpense ? Colors.red : Colors.green,
+              color: isExpense
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.tertiary,
               size: 18,
             ),
           ),
@@ -359,7 +360,9 @@ class BudgetCategoryDetailView extends StatelessWidget {
           trailing: Text(
             (isExpense ? '-' : '+') + format.format(amount),
             style: TextStyle(
-              color: isExpense ? Colors.red : Colors.green,
+              color: isExpense
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.tertiary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -409,7 +412,10 @@ class BudgetCategoryDetailView extends StatelessWidget {
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Close detail view
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),

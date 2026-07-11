@@ -232,7 +232,7 @@ class AccountDetailView extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             IconButton.outlined(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
               onPressed: () => _showDeleteDialog(context, account),
               tooltip: 'Delete Account',
             ),
@@ -347,11 +347,13 @@ class AccountDetailView extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(
                   backgroundColor: isExpense
-                      ? Colors.red.withValues(alpha: 0.1)
-                      : Colors.green.withValues(alpha: 0.1),
+                      ? Theme.of(context).colorScheme.error.withValues(alpha: 0.1)
+                      : Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
                   child: Icon(
                     isExpense ? Icons.remove : Icons.add,
-                    color: isExpense ? Colors.red : Colors.green,
+                    color: isExpense
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.tertiary,
                     size: 18,
                   ),
                 ),
@@ -364,7 +366,9 @@ class AccountDetailView extends StatelessWidget {
                 trailing: Text(
                   (isExpense ? '-' : '+') + format.format(amount),
                   style: TextStyle(
-                    color: isExpense ? Colors.red : Colors.green,
+                    color: isExpense
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.tertiary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -495,7 +499,10 @@ class AccountDetailView extends StatelessWidget {
               Navigator.pop(context);
               onDelete?.call();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),

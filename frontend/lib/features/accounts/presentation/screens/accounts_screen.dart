@@ -104,11 +104,6 @@ class _AccountsScreenState extends State<AccountsScreen> {
                       account: account,
                       isSelected: isSelected,
                       onTap: () => _showAccountDetail(account),
-                      onDelete: () {
-                        context.read<AccountBloc>().add(
-                          DeleteAccount(account.id),
-                        );
-                      },
                     );
                   },
                 );

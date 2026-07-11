@@ -105,36 +105,30 @@ final goRouter = GoRouter(
             GoRoute(
               path: '/goals',
               builder: (context, state) => const GoalListScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/overtime',
-              builder: (context, state) => BlocProvider(
-                create: (context) => OvertimeBloc(
-                  incomeRepository: IncomeRepository(
-                    client: context.read<ApiClient>(),
+              routes: [
+                GoRoute(
+                  path: 'overtime',
+                  builder: (context, state) => BlocProvider(
+                    create: (context) => OvertimeBloc(
+                      incomeRepository: IncomeRepository(
+                        client: context.read<ApiClient>(),
+                      ),
+                      goalRepository: GoalRepository(
+                        client: context.read<ApiClient>(),
+                      ),
+                    )..add(FetchOvertimeData()),
+                    child: const OvertimeScreen(),
                   ),
-                  goalRepository: GoalRepository(
-                    client: context.read<ApiClient>(),
-                  ),
-                )..add(FetchOvertimeData()),
-                child: const OvertimeScreen(),
-              ),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/profile',
-              builder: (context, state) => const ProfileScreen(),
+                ),
+              ],
             ),
           ],
         ),
       ],
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
     ),
   ],
 );

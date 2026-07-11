@@ -8,14 +8,12 @@ class BudgetCategoryCard extends StatelessWidget {
   final BudgetCategory category;
   final double percent;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
 
   const BudgetCategoryCard({
     super.key,
     required this.category,
     required this.percent,
     required this.onTap,
-    required this.onDelete,
   });
 
   Color _parseColor(String? hex) {
@@ -63,9 +61,8 @@ class BudgetCategoryCard extends StatelessWidget {
                       children: [
                         Text(
                           category.name,
-                          style: const TextStyle(
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -101,13 +98,6 @@ class BudgetCategoryCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    onPressed: onDelete,
                   ),
                 ],
               ),

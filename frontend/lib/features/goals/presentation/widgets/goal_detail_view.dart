@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:confetti/confetti.dart';
 import '../../../../../core/api/api_client.dart';
+import '../../../../core/theme/llc_theme.dart';
+import '../../../../core/theme/refractive_glass.dart';
 import '../../models/goal.dart';
 import '../../models/sub_goal.dart';
 import '../../repositories/goal_repository.dart';
@@ -28,22 +29,17 @@ class _GoalDetailViewState extends State<GoalDetailView> {
   late final GoalRepository _goalRepository;
   late Goal _currentGoal;
   bool _isLoading = false;
-  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
     _goalRepository = GoalRepository(client: context.read<ApiClient>());
     _currentGoal = widget.goal;
-    _confettiController = ConfettiController(
-      duration: const Duration(seconds: 3),
-    );
     _refreshGoal();
   }
 
   @override
   void dispose() {
-    _confettiController.dispose();
     super.dispose();
   }
 
@@ -63,8 +59,6 @@ class _GoalDetailViewState extends State<GoalDetailView> {
       final goals = await _goalRepository.getGoals();
       final updatedGoal = goals.firstWhere((g) => g.id == oldGoal.id);
 
-      _checkCompletion(oldGoal, updatedGoal);
-
       setState(() {
         _currentGoal = updatedGoal;
         _isLoading = false;
@@ -76,27 +70,6 @@ class _GoalDetailViewState extends State<GoalDetailView> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error refreshing: $e')));
-      }
-    }
-  }
-
-  void _checkCompletion(Goal oldGoal, Goal newGoal) {
-    // Check parent goal completion transition
-    if (!oldGoal.isCompleted && newGoal.isCompleted) {
-      _confettiController.play();
-      return; // Already triggered for parent, no need to check subgoals
-    }
-
-    // Check if any subgoal transitioned to completed
-    for (final newSg in newGoal.subGoals) {
-      final oldSg = oldGoal.subGoals.cast<SubGoal?>().firstWhere(
-        (s) => s?.id == newSg.id,
-        orElse: () => null,
-      );
-
-      if (oldSg != null && !oldSg.isCompleted && newSg.isCompleted) {
-        _confettiController.play();
-        break;
       }
     }
   }
@@ -304,10 +277,8 @@ class _GoalDetailViewState extends State<GoalDetailView> {
         ? _currentGoal.currentAmount / _currentGoal.targetAmount
         : 0.0;
 
-    return Stack(
+    return Column(
       children: [
-        Column(
-          children: [
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 24.0,
@@ -487,206 +458,174 @@ class _GoalDetailViewState extends State<GoalDetailView> {
               ),
             ),
           ],
-        ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            colors: const [
-              Colors.green,
-              Colors.blue,
-              Colors.pink,
-              Colors.orange,
-              Colors.purple,
-            ],
-          ),
-        ),
-      ],
-    );
+        );
   }
 
   Widget _buildParentProgressCard(double progress) {
     final isCompleted = _currentGoal.isCompleted;
+    final colorScheme = Theme.of(context).colorScheme;
+    final progressColor = isCompleted ? LLCColors.affirmMint : colorScheme.primary;
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            isCompleted
-                ? Colors.green.shade700
-                : Theme.of(context).colorScheme.primary,
-            isCompleted
-                ? Colors.green.shade500
-                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color:
-                (isCompleted
-                        ? Colors.green
-                        : Theme.of(context).colorScheme.primary)
-                    .withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Overall Progress',
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onPrimary.withValues(alpha: 0.8),
+    return RefractiveGlass(
+      borderRadius: 20,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Overall Progress',
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-              if (isCompleted)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.white, size: 16),
-                      SizedBox(width: 4),
-                      Text(
-                        'Completed',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isCompleted)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: LLCColors.affirmMint.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: LLCColors.affirmMint.withValues(alpha: 0.3)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle, color: LLCColors.affirmMint, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              'Completed',
+                              style: TextStyle(
+                                color: LLCColors.affirmMint,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (_currentGoal.accountIds.isNotEmpty) ...[
+                      if (isCompleted) const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.sync, color: colorScheme.primary, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Synced',
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '\$${_currentGoal.currentAmount.toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
-              if (_currentGoal.accountIds.isNotEmpty) ...[
-                if (isCompleted) const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.sync, color: Colors.white, size: 16),
-                      SizedBox(width: 4),
-                      Text(
-                        'Synced',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Target: \$${_currentGoal.targetAmount.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '\$${_currentGoal.currentAmount.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Target: \$${_currentGoal.targetAmount.toStringAsFixed(2)}',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          LinearProgressIndicator(
-            value: progress.clamp(0.0, 1.0),
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.onPrimary.withValues(alpha: 0.2),
-            color: Theme.of(context).colorScheme.onPrimary,
-            minHeight: 12,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${(progress * 100).toStringAsFixed(0)}% Complete',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onPrimary,
-              fontWeight: FontWeight.bold,
             ),
-          ),
-          const SizedBox(height: 16),
-          if (_currentGoal.accountIds.isEmpty)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _showManualFundGoal,
-                icon: const Icon(Icons.add_card),
-                label: const Text('Fund Goal'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.onPrimary,
-                  foregroundColor: isCompleted
-                      ? Colors.green.shade700
-                      : Theme.of(context).colorScheme.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                backgroundColor: colorScheme.surfaceContainerHighest,
+                color: progressColor,
+                minHeight: 8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${(progress * 100).toStringAsFixed(0)}% Complete',
+              style: TextStyle(
+                color: progressColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (_currentGoal.accountIds.isEmpty) ...[
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _showManualFundGoal,
+                  icon: const Icon(Icons.add_card),
+                  label: const Text('Fund Goal'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: isCompleted ? LLCColors.affirmMint : colorScheme.primary,
+                    foregroundColor: isCompleted ? LLCColors.voidBlack : colorScheme.onPrimary,
                   ),
                 ),
               ),
-            )
-          else
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.info_outline, color: Colors.white, size: 16),
-                  SizedBox(width: 8),
-                  Text(
-                    'Synced with Account Balances',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+            ] else ...[
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.info_outline, color: colorScheme.primary, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Synced with Account Balances',
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-        ],
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -696,85 +635,89 @@ class _GoalDetailViewState extends State<GoalDetailView> {
         ? subGoal.currentAmount / subGoal.targetAmount
         : 0.0;
     final isCompleted = subGoal.isCompleted;
+    final colorScheme = Theme.of(context).colorScheme;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          subGoal.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: RefractiveGlass(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            subGoal.name,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      if (isCompleted) ...[
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                          size: 16,
+                        if (isCompleted) ...[
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.check_circle,
+                            color: LLCColors.affirmMint,
+                            size: 16,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (_currentGoal.accountIds.isEmpty)
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          onPressed: () => _showEditSubGoalAmount(subGoal),
+                          tooltip: 'Edit Amount',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 20),
+                          onPressed: () async {
+                            await _goalRepository.deleteSubGoal(subGoal.id);
+                            _refreshGoal();
+                          },
+                          tooltip: 'Delete Subgoal',
                         ),
                       ],
-                    ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '\$${subGoal.currentAmount.toStringAsFixed(2)} of \$${subGoal.targetAmount.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: isCompleted ? LLCColors.affirmMint : null,
+                      fontWeight: isCompleted ? FontWeight.bold : null,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
+                  Text('${(subProgress * 100).toStringAsFixed(0)}%'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: subProgress.clamp(0.0, 1.0),
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  color: isCompleted ? LLCColors.affirmMint : null,
+                  minHeight: 8,
                 ),
-                if (_currentGoal.accountIds.isEmpty)
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                        onPressed: () => _showEditSubGoalAmount(subGoal),
-                        tooltip: 'Edit Amount',
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 20),
-                        onPressed: () async {
-                          await _goalRepository.deleteSubGoal(subGoal.id);
-                          _refreshGoal();
-                        },
-                        tooltip: 'Delete Subgoal',
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '\$${subGoal.currentAmount.toStringAsFixed(2)} of \$${subGoal.targetAmount.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: isCompleted ? Colors.green.shade700 : null,
-                    fontWeight: isCompleted ? FontWeight.bold : null,
-                  ),
-                ),
-                Text('${(subProgress * 100).toStringAsFixed(0)}%'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(
-              value: subProgress.clamp(0.0, 1.0),
-              backgroundColor: Colors.grey[200],
-              color: isCompleted ? Colors.green : null,
-              minHeight: 8,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

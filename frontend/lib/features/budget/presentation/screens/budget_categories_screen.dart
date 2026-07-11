@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/breakpoints.dart';
+import '../../../../core/theme/refractive_glass.dart';
 import '../../bloc/budget_bloc.dart';
 import '../widgets/budget_category_card.dart';
 import '../widgets/budget_category_form_sheet.dart';
@@ -47,7 +48,7 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.transparent,
       appBar: context.isCompact
           ? AppBar(
               title: const Text('Budget Categories'),
@@ -79,80 +80,58 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primaryContainer,
-                            Theme.of(context).colorScheme.secondaryContainer,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Total Budget Allocation',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer
-                                      .withValues(alpha: 0.8),
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                Text(
-                                  '\$${totalSpent.toStringAsFixed(0)}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .displayMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onPrimaryContainer,
-                                      ),
-                                ),
-                                Text(
-                                  ' / \$${totalBudget.toStringAsFixed(0)}',
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onPrimaryContainer
-                                            .withValues(alpha: 0.6),
-                                      ),
-                                ),
-                              ],
+                    child: RefractiveGlass(
+                      borderRadius: 20,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Budget Allocation',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: overallPercent,
-                              minHeight: 8,
-                              backgroundColor: Colors.white.withValues(
-                                alpha: 0.3,
+                            const SizedBox(height: 8),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    '\$${totalSpent.toStringAsFixed(0)}',
+                                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontFeatures: const [FontFeature.tabularFigures()],
+                                        ),
+                                  ),
+                                  Text(
+                                    ' / \$${totalBudget.toStringAsFixed(0)}',
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          fontFeatures: const [FontFeature.tabularFigures()],
+                                        ),
+                                  ),
+                                ],
                               ),
-                              color: overallPercent > 0.9
-                                  ? Colors.redAccent
-                                  : Theme.of(context).colorScheme.primary,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: overallPercent,
+                                minHeight: 8,
+                                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                color: overallPercent > 0.9
+                                    ? Colors.redAccent
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -211,11 +190,6 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                                   category: category,
                                   percent: percent,
                                   onTap: () => _showCategoryDetail(category),
-                                  onDelete: () {
-                                    context.read<BudgetBloc>().add(
-                                      DeleteBudgetCategory(category.id),
-                                    );
-                                  },
                                 ),
                               );
                             }, childCount: state.categories.length),
@@ -243,11 +217,6 @@ class _BudgetCategoriesScreenState extends State<BudgetCategoriesScreen> {
                                 category: category,
                                 percent: percent,
                                 onTap: () => _showCategoryDetail(category),
-                                onDelete: () {
-                                  context.read<BudgetBloc>().add(
-                                    DeleteBudgetCategory(category.id),
-                                  );
-                                },
                               );
                             }, childCount: state.categories.length),
                           ),

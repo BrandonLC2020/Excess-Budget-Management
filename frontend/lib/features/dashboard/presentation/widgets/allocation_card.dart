@@ -186,22 +186,32 @@ class _AllocationCardState extends State<AllocationCard> {
                       child: ThermalGlow(
                         borderRadius: 12,
                         onTap: () => _handleAccept(context),
-                        child: OutlinedButton.icon(
-                          onPressed: () => _handleAccept(context),
-                          icon: const Icon(
-                            Icons.check_circle_outline,
-                            size: 18,
-                          ),
-                          label: const Text('Accept Suggestion'),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            foregroundColor: color,
-                            side: BorderSide(
+                        child: Container(
+                          height: 48,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
                               color: color.withValues(alpha: 0.5),
+                              width: 0.75,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline,
+                                size: 18,
+                                color: color,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Accept Suggestion',
+                                style: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

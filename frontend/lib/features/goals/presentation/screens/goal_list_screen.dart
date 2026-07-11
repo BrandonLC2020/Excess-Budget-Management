@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/breakpoints.dart';
+import '../../../../core/theme/refractive_glass.dart';
+import '../../../../core/theme/thermal_glow.dart';
 import '../../../../core/widgets/master_detail_layout.dart';
 import '../../models/goal.dart';
 import '../../repositories/goal_repository.dart';
@@ -79,7 +82,16 @@ class _GoalListScreenState extends State<GoalListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: context.isCompact
-          ? AppBar(title: const Text('Financial Goals'))
+          ? AppBar(
+              title: const Text('Financial Goals'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.trending_up),
+                  onPressed: () => context.push('/goals/overtime'),
+                  tooltip: 'Overtime Accelerator',
+                ),
+              ],
+            )
           : null,
       body: MasterDetailLayout(
         master: _buildMasterPane(),
@@ -109,43 +121,70 @@ class _GoalListScreenState extends State<GoalListScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_goals.isEmpty) {
-      return const Center(
-        child: Text('No goals yet. Add one to start saving!'),
-      );
-    }
-
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(16),
-      itemCount: _goals.length,
-      itemBuilder: (context, index) {
-        final goal = _goals[index];
-        final isSelected = _selectedGoal?.id == goal.id;
-
-        return GoalCard(
-          goal: goal,
-          isSelected: isSelected,
-          onTap: () async {
-            if (context.isCompact) {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GoalDetailScreen(goal: goal),
+      children: [
+        // Overtime Accelerator Banner
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: ThermalGlow(
+            onTap: () => context.push('/goals/overtime'),
+            child: RefractiveGlass(
+              child: ListTile(
+                leading: Icon(
+                  Icons.trending_up,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-              );
-              _loadGoals();
-            } else {
-              setState(() {
-                _selectedGoal = goal;
-              });
-            }
-          },
-          onDelete: () async {
-            await _goalRepository.deleteGoal(goal.id);
-            _loadGoals();
-          },
-        );
-      },
+                title: const Text(
+                  'Overtime Accelerator',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text(
+                  'Simulate how extra hours accelerate your goal completion',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+              ),
+            ),
+          ),
+        ),
+        if (_goals.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(
+              child: Text(
+                'No goals yet. Add one to start saving!',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          ..._goals.map((goal) {
+            final isSelected = _selectedGoal?.id == goal.id;
+            return GoalCard(
+              goal: goal,
+              isSelected: isSelected,
+              onTap: () async {
+                if (context.isCompact) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GoalDetailScreen(goal: goal),
+                    ),
+                  );
+                  _loadGoals();
+                } else {
+                  setState(() {
+                    _selectedGoal = goal;
+                  });
+                }
+              },
+              onDelete: () async {
+                await _goalRepository.deleteGoal(goal.id);
+                _loadGoals();
+              },
+            );
+          }),
+      ],
     );
   }
 }

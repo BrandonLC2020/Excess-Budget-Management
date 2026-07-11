@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/api/api_client.dart';
-import '../../../../core/breakpoints.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../bloc/auth_event.dart';
 import '../../models/profile.dart';
@@ -127,9 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: context.isCompact
-          ? AppBar(title: const Text('Profile Settings'))
-          : null,
+      appBar: AppBar(title: const Text('Profile Settings')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -200,14 +197,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 32),
                   const Divider(),
                   const SizedBox(height: 32),
-                  const Text(
+                  Text(
                     'AI Recommendation Balance',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                   Text(
                     'When you have no recent history, the AI will use this ratio to balance between savings and purchase goals.',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -239,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context.read<AuthBloc>().add(AuthLogoutRequested()),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
-                      foregroundColor: Colors.red,
+                      foregroundColor: Theme.of(context).colorScheme.error,
                     ),
                     child: const Text('Logout'),
                   ),

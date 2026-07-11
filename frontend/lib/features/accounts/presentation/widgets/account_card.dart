@@ -8,14 +8,12 @@ class AccountCard extends StatelessWidget {
   final Account account;
   final bool isSelected;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
 
   const AccountCard({
     super.key,
     required this.account,
     required this.isSelected,
     required this.onTap,
-    required this.onDelete,
   });
 
   @override
@@ -44,12 +42,6 @@ class AccountCard extends StatelessWidget {
                 '\$${account.balance.toStringAsFixed(2)}',
                 style: const TextStyle(fontFeatures: [FontFeature.tabularFigures()]),
               ),
-              trailing: context.isCompact
-                  ? IconButton(
-                      icon: Icon(Icons.delete, color: colorScheme.onSurfaceVariant),
-                      onPressed: onDelete,
-                    )
-                  : null,
             ),
           ),
         ),
