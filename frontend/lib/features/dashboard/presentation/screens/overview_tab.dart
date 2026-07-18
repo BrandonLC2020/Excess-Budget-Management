@@ -498,14 +498,14 @@ class _OverviewTabState extends State<OverviewTab> {
               title: 'Net Worth',
               value: currencyFormat.format(netWorth),
               icon: Icons.account_balance_wallet_outlined,
-              color: Colors.blue,
+              color: Theme.of(context).colorScheme.primary,
             ),
             MetricCard(
               title: 'Monthly Budget',
               value:
                   '${currencyFormat.format(totalSpent)} / ${currencyFormat.format(totalLimit)}',
               icon: Icons.pie_chart_outline,
-              color: Colors.orange,
+              color: Theme.of(context).colorScheme.primary,
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -514,8 +514,8 @@ class _OverviewTabState extends State<OverviewTab> {
                     child: LinearProgressIndicator(
                       value: budgetProgress,
                       minHeight: 6,
-                      backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                      valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.primary),
                     ),
                   ),
                 ],
@@ -525,7 +525,7 @@ class _OverviewTabState extends State<OverviewTab> {
               title: 'Goal Progress',
               value: '${(goalProgress * 100).toStringAsFixed(0)}%',
               icon: Icons.flag_outlined,
-              color: Colors.green,
+              color: Theme.of(context).colorScheme.tertiary,
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -534,8 +534,8 @@ class _OverviewTabState extends State<OverviewTab> {
                     child: LinearProgressIndicator(
                       value: goalProgress,
                       minHeight: 6,
-                      backgroundColor: Colors.green.withValues(alpha: 0.1),
-                      valueColor: const AlwaysStoppedAnimation(Colors.green),
+                      backgroundColor: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
+                      valueColor: AlwaysStoppedAnimation(Theme.of(context).colorScheme.tertiary),
                     ),
                   ),
                   const SizedBox(height: 4),

@@ -309,9 +309,9 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                           onPressed: _refreshGoal,
                         ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.delete_outline,
-                          color: Colors.red,
+                          color: Theme.of(context).colorScheme.error,
                         ),
                         onPressed: () {
                           showDialog(
@@ -336,9 +336,9 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                                       widget.onDelete?.call();
                                     }
                                   },
-                                  child: const Text(
+                                  child: Text(
                                     'Delete',
-                                    style: TextStyle(color: Colors.red),
+                                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                                   ),
                                 ),
                               ],
@@ -407,10 +407,10 @@ class _GoalDetailViewState extends State<GoalDetailView> {
                                       padding: const EdgeInsets.only(bottom: 8),
                                       child: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.account_balance_wallet,
                                             size: 16,
-                                            color: Colors.grey,
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                                           ),
                                           const SizedBox(width: 8),
                                           Text(a.name),

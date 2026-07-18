@@ -146,13 +146,14 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
     // Determine screen height for dynamic bottom sheet padding to handle keyboard
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      padding: EdgeInsets.only(
-        left: 24.0,
-        right: 24.0,
-        top: 24.0,
-        bottom: bottomInset > 0 ? bottomInset + 16.0 : 24.0,
-      ),
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.only(
+          left: 24.0,
+          right: 24.0,
+          top: 24.0,
+          bottom: bottomInset > 0 ? bottomInset : 8.0,
+        ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -410,8 +411,9 @@ class _BudgetCategoryFormSheetState extends State<BudgetCategoryFormSheet> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showIconPicker() {
     showModalBottomSheet(

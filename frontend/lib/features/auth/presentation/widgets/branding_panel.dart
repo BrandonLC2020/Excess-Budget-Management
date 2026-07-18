@@ -14,11 +14,12 @@ class BrandingPanel extends StatelessWidget {
           colors: [theme.colorScheme.primary, theme.colorScheme.tertiary],
         ),
       ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(48.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(48.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.account_balance_wallet,
@@ -46,6 +47,7 @@ class BrandingPanel extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

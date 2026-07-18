@@ -96,9 +96,9 @@ class ProjectedBalanceSummary extends StatelessWidget {
                                             .bodySmall
                                             ?.copyWith(
                                               color: delta > 0
-                                                  ? Colors.green
+                                                  ? Theme.of(context).colorScheme.tertiary
                                                   : (delta < 0
-                                                        ? Colors.red
+                                                        ? Theme.of(context).colorScheme.error
                                                         : null),
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -112,8 +112,8 @@ class ProjectedBalanceSummary extends StatelessWidget {
                                         .labelSmall
                                         ?.copyWith(
                                           color: delta > 0
-                                              ? Colors.green
-                                              : (delta < 0 ? Colors.red : null),
+                                              ? Theme.of(context).colorScheme.tertiary
+                                              : (delta < 0 ? Theme.of(context).colorScheme.error : null),
                                         ),
                                   ),
                                 ],

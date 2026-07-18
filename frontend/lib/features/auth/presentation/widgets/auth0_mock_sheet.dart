@@ -90,7 +90,7 @@ class _Auth0MockSheetState extends State<Auth0MockSheet> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 10,
                 offset: const Offset(0, -2),
               ),
@@ -109,7 +109,7 @@ class _Auth0MockSheetState extends State<Auth0MockSheet> {
                   width: 48,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.dividerColor.withOpacity(0.4),
+                    color: theme.dividerColor.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -123,7 +123,7 @@ class _Auth0MockSheetState extends State<Auth0MockSheet> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEB5424).withOpacity(0.1),
+                      color: const Color(0xFFEB5424).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

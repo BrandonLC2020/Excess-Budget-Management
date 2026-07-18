@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/breakpoints.dart';
+import '../../../../core/theme/refractive_glass.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../bloc/auth_state.dart';
 import '../widgets/branding_panel.dart';
@@ -34,13 +35,11 @@ class LoginScreen extends StatelessWidget {
               return SafeArea(
                 child: Center(
                   child: SingleChildScrollView(
-                    child: Card(
-                      margin: const EdgeInsets.all(16.0),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: RefractiveGlass(
+                        child: const LoginForm(),
                       ),
-                      child: const LoginForm(),
                     ),
                   ),
                 ),
@@ -51,10 +50,12 @@ class LoginScreen extends StatelessWidget {
                   const Expanded(flex: 1, child: BrandingPanel()),
                   Expanded(
                     flex: 1,
-                    child: Center(
-                      child: Container(
-                        constraints: const BoxConstraints(maxWidth: 480),
-                        child: const SingleChildScrollView(child: LoginForm()),
+                    child: SafeArea(
+                      child: Center(
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: const SingleChildScrollView(child: LoginForm()),
+                        ),
                       ),
                     ),
                   ),

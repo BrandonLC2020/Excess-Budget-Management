@@ -121,34 +121,37 @@ class _GoalListScreenState extends State<GoalListScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.all(16),
-      children: [
-        // Overtime Accelerator Banner
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: ThermalGlow(
-            onTap: () => context.push('/goals/overtime'),
-            child: RefractiveGlass(
-              child: ListTile(
-                leading: Icon(
-                  Icons.trending_up,
-                  color: Theme.of(context).colorScheme.primary,
+      itemCount: 1 + (_goals.isEmpty ? 1 : _goals.length),
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: ThermalGlow(
+              onTap: () => context.push('/goals/overtime'),
+              child: RefractiveGlass(
+                child: ListTile(
+                  leading: Icon(
+                    Icons.trending_up,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: const Text(
+                    'Overtime Accelerator',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: const Text(
+                    'Simulate how extra hours accelerate your goal completion',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
                 ),
-                title: const Text(
-                  'Overtime Accelerator',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text(
-                  'Simulate how extra hours accelerate your goal completion',
-                ),
-                trailing: const Icon(Icons.chevron_right),
               ),
             ),
-          ),
-        ),
-        if (_goals.isEmpty)
-          const Padding(
+          );
+        }
+
+        if (_goals.isEmpty) {
+          return const Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
               child: Text(
@@ -156,35 +159,35 @@ class _GoalListScreenState extends State<GoalListScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-          )
-        else
-          ..._goals.map((goal) {
-            final isSelected = _selectedGoal?.id == goal.id;
-            return GoalCard(
-              goal: goal,
-              isSelected: isSelected,
-              onTap: () async {
-                if (context.isCompact) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GoalDetailScreen(goal: goal),
-                    ),
-                  );
-                  _loadGoals();
-                } else {
-                  setState(() {
-                    _selectedGoal = goal;
-                  });
-                }
-              },
-              onDelete: () async {
-                await _goalRepository.deleteGoal(goal.id);
-                _loadGoals();
-              },
-            );
-          }),
-      ],
+          );
+        }
+
+        final goal = _goals[index - 1];
+        final isSelected = _selectedGoal?.id == goal.id;
+        return GoalCard(
+          goal: goal,
+          isSelected: isSelected,
+          onTap: () async {
+            if (context.isCompact) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GoalDetailScreen(goal: goal),
+                ),
+              );
+              _loadGoals();
+            } else {
+              setState(() {
+                _selectedGoal = goal;
+              });
+            }
+          },
+          onDelete: () async {
+            await _goalRepository.deleteGoal(goal.id);
+            _loadGoals();
+          },
+        );
+      },
     );
   }
 }

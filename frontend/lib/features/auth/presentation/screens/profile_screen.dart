@@ -129,121 +129,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(title: const Text('Profile Settings')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundImage: _profile?.avatarUrl != null
-                              ? NetworkImage(_profile!.avatarUrl!)
-                              : null,
-                          child: _profile?.avatarUrl == null
-                              ? const Icon(Icons.person, size: 60)
-                              : null,
-                        ),
-                        if (_isUploading)
-                          const Positioned.fill(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: CircleAvatar(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            radius: 18,
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                size: 18,
-                                color: Colors.white,
-                              ),
-                              onPressed: _isUploading
-                                  ? null
-                                  : _pickAndUploadImage,
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 60,
+                              backgroundImage: _profile?.avatarUrl != null
+                                  ? NetworkImage(_profile!.avatarUrl!)
+                                  : null,
+                              child: _profile?.avatarUrl == null
+                                  ? const Icon(Icons.person, size: 60)
+                                  : null,
                             ),
-                          ),
+                            if (_isUploading)
+                              const Positioned.fill(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: CircleAvatar(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                radius: 18,
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: _isUploading
+                                      ? null
+                                      : _pickAndUploadImage,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.badge),
-                    ),
-                    onFieldSubmitted: (_) => _updateProfile(),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    initialValue: _profile?.email,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
-                      filled: true,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  const Divider(),
-                  const SizedBox(height: 32),
-                  Text(
-                    'AI Recommendation Balance',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                   Text(
-                    'When you have no recent history, the AI will use this ratio to balance between savings and purchase goals.',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text('Purchase Goals'),
-                      Text('Savings Goals'),
+                      ),
+                      const SizedBox(height: 32),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Full Name',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.badge),
+                        ),
+                        onFieldSubmitted: (_) => _updateProfile(),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: _profile?.email,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Email Address',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.email),
+                          filled: true,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      const Divider(),
+                      const SizedBox(height: 32),
+                      Text(
+                        'AI Recommendation Balance',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                       Text(
+                        'When you have no recent history, the AI will use this ratio to balance between savings and purchase goals.',
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text('Purchase Goals'),
+                          Text('Savings Goals'),
+                        ],
+                      ),
+                      Slider(
+                        value: _profile?.defaultSavingsRatio ?? 0.5,
+                        onChanged: (val) => setState(() {
+                          _profile = _profile?.copyWith(defaultSavingsRatio: val);
+                        }),
+                        onChangeEnd: _saveRatio,
+                        divisions: 10,
+                        label:
+                            '${((_profile?.defaultSavingsRatio ?? 0.5) * 100).toInt()}% Savings',
+                      ),
+                      Center(
+                        child: Text(
+                          '${((1 - (_profile?.defaultSavingsRatio ?? 0.5)) * 100).toInt()}% Purchases / ${((_profile?.defaultSavingsRatio ?? 0.5) * 100).toInt()}% Savings',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      OutlinedButton(
+                        onPressed: () =>
+                            context.read<AuthBloc>().add(AuthLogoutRequested()),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          foregroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                        child: const Text('Logout'),
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
-                  Slider(
-                    value: _profile?.defaultSavingsRatio ?? 0.5,
-                    onChanged: (val) => setState(() {
-                      _profile = _profile?.copyWith(defaultSavingsRatio: val);
-                    }),
-                    onChangeEnd: _saveRatio,
-                    divisions: 10,
-                    label:
-                        '${((_profile?.defaultSavingsRatio ?? 0.5) * 100).toInt()}% Savings',
-                  ),
-                  Center(
-                    child: Text(
-                      '${((1 - (_profile?.defaultSavingsRatio ?? 0.5)) * 100).toInt()}% Purchases / ${((_profile?.defaultSavingsRatio ?? 0.5) * 100).toInt()}% Savings',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  OutlinedButton(
-                    onPressed: () =>
-                        context.read<AuthBloc>().add(AuthLogoutRequested()),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                      foregroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                    child: const Text('Logout'),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
             ),
     );

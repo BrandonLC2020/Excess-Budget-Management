@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/refractive_glass.dart';
 
 class MetricCard extends StatelessWidget {
   final String title;
@@ -18,7 +19,7 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card.filled(
+    return RefractiveGlass(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(

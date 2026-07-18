@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/breakpoints.dart';
+import '../../../../core/theme/refractive_glass.dart';
 import '../../../goals/models/goal.dart';
 import '../../../goals/models/sub_goal.dart';
 import '../../bloc/overtime_bloc.dart';
@@ -199,9 +200,14 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
                   ),
               ],
             ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: content,
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: content,
+                ),
+              ),
             ),
           );
         },
@@ -218,12 +224,7 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
   ) {
     final theme = Theme.of(context);
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
-      ),
+    return RefractiveGlass(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -291,7 +292,7 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: state.selectedGoalId,
+              initialValue: state.selectedGoalId,
               decoration: const InputDecoration(
                 labelText: 'Select Financial Goal',
                 border: OutlineInputBorder(),
@@ -311,7 +312,7 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
             if (subgoals.isNotEmpty) ...[
               const SizedBox(height: 16),
               DropdownButtonFormField<String?>(
-                value: state.selectedSubgoalId,
+                initialValue: state.selectedSubgoalId,
                 decoration: const InputDecoration(
                   labelText: 'Select Subgoal (Optional)',
                   border: OutlineInputBorder(),
@@ -403,13 +404,8 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
     final proj = state.projection;
 
     if (proj == null) {
-      return Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
-        ),
-        child: const Padding(
+      return const RefractiveGlass(
+        child: Padding(
           padding: EdgeInsets.all(40.0),
           child: Center(
             child: Text('Adjust settings or select a goal to see projections.'),
@@ -430,216 +426,217 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
         ? '\$${remainingAmount.toStringAsFixed(2)} remaining'
         : 'Fully Funded';
 
-    return Column(
-      children: [
-        // Rate Card
-        Card(
-          elevation: 0,
-          color: theme.colorScheme.primaryContainer,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.trending_up,
-                  size: 40,
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Net Overtime Hourly Rate',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer
-                              .withOpacity(0.8),
-                        ),
-                      ),
-                      Text(
-                        '\$${proj.netHourlyRate.toStringAsFixed(2)} / hr',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Income Projections Card
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Overtime Earnings Impact',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildStatRow(
-                  context,
-                  'Weekly Net Increase',
-                  '+\$${proj.weeklyOvertimeNetIncome.toStringAsFixed(2)}',
-                ),
-                const Divider(),
-                _buildStatRow(
-                  context,
-                  'Monthly Net Increase',
-                  '+\$${proj.monthlyOvertimeNetIncome.toStringAsFixed(2)}',
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Timeline Projections Card (Only if a goal/subgoal is selected)
-        if (hasTarget)
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: theme.colorScheme.outlineVariant,
-                width: 1,
+    return RefractiveGlass(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            // Rate Card
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              targetName,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              targetString,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (proj.monthsSaved != null && proj.monthsSaved! > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.green.shade200),
-                          ),
-                          child: Text(
-                            '${proj.monthsSaved!.toStringAsFixed(1)} mos saved',
-                            style: TextStyle(
-                              color: Colors.green.shade800,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const Divider(height: 32),
-                  if (proj.totalHoursNeeded != null &&
-                      proj.totalHoursNeeded! > 0) ...[
-                    Text(
-                      'Psychological Goal Target',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.trending_up,
+                      size: 40,
+                      color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(height: 6),
-                    RichText(
-                      text: TextSpan(
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                        ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const TextSpan(text: 'It will take '),
-                          TextSpan(
-                            text:
-                                '${proj.totalHoursNeeded!.toStringAsFixed(1)} hours',
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
+                          Text(
+                            'Net Overtime Hourly Rate',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          const TextSpan(
-                            text:
-                                ' of overtime to fully fund the remaining balance.',
+                          Text(
+                            '\$${proj.netHourlyRate.toStringAsFixed(2)} / hr',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const Divider(height: 32),
                   ],
-                  Text(
-                    'Time to Complete',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (proj.monthsToCompleteStandard != null) ...[
-                    _buildTimelineBar(
-                      context,
-                      'Standard Savings Path',
-                      proj.monthsToCompleteStandard!,
-                      theme.colorScheme.secondary.withOpacity(0.5),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  if (proj.monthsToCompleteWithOvertime != null)
-                    _buildTimelineBar(
-                      context,
-                      'Overtime Accelerated Path',
-                      proj.monthsToCompleteWithOvertime!,
-                      theme.colorScheme.primary,
-                    ),
-                  if (proj.monthsToCompleteStandard == null &&
-                      proj.monthsToCompleteWithOvertime == null)
-                    const Text(
-                      'Enter hours or standard contribution to estimate timeline.',
-                    ),
-                ],
+                ),
               ),
             ),
-          ),
-      ],
+            const SizedBox(height: 16),
+
+            // Income Projections Card
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Overtime Earnings Impact',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildStatRow(
+                      context,
+                      'Weekly Net Increase',
+                      '+\$${proj.weeklyOvertimeNetIncome.toStringAsFixed(2)}',
+                    ),
+                    const Divider(),
+                    _buildStatRow(
+                      context,
+                      'Monthly Net Increase',
+                      '+\$${proj.monthlyOvertimeNetIncome.toStringAsFixed(2)}',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Timeline Projections Card (Only if a goal/subgoal is selected)
+            if (hasTarget)
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerLow.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  targetName,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  targetString,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (proj.monthsSaved != null && proj.monthsSaved! > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.tertiaryContainer,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: theme.colorScheme.tertiary.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                '${proj.monthsSaved!.toStringAsFixed(1)} mos saved',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onTertiaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const Divider(height: 32),
+                      if (proj.totalHoursNeeded != null &&
+                          proj.totalHoursNeeded! > 0) ...[
+                        Text(
+                          'Psychological Goal Target',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        RichText(
+                          text: TextSpan(
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                            children: [
+                              const TextSpan(text: 'It will take '),
+                              TextSpan(
+                                text:
+                                    '${proj.totalHoursNeeded!.toStringAsFixed(1)} hours',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const TextSpan(
+                                text:
+                                    ' of overtime to fully fund the remaining balance.',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(height: 32),
+                      ],
+                      Text(
+                        'Time to Complete',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (proj.monthsToCompleteStandard != null) ...[
+                        _buildTimelineBar(
+                          context,
+                          'Standard Savings Path',
+                          proj.monthsToCompleteStandard!,
+                          theme.colorScheme.secondary.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      if (proj.monthsToCompleteWithOvertime != null)
+                        _buildTimelineBar(
+                          context,
+                          'Overtime Accelerated Path',
+                          proj.monthsToCompleteWithOvertime!,
+                          theme.colorScheme.primary,
+                        ),
+                      if (proj.monthsToCompleteStandard == null &&
+                          proj.monthsToCompleteWithOvertime == null)
+                        const Text(
+                          'Enter hours or standard contribution to estimate timeline.',
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -695,7 +692,7 @@ class _OvertimeScreenState extends State<OvertimeScreen> {
           child: Container(
             height: 8,
             width: double.infinity,
-            color: theme.colorScheme.surfaceVariant,
+            color: theme.colorScheme.surfaceContainerHighest,
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
               // Normalize: cap bar representation at 1.0. Let's assume max is 24 months for bar sizing.
