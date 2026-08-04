@@ -19,6 +19,7 @@
 - **`date`-only fields** (not full timestamps — `Expense.date`, `ExtraIncome.date_received`, `Goal.target_date`) are stored as ISO strings (`date.isoformat()`) and parsed back with `date.fromisoformat()`; Firestore has no bare-date type.
 - **`created_at`/`updated_at`** are computed client-side as `datetime.now(timezone.utc)` and written as a literal value (not the `SERVER_TIMESTAMP` sentinel) so the value is immediately available for the function's return value without a second round-trip read — this matches the *existing* behavior anyway, since Django's `auto_now_add=True` also uses `timezone.now()` client-side, not a database server clock.
 - Run all commands from `backend/` unless stated otherwise. Every commit in this plan runs `uv run ruff check .` first and fixes any lint failures before committing.
+- **Cross-app FK retype pattern (discovered during Task 5 execution).** Converting an app's `models.py` to a dataclass breaks Django's system checks for *every other still-Postgres app* holding a live `ForeignKey` into it — Django validates the whole `INSTALLED_APPS` model graph together, not per-app, so a FK whose target is no longer a real `django.db.models.Model` fails `fields.E300`/`E307` immediately, blocking `manage.py migrate`/`runserver`/pytest collection *project-wide*, not just for the converted app. Tasks 5 (`accounts`), 6 (`budget`), and 8 (`goals`) are each depended upon by later, not-yet-converted apps via a live FK, so each of those three tasks includes an extra step: retype the *specific* cross-app FK field(s) in the dependent app(s) from `ForeignKey(...)` to a plain nullable `models.UUIDField(null=True, blank=True)` (same field name, so `schemas.py`'s `*_id` fields keep resolving unchanged) plus a new migration for that dependent app — no other change to the dependent app (`services.py`, `api.py`, `schemas.py`, tests all untouched at this point). This unblocks the global migration graph and every *unrelated* app's tests/dev-server immediately. It does **not** fix the dependent app's own tests that exercise the now-retyped field through its still-ORM `services.py` (e.g. `get_owned_or_404(Account, ...)` calls) — those go red until that app's own dedicated task lands and rewrites its `services.py` against Firestore; this is expected, tracked in the SDD ledger, and superseded (not wasted twice) since that task deletes the dependent app's migrations entirely anyway.
 
 ---
 
@@ -703,6 +704,8 @@ git commit -m "test: require Firestore emulator and wipe collections between tes
 - Modify: `backend/apps/accounts/apps.py`
 - Delete: `backend/apps/accounts/migrations/` (all files except keep the directory removed entirely)
 - No changes: `backend/apps/accounts/api.py`, `backend/apps/accounts/schemas.py`, `backend/apps/accounts/tests/test_api.py`
+- Modify (cross-app FK retype — see Global Constraints): `backend/apps/income/models.py`, `backend/apps/expenses/models.py`, `backend/apps/goals/models.py`, `backend/apps/allocations/models.py`
+- Create (new migrations for the retype, generated via `makemigrations`, not hand-written): one new migration file each in `backend/apps/income/migrations/`, `backend/apps/expenses/migrations/`, `backend/apps/goals/migrations/`, `backend/apps/allocations/migrations/`
 
 **Interfaces:**
 - Consumes: `apps.common.firestore.get_client`, `apps.common.firestore_helpers.get_owned_or_404_fs`, `apps.common.money.{to_cents,from_cents}`, `apps.common.rollups.recompute_goal_from_accounts`.
@@ -831,18 +834,67 @@ class AccountsConfig(AppConfig):
 Run: `rm -rf apps/accounts/migrations`
 (Firestore is schemaless — this app no longer has any ORM tables to migrate. The `migrations/__init__.py` and any numbered migration files are all removed.)
 
-- [ ] **Step 7: Run and confirm the existing tests pass again**
+- [ ] **Step 7: Retype the cross-app FK fields that still point at `accounts.Account`**
 
-Run: `uv run pytest apps/accounts/tests/test_api.py -v`
-Expected: PASS — same test file, unchanged, now running against Firestore instead of Postgres.
+At this point, the global Django app registry is broken: `income.ExtraIncome.account`, `expenses.Expense.account`, `goals.GoalAccount.account`, and `allocations.GoalAllocation.account` are all still live `ForeignKey("accounts.Account", ...)` fields pointing at a model that no longer exists as a Django model. Confirm this by running `uv run python manage.py check` — expect `fields.E300`/`E307` errors naming all four fields.
 
-- [ ] **Step 8: Commit**
+For each of the four fields, change the field declaration from a `ForeignKey` to a plain nullable `UUIDField`, keeping the field name unchanged (so `schemas.py`'s `account_id`-typed fields in each of those apps keep resolving via Django's auto-generated `_id` shadow attribute — wait, that shadow attribute is FK-specific and won't exist once retyped, so **also rename the field to `account_id`** at the same time, matching what the field will be called once each app's own Firestore conversion task lands anyway):
+
+`backend/apps/income/models.py` — `ExtraIncome`:
+```python
+    account_id = models.UUIDField(null=True, blank=True)
+```
+(replaces the existing `account = models.ForeignKey("accounts.Account", null=True, blank=True, on_delete=models.SET_NULL, related_name="extra_income")` field)
+
+`backend/apps/expenses/models.py` — `Expense`:
+```python
+    account_id = models.UUIDField(null=True, blank=True)
+```
+(replaces `account = models.ForeignKey("accounts.Account", null=True, blank=True, on_delete=models.SET_NULL, related_name="expenses")`)
+
+`backend/apps/goals/models.py` — `GoalAccount`:
+```python
+    account_id = models.UUIDField()
+```
+(replaces `account = models.ForeignKey("accounts.Account", on_delete=models.CASCADE, related_name="goal_accounts")`; drop the `Meta.constraints` `UniqueConstraint(fields=["goal", "account"], ...)` too, since it references the old field name — this app's own Task 8 will replace this whole model with a dataclass shortly, so the uniqueness guarantee is dropped now rather than patched twice)
+
+`backend/apps/allocations/models.py` — `GoalAllocation`:
+```python
+    account_id = models.UUIDField(null=True, blank=True)
+```
+(replaces `account = models.ForeignKey("accounts.Account", null=True, blank=True, on_delete=models.SET_NULL, related_name="allocations")`; also drop the `models.Index(fields=["account"])` entry in `Meta.indexes`, replacing with `models.Index(fields=["account_id"])`)
+
+Do **not** touch any of these four apps' `services.py`, `api.py`, `schemas.py`, or `signals.py` in this step — only the one field declaration (and, for `goals`/`allocations`, the `Meta` references to it) in each `models.py`. This is expected to leave each of those four apps' own tests that exercise this field (e.g. creating an expense with an `account_id`) failing — that's fine, out of scope for Task 5, and will be resolved when each app gets its own dedicated Firestore-conversion task.
+
+Generate the migrations (don't hand-write them):
+```bash
+uv run python manage.py makemigrations income expenses goals allocations
+```
+Expected: one new migration per app, each renaming/retyping the field (Django will likely ask interactively whether this is a rename — answer yes/`y` where prompted, or pass `--no-input` and verify the generated migration does a rename+retype rather than a drop+add if run non-interactively; either is acceptable for dev-only data, but confirm the migration file it wrote makes sense before applying it).
+
+- [ ] **Step 8: Confirm the global migration graph and unrelated apps are unblocked**
+
+Run: `uv run python manage.py check` — expect no more `fields.E300`/`E307` errors.
+Run: `uv run pytest apps/budget/tests/test_api.py -v` (an app *not* touched by this task, whose tests were failing at collection time before this fix) — expect PASS, proving the project-wide migration graph is healthy again.
+Run: `uv run pytest apps/accounts/tests/test_api.py -v` — expect PASS (same test file, unchanged, now against Firestore).
+
+Record, but do not attempt to fix, which of `income`/`expenses`/`goals`/`allocations`'s own tests are now failing because of the retyped field (expected — their own conversion tasks resolve this).
+
+- [ ] **Step 9: Commit**
 
 ```bash
 git add apps/accounts/models.py apps/accounts/services.py apps/accounts/apps.py
 git rm apps/accounts/signals.py
 git add -A apps/accounts/migrations
-git commit -m "feat(accounts): migrate to Firestore"
+git add apps/income/models.py apps/income/migrations apps/expenses/models.py apps/expenses/migrations apps/goals/models.py apps/goals/migrations apps/allocations/models.py apps/allocations/migrations
+git commit -m "feat(accounts): migrate to Firestore
+
+Also retypes the cross-app FK fields in income/expenses/goals/allocations
+that pointed at accounts.Account (ForeignKey -> UUIDField), which is
+otherwise required to keep Django's system checks and migration graph
+working project-wide now that Account is no longer a Django model. Each
+of those apps' own tests exercising this field are expected to fail until
+their own dedicated Firestore-conversion task lands."
 ```
 
 ---
@@ -854,6 +906,8 @@ git commit -m "feat(accounts): migrate to Firestore"
 - Modify: `backend/apps/budget/services.py`
 - Delete: `backend/apps/budget/migrations/`
 - No changes: `backend/apps/budget/api.py`, `backend/apps/budget/schemas.py`, `backend/apps/budget/tests/test_api.py`
+- Modify (cross-app FK retype — see Global Constraints, same pattern as Task 5): `backend/apps/income/models.py`, `backend/apps/expenses/models.py`
+- Create: one new migration each in `backend/apps/income/migrations/`, `backend/apps/expenses/migrations/`
 
 **Interfaces:**
 - Consumes: `apps.common.firestore.get_client`, `apps.common.firestore_helpers.get_owned_or_404_fs`, `apps.common.money.{to_cents,from_cents}`.
@@ -980,17 +1034,44 @@ Add `from decimal import Decimal` to the imports at the top of the file (used in
 
 Run: `rm -rf apps/budget/migrations`
 
-- [ ] **Step 6: Run and confirm pass**
+- [ ] **Step 6: Retype the cross-app FK fields that still point at `budget.BudgetCategory`**
 
-Run: `uv run pytest apps/budget/tests/test_api.py -v`
-Expected: PASS.
+Same pattern as Task 5, Step 7. `income.ExtraIncome.budget_category` and `expenses.Expense.budget_category` are still live `ForeignKey("budget.BudgetCategory", ...)` fields. Confirm with `uv run python manage.py check` (expect `fields.E300`/`E307` on both).
 
-- [ ] **Step 7: Commit**
+`backend/apps/income/models.py` — `ExtraIncome`:
+```python
+    budget_category_id = models.UUIDField(null=True, blank=True)
+```
+(replaces `budget_category = models.ForeignKey("budget.BudgetCategory", null=True, blank=True, on_delete=models.SET_NULL, related_name="extra_income")`; note `income/models.py` already has `account_id` from Task 5 — this is a second, independent edit to the same file)
+
+`backend/apps/expenses/models.py` — `Expense`:
+```python
+    budget_category_id = models.UUIDField()
+```
+(replaces `budget_category = models.ForeignKey("budget.BudgetCategory", on_delete=models.CASCADE, related_name="expenses")` — note this field was non-nullable/required before; making it a plain `UUIDField()` with no `null=True` preserves that at the DB level, and the table is empty so no default is needed)
+
+Do not touch `services.py`/`api.py`/`schemas.py` in either app. Generate migrations:
+```bash
+uv run python manage.py makemigrations income expenses
+```
+
+- [ ] **Step 7: Confirm the global migration graph and unrelated apps are unblocked**
+
+Run: `uv run python manage.py check` — expect no more `fields.E300`/`E307` errors.
+Run: `uv run pytest apps/budget/tests/test_api.py -v` — expect PASS.
+Run: `uv run pytest apps/accounts/tests/test_api.py -v` — expect PASS (proves the graph stays healthy across both retype rounds so far).
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add apps/budget/models.py apps/budget/services.py
 git add -A apps/budget/migrations
-git commit -m "feat(budget): migrate to Firestore"
+git add apps/income/models.py apps/income/migrations apps/expenses/models.py apps/expenses/migrations
+git commit -m "feat(budget): migrate to Firestore
+
+Also retypes the cross-app FK fields in income/expenses that pointed at
+budget.BudgetCategory (ForeignKey -> UUIDField), for the same reason as
+the accounts retype in Task 5."
 ```
 
 ---
@@ -1399,6 +1480,8 @@ git commit -m "feat(income): migrate to Firestore"
 - Delete: `backend/apps/goals/migrations/`
 - Rewrite: `backend/apps/goals/tests/test_aggregation.py`
 - No changes: `backend/apps/goals/api.py`, `backend/apps/goals/schemas.py`, `backend/apps/goals/tests/test_api.py`
+- Modify (cross-app FK retype — see Global Constraints, same pattern as Tasks 5/6): `backend/apps/allocations/models.py`
+- Create: one new migration in `backend/apps/allocations/migrations/`
 
 **Interfaces:**
 - Consumes: `apps.common.firestore.get_client`, `apps.common.firestore_helpers.get_owned_or_404_fs`, `apps.common.money.{to_cents,from_cents}`, `apps.common.rollups.{recompute_subgoal_parent,recompute_goal_from_accounts}`.
@@ -1770,13 +1853,42 @@ def test_account_balance_change_propagates(u):
 Run: `uv run pytest apps/goals/tests/test_aggregation.py -v`
 Expected: PASS (4 passed).
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 10: Retype the cross-app FK fields that still point at `goals.Goal`/`goals.Subgoal`**
+
+Same pattern as Tasks 5/6. `allocations.GoalAllocation.goal` and `.sub_goal` are still live `ForeignKey`s. Confirm with `uv run python manage.py check` (expect `fields.E300`/`E307` on both). Note: `allocations.GoalAllocation.account` was already retyped to `account_id` back in Task 5 — this step only touches `goal`/`sub_goal`.
+
+`backend/apps/allocations/models.py` — `GoalAllocation`:
+```python
+    goal_id = models.UUIDField()
+    sub_goal_id = models.UUIDField(null=True, blank=True)
+```
+(replaces `goal = models.ForeignKey("goals.Goal", on_delete=models.CASCADE, related_name="allocations")` and `sub_goal = models.ForeignKey("goals.Subgoal", null=True, blank=True, on_delete=models.SET_NULL, related_name="allocations")`)
+
+Update `Meta.indexes` to match the renamed field: `models.Index(fields=["sub_goal"])` → `models.Index(fields=["sub_goal_id"])` (the `models.Index(fields=["account"])` entry was already updated to `account_id` in Task 5, and `models.Index(fields=["user", "created_at"])` is unaffected).
+
+Do not touch `services.py`/`api.py`/`schemas.py`. Generate the migration:
+```bash
+uv run python manage.py makemigrations allocations
+```
+
+- [ ] **Step 11: Confirm the global migration graph and unrelated apps are unblocked**
+
+Run: `uv run python manage.py check` — expect no more `fields.E300`/`E307` errors anywhere.
+Run: `uv run pytest apps/goals/tests/test_api.py apps/goals/tests/test_aggregation.py -v` — expect PASS.
+Run: `uv run pytest apps/accounts/tests/test_api.py apps/budget/tests/test_api.py -v` — expect PASS (confirms the graph is still healthy across all three retype rounds so far).
+
+- [ ] **Step 12: Commit**
 
 ```bash
 git add apps/goals/models.py apps/goals/services.py apps/goals/apps.py apps/goals/tests/test_aggregation.py
 git rm apps/goals/signals.py
 git add -A apps/goals/migrations
-git commit -m "feat(goals): migrate to Firestore, port cascade delete and aggregation rollups"
+git add apps/allocations/models.py apps/allocations/migrations
+git commit -m "feat(goals): migrate to Firestore, port cascade delete and aggregation rollups
+
+Also retypes allocations.GoalAllocation's goal/sub_goal FK fields
+(ForeignKey -> UUIDField), for the same reason as the accounts/budget
+retypes in Tasks 5/6."
 ```
 
 ---
