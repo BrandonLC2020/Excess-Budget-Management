@@ -16,20 +16,14 @@ class GoalAllocation(models.Model):
         on_delete=models.SET_NULL,
         related_name="allocations",
     )
-    account = models.ForeignKey(
-        "accounts.Account",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="allocations",
-    )
+    account_id = models.UUIDField(null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["account"]),
+            models.Index(fields=["account_id"]),
             models.Index(fields=["sub_goal"]),
             models.Index(fields=["user", "created_at"]),
         ]

@@ -39,12 +39,5 @@ class Subgoal(models.Model):
 class GoalAccount(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name="goal_accounts")
-    account = models.ForeignKey(
-        "accounts.Account", on_delete=models.CASCADE, related_name="goal_accounts"
-    )
+    account_id = models.UUIDField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["goal", "account"], name="uniq_goal_account")
-        ]

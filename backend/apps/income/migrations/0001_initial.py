@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('accounts', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -24,7 +23,7 @@ class Migration(migrations.Migration):
                 ('description', models.CharField(blank=True, default='', max_length=500)),
                 ('date_received', models.DateField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('account', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='extra_income', to='accounts.account')),
+                ('account_id', models.UUIDField(blank=True, null=True)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='extra_income', to=settings.AUTH_USER_MODEL)),
             ],
             options={

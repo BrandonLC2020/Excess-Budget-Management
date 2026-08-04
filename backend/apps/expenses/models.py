@@ -15,13 +15,7 @@ class Expense(models.Model):
         on_delete=models.CASCADE,
         related_name="expenses",
     )
-    account = models.ForeignKey(
-        "accounts.Account",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="expenses",
-    )
+    account_id = models.UUIDField(null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.CharField(max_length=500, blank=True, default="")
     date = models.DateField()

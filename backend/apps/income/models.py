@@ -36,13 +36,7 @@ class ExtraIncome(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.CharField(max_length=500, blank=True, default="")
     date_received = models.DateField()
-    account = models.ForeignKey(
-        "accounts.Account",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="extra_income",
-    )
+    account_id = models.UUIDField(null=True, blank=True)
     budget_category = models.ForeignKey(
         "budget.BudgetCategory",
         null=True,
