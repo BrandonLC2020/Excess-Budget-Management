@@ -1050,10 +1050,11 @@ Same pattern as Task 5, Step 7. `income.ExtraIncome.budget_category` and `expens
 ```
 (replaces `budget_category = models.ForeignKey("budget.BudgetCategory", on_delete=models.CASCADE, related_name="expenses")` — note this field was non-nullable/required before; making it a plain `UUIDField()` with no `null=True` preserves that at the DB level, and the table is empty so no default is needed)
 
-Do not touch `services.py`/`api.py`/`schemas.py` in either app. Generate migrations:
+Do not touch `services.py`/`api.py`/`schemas.py` in either app. **Lesson from Task 5: `manage.py makemigrations` will not work here.** `income`'s and `expenses`' existing `0001_initial.py` migrations already declare a `dependencies` edge on `budget`'s migrations, which Task 6, Step 5 deletes — Django cannot load the migration graph to compute a fresh diff once that target is gone (confirmed experimentally in Task 5 for the equivalent `accounts` case: this is not fixable by patching the dependency edge alone, since the FK's `to=` target model itself no longer exists as a Django model either way). Instead, **hand-edit `income/migrations/0001_initial.py` and `expenses/migrations/0001_initial.py` directly**: remove the `('budget', ...)` entries from `dependencies`, and change the embedded field operation for `budget_category` from a `ForeignKey` field op to the `UUIDField` declaration matching the `models.py` change above (same field name, same nullability). Verify there's no drift with:
 ```bash
-uv run python manage.py makemigrations income expenses
+uv run python manage.py makemigrations income expenses --check --dry-run
 ```
+Expected: `No changes detected` — this is the proof the hand-edited migration state exactly matches `models.py`. If it reports anything else, the hand-edit has a mismatch (wrong nullability, wrong field name, or a stale index/constraint reference) — fix it before proceeding.
 
 - [ ] **Step 7: Confirm the global migration graph and unrelated apps are unblocked**
 
@@ -1866,10 +1867,11 @@ Same pattern as Tasks 5/6. `allocations.GoalAllocation.goal` and `.sub_goal` are
 
 Update `Meta.indexes` to match the renamed field: `models.Index(fields=["sub_goal"])` → `models.Index(fields=["sub_goal_id"])` (the `models.Index(fields=["account"])` entry was already updated to `account_id` in Task 5, and `models.Index(fields=["user", "created_at"])` is unaffected).
 
-Do not touch `services.py`/`api.py`/`schemas.py`. Generate the migration:
+Do not touch `services.py`/`api.py`/`schemas.py`. **Lesson from Task 5: `manage.py makemigrations` will not work here.** `allocations`' existing `0001_initial.py` already declares a `dependencies` edge on `goals`' migrations, which Task 8, Step 6 deletes — Django cannot load the migration graph to compute a fresh diff once that target is gone. Instead, **hand-edit `allocations/migrations/0001_initial.py` directly**: remove the `('goals', ...)` entries from `dependencies`, and change the embedded field operations for `goal` and `sub_goal` from `ForeignKey` field ops to `UUIDField` declarations matching the `models.py` changes above (same field names, same nullability), and update the embedded index operation's field reference from `sub_goal` to `sub_goal_id` to match. Verify with:
 ```bash
-uv run python manage.py makemigrations allocations
+uv run python manage.py makemigrations allocations --check --dry-run
 ```
+Expected: `No changes detected`. If it reports anything else, fix the mismatch before proceeding.
 
 - [ ] **Step 11: Confirm the global migration graph and unrelated apps are unblocked**
 
