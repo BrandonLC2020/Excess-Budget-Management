@@ -32,6 +32,7 @@ Move the 7 business-data Django apps (`accounts`, `income`, `budget`, `goals`, `
 | Emulator flavor | `gcloud emulators firestore start` (GCP-native, not Firebase CLI) | Consistent with staying off Firebase branding, matching the GCIP (not Firebase Auth) decision made for the future auth task. |
 | Testing | Real emulator required, no in-memory fake | Matches the task's own framing ("use the Emulator"). `apps.users` tests keep using SQLite in-memory, unaffected. |
 | Cross-app side effects (balance/spent/goal-progress rollups) | Django signals replaced with explicit function calls in `services.py`, atomic increments via `firestore.Increment()` | Django's signal dispatcher only fires on real `models.Model` saves; it cannot fire on Firestore writes. `expenses/signals.py`, `allocations/signals.py`, `goals/signals.py`, and `accounts/signals.py` implement real cross-app business logic (balance/budget/goal-progress consistency) that must be ported deliberately, not dropped. |
+| Decimal/money field storage | Every persisted decimal field stored as an **integer in cents** (`$45.00` → `4500`), converted at the service-layer boundary via `apps/common/money.py::to_cents`/`from_cents` | Firestore has no native `Decimal` type, only `double`/`integer`. `double` risks float-rounding drift across repeated `Increment()` calls — unacceptable for a budgeting app. Every persisted decimal field in the current schema already uses `decimal_places=2`, so a uniform ×100 integer scaling has no exceptions and keeps `firestore.Increment()` usable (it only works on numeric fields, not strings). |
 
 ## Architecture
 
@@ -64,6 +65,7 @@ backend/
 │   │   ├── firestore.py          # NEW — cached client factory: get_client()
 │   │   ├── firestore_helpers.py  # NEW — get_owned_or_404_fs(collection, doc_id, user)
 │   │   ├── rollups.py            # NEW — explicit-call replacements for the 4 signal files
+│   │   ├── money.py              # NEW — to_cents(Decimal) -> int, from_cents(int) -> Decimal
 │   │   └── permissions.py        # unchanged — still used by apps.users
 │   ├── users/                    # UNCHANGED — Postgres/ORM auth core
 │   ├── accounts/
