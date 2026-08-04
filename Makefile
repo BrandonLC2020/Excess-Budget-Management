@@ -4,6 +4,7 @@
 COMPOSE      ?= docker compose -f backend/docker-compose.yml
 WEB          ?= web
 DB           ?= db
+FIRESTORE    ?= firestore
 HEALTH_URL   ?= http://localhost:8000/api/v1/health
 
 # Default target: show available commands.
@@ -47,6 +48,10 @@ logs:  ## Tail web logs (Ctrl-C to detach).
 .PHONY: logs-db
 logs-db:  ## Tail Postgres logs.
 	$(COMPOSE) logs -f $(DB)
+
+.PHONY: logs-firestore
+logs-firestore:  ## Tail Firestore emulator logs.
+	$(COMPOSE) logs -f $(FIRESTORE)
 
 # --- Django ---------------------------------------------------------------
 

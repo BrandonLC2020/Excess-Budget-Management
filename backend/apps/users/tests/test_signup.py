@@ -43,7 +43,6 @@ def test_signup_rejects_short_password():
 def test_signup_is_atomic_user_not_created_if_profile_fails(monkeypatch):
     """If Profile.create() fails, User should also be rolled back."""
     from apps.users import services
-    real_create = services.Profile.objects.create
 
     def boom(*a, **kw):
         raise RuntimeError("simulated Profile failure")

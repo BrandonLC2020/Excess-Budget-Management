@@ -15,15 +15,33 @@ services:
       timeout: 3s
       retries: 10
 
+  firestore:
+    image: google/cloud-sdk:emulators
+    command: >
+      gcloud emulators firestore start
+        --host-port=0.0.0.0:8080
+        --project=excess-budget-dev
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   web:
     build: .
     env_file: .env
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/excess
+      FIRESTORE_EMULATOR_HOST: firestore:8080
+      GOOGLE_CLOUD_PROJECT: excess-budget-dev
     ports:
       - "8000:8000"
     depends_on:
       db:
+        condition: service_healthy
+      firestore:
         condition: service_healthy
     command: >
       bash -c "uv run python manage.py migrate &&
