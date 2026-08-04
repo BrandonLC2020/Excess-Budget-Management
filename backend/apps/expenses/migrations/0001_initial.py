@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('budget', '0002_alter_budgetcategory_spent_amount'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -25,7 +24,7 @@ class Migration(migrations.Migration):
                 ('date', models.DateField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('account_id', models.UUIDField(blank=True, null=True)),
-                ('budget_category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='expenses', to='budget.budgetcategory')),
+                ('budget_category_id', models.UUIDField()),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='expenses', to=settings.AUTH_USER_MODEL)),
             ],
             options={

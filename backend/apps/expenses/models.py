@@ -10,11 +10,7 @@ class Expense(models.Model):
         on_delete=models.CASCADE,
         related_name="expenses",
     )
-    budget_category = models.ForeignKey(
-        "budget.BudgetCategory",
-        on_delete=models.CASCADE,
-        related_name="expenses",
-    )
+    budget_category_id = models.UUIDField()
     account_id = models.UUIDField(null=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.CharField(max_length=500, blank=True, default="")

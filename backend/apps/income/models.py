@@ -37,13 +37,7 @@ class ExtraIncome(models.Model):
     description = models.CharField(max_length=500, blank=True, default="")
     date_received = models.DateField()
     account_id = models.UUIDField(null=True, blank=True)
-    budget_category = models.ForeignKey(
-        "budget.BudgetCategory",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="extra_income",
-    )
+    budget_category_id = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
