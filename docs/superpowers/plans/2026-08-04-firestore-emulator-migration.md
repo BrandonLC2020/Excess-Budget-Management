@@ -515,12 +515,14 @@ from .firestore import get_client
 
 
 def _apply_to_balance(account_id: str | None, delta_cents: int) -> None:
-    """Add delta_cents to accounts/{account_id}.balance. No-op if account_id is None."""
+    """Add delta_cents to accounts/{account_id}.balance. No-op if account_id is None
+    or the account doesn't exist (mirrors _apply_to_budget's existence check below)."""
     if not account_id or delta_cents == 0:
         return
-    get_client().collection("accounts").document(account_id).update(
-        {"balance": firestore.Increment(delta_cents)}
-    )
+    doc_ref = get_client().collection("accounts").document(account_id)
+    if not doc_ref.get().exists:
+        return
+    doc_ref.update({"balance": firestore.Increment(delta_cents)})
 
 
 def _apply_to_budget(category_id: str | None, raw_delta_cents: int) -> None:
@@ -565,30 +567,36 @@ def apply_extra_income_effects(old: dict | None, new: dict | None) -> None:
 
 def recompute_subgoal_parent(goal_id: str) -> None:
     """Port of goals/signals.py's Subgoal post_save/post_delete receivers:
-    re-sum all sibling subgoals' target/current amounts onto the parent Goal."""
+    re-sum all sibling subgoals' target/current amounts onto the parent Goal.
+    No-op if the goal itself doesn't exist (e.g. orphaned/racing delete)."""
     client = get_client()
+    goal_ref = client.collection("goals").document(goal_id)
+    if not goal_ref.get().exists:
+        return
     subgoals = list(client.collection("sub_goals").where("goal_id", "==", goal_id).stream())
     if not subgoals:
         return
     target_total = sum(s.get("target_amount") for s in subgoals)
     current_total = sum(s.get("current_amount") for s in subgoals)
-    client.collection("goals").document(goal_id).update(
-        {"target_amount": target_total, "current_amount": current_total}
-    )
+    goal_ref.update({"target_amount": target_total, "current_amount": current_total})
 
 
 def recompute_goal_from_accounts(goal_id: str) -> None:
     """Port of goals/signals.py's GoalAccount post_save/post_delete receivers
     (and reused by accounts/services.py's balance-change path): re-sum linked
-    accounts' balances onto the Goal's current_amount."""
+    accounts' balances onto the Goal's current_amount.
+    No-op if the goal itself doesn't exist (e.g. orphaned/racing delete)."""
     client = get_client()
+    goal_ref = client.collection("goals").document(goal_id)
+    if not goal_ref.get().exists:
+        return
     links = list(client.collection("goal_accounts").where("goal_id", "==", goal_id).stream())
     total = 0
     for link in links:
         account = client.collection("accounts").document(link.get("account_id")).get()
         if account.exists:
             total += account.get("balance")
-    client.collection("goals").document(goal_id).update({"current_amount": total})
+    goal_ref.update({"current_amount": total})
 
 
 def _apply_progress(sub_goal_id: str | None, goal_id: str, delta_cents: int) -> None:
