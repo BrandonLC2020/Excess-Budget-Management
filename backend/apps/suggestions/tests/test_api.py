@@ -2,7 +2,8 @@ import pytest
 from unittest.mock import patch
 from decimal import Decimal
 from apps.users.models import Profile
-from apps.goals.models import Goal
+from apps.goals.services import create_goal
+from apps.goals.schemas import GoalIn
 
 
 @pytest.mark.django_db
@@ -27,12 +28,14 @@ def test_generate_returns_suggestion_and_persists_audit(auth_client):
     Profile.objects.update_or_create(
         user=user, defaults={"default_savings_ratio": Decimal("0.5")}
     )
-    Goal.objects.create(
-        user=user,
-        name="Vacation",
-        target_amount=Decimal("1000"),
-        type="short_term",
-        category="purchase",
+    create_goal(
+        user,
+        GoalIn(
+            name="Vacation",
+            target_amount=Decimal("1000"),
+            type="short_term",
+            category="purchase",
+        ),
     )
 
     fake_response = {
@@ -47,9 +50,13 @@ def test_generate_returns_suggestion_and_persists_audit(auth_client):
         )
     assert r.status_code == 200
     assert r.json()["reasoning"].startswith("Vacation funds")
-    from apps.suggestions.models import AllocationSuggestion
+    from apps.common.firestore import get_client
+    from apps.suggestions.services import COLLECTION
 
-    assert AllocationSuggestion.objects.filter(user=user).count() == 1
+    docs = list(
+        get_client().collection(COLLECTION).where("user_id", "==", str(user.id)).stream()
+    )
+    assert len(docs) == 1
 
 
 @pytest.mark.django_db

@@ -1,17 +1,25 @@
+import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 from django.conf import settings
-from apps.accounts.models import Account
-from apps.goals.models import Goal
+from apps.accounts.services import list_accounts
+from apps.goals.services import list_goals, list_subgoals
 from apps.allocations.services import recent_allocation_summary
 from apps.common.exceptions import UpstreamError
-from .models import AllocationSuggestion
+from apps.common.firestore import get_client
+from apps.common.money import to_cents
+
+COLLECTION = "allocation_suggestions"
 
 
 def gather_context(user) -> dict:
     profile = getattr(user, "profile", None)
     ratio = float(profile.default_savings_ratio) if profile else 0.5
-    goals = [
-        {
+
+    goals = []
+    for g in list_goals(user):
+        subgoals = list_subgoals(user, g.id)
+        goals.append({
             "id": str(g.id),
             "name": g.name,
             "category": g.category,
@@ -20,20 +28,13 @@ def gather_context(user) -> dict:
             "current_amount": float(g.current_amount),
             "target_date": g.target_date.isoformat() if g.target_date else None,
             "sub_goals": [
-                {
-                    "name": s.name,
-                    "target": float(s.target_amount),
-                    "current": float(s.current_amount),
-                }
-                for s in g.subgoals.all()
+                {"name": s.name, "target": float(s.target_amount), "current": float(s.current_amount)}
+                for s in subgoals
             ],
-        }
-        for g in Goal.objects.filter(user=user).prefetch_related("subgoals")
-    ]
-    accounts = [
-        {"id": str(a.id), "name": a.name, "balance": float(a.balance)}
-        for a in Account.objects.filter(user=user)
-    ]
+        })
+
+    accounts = [{"id": str(a.id), "name": a.name, "balance": float(a.balance)} for a in list_accounts(user)]
+
     return {
         "goals": goals,
         "accounts": accounts,
@@ -78,5 +79,13 @@ def generate(user, excess: Decimal) -> dict:
     ctx = gather_context(user)
     prompt = _build_prompt(excess, ctx)
     result = call_gemini(prompt)
-    AllocationSuggestion.objects.create(user=user, excess_funds=excess, response_json=result)
+
+    suggestion_id = uuid.uuid4()
+    get_client().collection(COLLECTION).document(str(suggestion_id)).set({
+        "user_id": str(user.id),
+        "excess_funds": to_cents(excess),
+        "response_json": result,
+        "created_at": datetime.now(timezone.utc),
+    })
+
     return result
