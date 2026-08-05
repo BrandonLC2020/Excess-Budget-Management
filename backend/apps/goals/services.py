@@ -4,7 +4,11 @@ from decimal import Decimal
 from apps.common.firestore import get_client
 from apps.common.firestore_helpers import get_owned_or_404_fs
 from apps.common.money import to_cents, from_cents
-from apps.common.rollups import recompute_subgoal_parent, recompute_goal_from_accounts
+from apps.common.rollups import (
+    recompute_subgoal_parent,
+    recompute_goal_from_accounts,
+    apply_allocation_effects,
+)
 from apps.common.exceptions import NotFoundError
 from .models import Goal, Subgoal, GoalAccount
 
@@ -44,7 +48,9 @@ def _subgoal_from_doc(snapshot) -> Subgoal:
 # --- Goal CRUD ---
 
 def list_goals(user):
-    docs = get_client().collection(GOALS_COLLECTION).where("user_id", "==", str(user.id)).stream()
+    docs = get_client().collection(GOALS_COLLECTION).where(
+        "user_id", "==", str(user.id)
+    ).order_by("created_at").stream()
     return [_goal_from_doc(d) for d in docs]
 
 
@@ -94,12 +100,31 @@ def update_goal(user, goal_id, payload) -> Goal:
 def delete_goal(user, goal_id) -> None:
     get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
     client = get_client()
-    batch = client.batch()
 
+    # Reverse the balance effect of every allocation tied to this goal before
+    # deleting it — mirrors Django's CASCADE + post_delete-signal behavior:
+    # deleting a Goal cascades to its GoalAllocations, restoring any debited
+    # account balance. (Updating this goal's own current_amount along the way
+    # is wasted work since the goal doc is deleted right after, but harmless.)
+    for alloc in client.collection("allocations").where("goal_id", "==", str(goal_id)).stream():
+        data = alloc.to_dict()
+        apply_allocation_effects(
+            old={
+                "account_id": data.get("account_id"),
+                "goal_id": data["goal_id"],
+                "sub_goal_id": data.get("sub_goal_id"),
+                "amount_cents": data["amount"],
+            },
+            new=None,
+        )
+
+    batch = client.batch()
     for sub in client.collection(SUBGOALS_COLLECTION).where("goal_id", "==", str(goal_id)).stream():
         batch.delete(sub.reference)
     for link in client.collection(GOAL_ACCOUNTS_COLLECTION).where("goal_id", "==", str(goal_id)).stream():
         batch.delete(link.reference)
+    for alloc in client.collection("allocations").where("goal_id", "==", str(goal_id)).stream():
+        batch.delete(alloc.reference)
     batch.delete(client.collection(GOALS_COLLECTION).document(str(goal_id)))
 
     batch.commit()
@@ -109,7 +134,9 @@ def delete_goal(user, goal_id) -> None:
 
 def list_subgoals(user, goal_id):
     get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
-    docs = get_client().collection(SUBGOALS_COLLECTION).where("goal_id", "==", str(goal_id)).stream()
+    docs = get_client().collection(SUBGOALS_COLLECTION).where(
+        "goal_id", "==", str(goal_id)
+    ).order_by("created_at").stream()
     return [_subgoal_from_doc(d) for d in docs]
 
 
@@ -172,7 +199,16 @@ def delete_subgoal(user, goal_id, subgoal_id) -> None:
     snapshot = get_owned_or_404_fs(SUBGOALS_COLLECTION, subgoal_id, user)
     if snapshot.get("goal_id") != str(goal_id):
         raise NotFoundError("Subgoal not found.")
-    get_client().collection(SUBGOALS_COLLECTION).document(str(subgoal_id)).delete()
+
+    client = get_client()
+    batch = client.batch()
+    batch.delete(client.collection(SUBGOALS_COLLECTION).document(str(subgoal_id)))
+    # Mirrors Django's on_delete=SET_NULL for GoalAllocation.sub_goal: allocations
+    # keep existing (and keep their goal_id), they just lose the subgoal link.
+    for alloc in client.collection("allocations").where("sub_goal_id", "==", str(subgoal_id)).stream():
+        batch.update(alloc.reference, {"sub_goal_id": None})
+    batch.commit()
+
     recompute_subgoal_parent(str(goal_id))
 
 

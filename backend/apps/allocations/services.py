@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timedelta, timezone
+from google.cloud import firestore
 from apps.common.firestore import get_client
 from apps.common.firestore_helpers import get_owned_or_404_fs
 from apps.common.money import to_cents, from_cents
@@ -27,6 +28,7 @@ def list_allocations(user, goal_id=None):
     query = get_client().collection(COLLECTION).where("user_id", "==", str(user.id))
     if goal_id:
         query = query.where("goal_id", "==", str(goal_id))
+    query = query.order_by("created_at", direction=firestore.Query.DESCENDING)
     return [_from_doc(d) for d in query.stream()]
 
 

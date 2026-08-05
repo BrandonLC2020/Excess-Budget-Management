@@ -4,6 +4,7 @@ from decimal import Decimal
 from apps.common.firestore import get_client
 from apps.common.firestore_helpers import get_owned_or_404_fs
 from apps.common.money import to_cents, from_cents
+from apps.common.rollups import apply_expense_effects
 from .models import BudgetCategory
 
 COLLECTION = "budget_categories"
@@ -25,7 +26,9 @@ def _from_doc(snapshot) -> BudgetCategory:
 
 
 def list_categories(user):
-    docs = get_client().collection(COLLECTION).where("user_id", "==", str(user.id)).stream()
+    docs = get_client().collection(COLLECTION).where(
+        "user_id", "==", str(user.id)
+    ).order_by("created_at").stream()
     return [_from_doc(d) for d in docs]
 
 
@@ -76,4 +79,31 @@ def update_category(user, category_id, payload) -> BudgetCategory:
 
 def delete_category(user, category_id) -> None:
     get_owned_or_404_fs(COLLECTION, category_id, user)
-    get_client().collection(COLLECTION).document(str(category_id)).delete()
+    client = get_client()
+
+    # Reverse the account-balance effect of every expense tied to this category
+    # before deleting it — mirrors Django's CASCADE + post_delete-signal
+    # behavior: deleting a BudgetCategory cascades to its Expenses, restoring
+    # any debited account balance. (Updating this category's own spent_amount
+    # along the way is wasted work since the category doc is deleted right
+    # after, but harmless.)
+    for expense in client.collection("expenses").where("budget_category_id", "==", str(category_id)).stream():
+        data = expense.to_dict()
+        apply_expense_effects(
+            old={
+                "account_id": data.get("account_id"),
+                "budget_category_id": data["budget_category_id"],
+                "amount_cents": data["amount"],
+            },
+            new=None,
+        )
+
+    batch = client.batch()
+    batch.delete(client.collection(COLLECTION).document(str(category_id)))
+    for expense in client.collection("expenses").where("budget_category_id", "==", str(category_id)).stream():
+        batch.delete(expense.reference)
+    # Mirrors on_delete=SET_NULL for ExtraIncome.budget_category: keeps existing,
+    # just loses the category link.
+    for extra in client.collection("extra_income").where("budget_category_id", "==", str(category_id)).stream():
+        batch.update(extra.reference, {"budget_category_id": None})
+    batch.commit()

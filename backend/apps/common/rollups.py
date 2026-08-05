@@ -98,14 +98,14 @@ def recompute_goal_from_accounts(goal_id: str) -> None:
 def _apply_progress(sub_goal_id: str | None, goal_id: str, delta_cents: int) -> None:
     client = get_client()
     if sub_goal_id:
-        client.collection("sub_goals").document(sub_goal_id).update(
-            {"current_amount": firestore.Increment(delta_cents)}
-        )
-        recompute_subgoal_parent(goal_id)
+        subgoal_ref = client.collection("sub_goals").document(sub_goal_id)
+        if subgoal_ref.get().exists:
+            subgoal_ref.update({"current_amount": firestore.Increment(delta_cents)})
+            recompute_subgoal_parent(goal_id)
     else:
-        client.collection("goals").document(goal_id).update(
-            {"current_amount": firestore.Increment(delta_cents)}
-        )
+        goal_ref = client.collection("goals").document(goal_id)
+        if goal_ref.get().exists:
+            goal_ref.update({"current_amount": firestore.Increment(delta_cents)})
 
 
 def apply_allocation_effects(old: dict | None, new: dict | None) -> None:

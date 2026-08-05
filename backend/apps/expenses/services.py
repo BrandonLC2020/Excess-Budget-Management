@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime, timezone
+from google.cloud import firestore
 from apps.common.firestore import get_client
 from apps.common.firestore_helpers import get_owned_or_404_fs
 from apps.common.money import to_cents, from_cents
@@ -29,6 +30,9 @@ def list_expenses(user, account_id=None, budget_category_id=None):
         query = query.where("account_id", "==", str(account_id))
     if budget_category_id:
         query = query.where("budget_category_id", "==", str(budget_category_id))
+    query = query.order_by("date", direction=firestore.Query.DESCENDING).order_by(
+        "created_at", direction=firestore.Query.DESCENDING
+    )
     return [_from_doc(d) for d in query.stream()]
 
 

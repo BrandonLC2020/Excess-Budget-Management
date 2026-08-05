@@ -21,7 +21,9 @@ def _from_doc(snapshot) -> Account:
 
 
 def list_accounts(user):
-    docs = get_client().collection(COLLECTION).where("user_id", "==", str(user.id)).stream()
+    docs = get_client().collection(COLLECTION).where(
+        "user_id", "==", str(user.id)
+    ).order_by("created_at").stream()
     return [_from_doc(d) for d in docs]
 
 
@@ -66,4 +68,29 @@ def update_account(user, account_id, payload) -> Account:
 
 def delete_account(user, account_id) -> None:
     get_owned_or_404_fs(COLLECTION, account_id, user)
-    get_client().collection(COLLECTION).document(str(account_id)).delete()
+    client = get_client()
+
+    affected_goal_ids = set()
+    batch = client.batch()
+    batch.delete(client.collection(COLLECTION).document(str(account_id)))
+
+    # Mirrors Django's on_delete=CASCADE for GoalAccount.account: unlink this
+    # account from every goal it was linked to, then recompute each affected
+    # goal's current_amount once the links are gone.
+    for link in client.collection("goal_accounts").where("account_id", "==", str(account_id)).stream():
+        affected_goal_ids.add(link.get("goal_id"))
+        batch.delete(link.reference)
+
+    # Mirrors on_delete=SET_NULL for Expense.account / ExtraIncome.account /
+    # GoalAllocation.account: these keep existing, just lose the account link.
+    for expense in client.collection("expenses").where("account_id", "==", str(account_id)).stream():
+        batch.update(expense.reference, {"account_id": None})
+    for extra in client.collection("extra_income").where("account_id", "==", str(account_id)).stream():
+        batch.update(extra.reference, {"account_id": None})
+    for alloc in client.collection("allocations").where("account_id", "==", str(account_id)).stream():
+        batch.update(alloc.reference, {"account_id": None})
+
+    batch.commit()
+
+    for goal_id in affected_goal_ids:
+        recompute_goal_from_accounts(goal_id)
