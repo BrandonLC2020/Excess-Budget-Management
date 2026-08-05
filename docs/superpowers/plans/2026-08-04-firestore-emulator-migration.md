@@ -2534,13 +2534,60 @@ def test_recent_summary_buckets_by_goal_category(u):
 Run: `uv run pytest apps/allocations/tests/test_sync.py -v`
 Expected: PASS (4 passed).
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 10: Fix a pre-existing bug in `AppError` construction (discovered during this task's review)**
+
+`create_allocation`/`update_allocation` raise `AppError(code="subgoal_goal_mismatch", message="...", status_code=400)` when a `sub_goal` doesn't belong to the specified `goal`. `apps/common/exceptions.py::AppError.__init__` only accepts `message`/`details` — `code`/`status_code` are meant to be set via subclassing (see `NotFoundError`, `ConflictError` etc. below it), not passed as constructor kwargs. This means the call raises an unhandled `TypeError` instead of the intended 400 — a bug that predates this migration (present in the original ORM-era `allocations/services.py` too) and was faithfully copied into this task's `services.py`, not introduced by it. No existing test exercises this path in either direction, which is how it went unnoticed.
+
+Edit `backend/apps/common/exceptions.py`, extending `AppError.__init__` to accept optional overrides (this changes nothing for every other existing call site — `NotFoundError("...")`, `ConflictError("...")`, etc. — none of them pass `code`/`status_code`, so they keep using their class-level defaults exactly as before):
+
+```python
+class AppError(Exception):
+    status_code = 400
+    code = "app_error"
+
+    def __init__(self, message: str = "", details=None, code: str | None = None, status_code: int | None = None):
+        self.message = message or self.code
+        self.details = details
+        if code is not None:
+            self.code = code
+        if status_code is not None:
+            self.status_code = status_code
+        super().__init__(self.message)
+```
+
+Add a regression test to `backend/apps/allocations/tests/test_api.py` (this is the one exception to that file being otherwise frozen in this plan — it's covering a bug fix, not a Firestore-migration behavior change):
+
+```python
+@pytest.mark.django_db
+def test_create_allocation_rejects_mismatched_subgoal(auth_client):
+    client, user = auth_client
+    g1 = client.post("/api/v1/goals", data={"name": "g1", "type": "short_term"}, content_type="application/json").json()
+    g2 = client.post("/api/v1/goals", data={"name": "g2", "type": "short_term"}, content_type="application/json").json()
+    sub = client.post(f"/api/v1/goals/{g1['id']}/subgoals",
+                      data={"name": "s", "target_amount": "100.00"}, content_type="application/json").json()
+
+    r = client.post("/api/v1/allocations",
+                    data={"goal_id": g2["id"], "sub_goal_id": sub["id"], "amount": "10.00"},
+                    content_type="application/json")
+
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "subgoal_goal_mismatch"
+```
+
+Run: `uv run pytest apps/allocations/tests/test_api.py -v` — expect the new test PASS alongside the existing 8, and `uv run pytest apps/common apps/users -v` to confirm the `AppError` signature change doesn't break anything else (it shouldn't — the new params are optional and additive).
+
+- [ ] **Step 11: Commit**
 
 ```bash
-git add apps/allocations/models.py apps/allocations/services.py apps/allocations/apps.py apps/allocations/tests/test_sync.py
+git add apps/allocations/models.py apps/allocations/services.py apps/allocations/apps.py apps/allocations/tests/test_sync.py apps/allocations/tests/test_api.py apps/common/exceptions.py
 git rm apps/allocations/signals.py
 git add -A apps/allocations/migrations
-git commit -m "feat(allocations): migrate to Firestore, port balance/goal-progress rollups"
+git commit -m "feat(allocations): migrate to Firestore, port balance/goal-progress rollups
+
+Also fixes a pre-existing bug in AppError's constructor (code/status_code
+were accepted nowhere, causing subgoal_goal_mismatch validation to raise
+TypeError instead of a 400) -- discovered during this task's review,
+predates the migration, now covered by a regression test."
 ```
 
 ---
