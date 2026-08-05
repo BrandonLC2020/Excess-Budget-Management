@@ -104,6 +104,16 @@ terraform plan
 terraform apply
 ```
 
+## Firestore (local dev)
+
+Business data (`accounts`, `budget`, `income`, `goals`, `expenses`, `allocations`,
+`suggestions`) is stored in Google Cloud Firestore. Locally this runs against the
+Firestore Emulator, started automatically by `make up` alongside Postgres (which
+still backs auth only). No GCP project or credentials are needed for local dev —
+the emulator runs fully offline against the dummy project ID in `.env.example`.
+
+Run `make logs-firestore` to tail the emulator's logs.
+
 ---
 
 ## 🗺️ Roadmap
