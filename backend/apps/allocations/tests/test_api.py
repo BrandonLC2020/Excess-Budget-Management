@@ -184,3 +184,19 @@ def test_allocation_summary(auth_client):
 def test_requires_auth():
     from django.test import Client
     assert Client().get("/api/v1/allocations").status_code == 401
+
+
+@pytest.mark.django_db
+def test_create_allocation_rejects_mismatched_subgoal(auth_client):
+    client, user = auth_client
+    g1 = client.post("/api/v1/goals", data={"name": "g1", "type": "short_term"}, content_type="application/json").json()
+    g2 = client.post("/api/v1/goals", data={"name": "g2", "type": "short_term"}, content_type="application/json").json()
+    sub = client.post(f"/api/v1/goals/{g1['id']}/subgoals",
+                      data={"name": "s", "target_amount": "100.00"}, content_type="application/json").json()
+
+    r = client.post("/api/v1/allocations",
+                    data={"goal_id": g2["id"], "sub_goal_id": sub["id"], "amount": "10.00"},
+                    content_type="application/json")
+
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == "subgoal_goal_mismatch"
