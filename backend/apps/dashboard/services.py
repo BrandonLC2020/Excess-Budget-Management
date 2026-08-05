@@ -1,21 +1,25 @@
 from decimal import Decimal, ROUND_HALF_UP
-from django.db.models import Sum
-from apps.accounts.models import Account
-from apps.goals.models import Goal
-from apps.budget.models import BudgetCategory
+from apps.accounts.services import list_accounts
+from apps.goals.services import list_goals
+from apps.budget.services import list_categories
 
 _TWO_PLACES = Decimal("0.01")
 
 
+def _sum(items, attr) -> Decimal:
+    total = sum((getattr(item, attr) for item in items), Decimal("0"))
+    return total.quantize(_TWO_PLACES, rounding=ROUND_HALF_UP)
+
+
 def dashboard_summary(user) -> dict:
-    def s(qs, field):
-        val = qs.aggregate(t=Sum(field))["t"] or Decimal("0")
-        return val.quantize(_TWO_PLACES, rounding=ROUND_HALF_UP)
+    accounts = list_accounts(user)
+    goals = list_goals(user)
+    categories = list_categories(user)
 
     return {
-        "total_balance":        s(Account.objects.filter(user=user), "balance"),
-        "goals_total_target":   s(Goal.objects.filter(user=user), "target_amount"),
-        "goals_total_current":  s(Goal.objects.filter(user=user), "current_amount"),
-        "budgets_total_limit":  s(BudgetCategory.objects.filter(user=user), "limit_amount"),
-        "budgets_total_spent":  s(BudgetCategory.objects.filter(user=user), "spent_amount"),
+        "total_balance":        _sum(accounts, "balance"),
+        "goals_total_target":   _sum(goals, "target_amount"),
+        "goals_total_current":  _sum(goals, "current_amount"),
+        "budgets_total_limit":  _sum(categories, "limit_amount"),
+        "budgets_total_spent":  _sum(categories, "spent_amount"),
     }
