@@ -33,6 +33,24 @@
       ]
     },
     {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "account_id", "order": "ASCENDING" },
+        { "fieldPath": "budget_category_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "extra_income",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "account_id", "order": "ASCENDING" },
+        { "fieldPath": "budget_category_id", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "allocations",
       "queryScope": "COLLECTION",
       "fields": [
