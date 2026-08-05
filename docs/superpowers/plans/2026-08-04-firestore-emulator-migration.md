@@ -1415,10 +1415,16 @@ def calculate_overtime_projections(user, payload) -> dict:
     if payload.subgoal_id:
         subgoal = get_subgoal(user, payload.goal_id, payload.subgoal_id) if payload.goal_id else None
         # subgoal_id can be supplied without goal_id in the request schema; resolve via a
-        # direct ownership check when goal_id isn't given.
+        # direct ownership check when goal_id isn't given. At this point in the migration
+        # (Task 7), `goals` has NOT yet converted to Firestore (that's Task 8) -- subgoals
+        # still live in Postgres, so this fallback uses the OLD ORM lookup, not Firestore.
+        # Task 8 replaces this branch (see its Step 10a) once goals.services grows a
+        # by-ID-only lookup to call instead.
         if subgoal is None:
-            snap = get_owned_or_404_fs("sub_goals", payload.subgoal_id, user)
-            remaining_amount = from_cents(snap.get("target_amount")) - from_cents(snap.get("current_amount"))
+            from apps.common.permissions import get_owned_or_404
+            from apps.goals.models import Subgoal
+            sg = get_owned_or_404(Subgoal, payload.subgoal_id, user)
+            remaining_amount = sg.target_amount - sg.current_amount
         else:
             remaining_amount = subgoal.target_amount - subgoal.current_amount
         has_target = True
@@ -1448,7 +1454,7 @@ def calculate_overtime_projections(user, payload) -> dict:
     return result
 ```
 
-Note: `calculate_overtime_projections`'s subgoal-without-goal_id branch is a direct port of the original's `get_owned_or_404(Subgoal, payload.subgoal_id, user)` call, which never required a `goal_id` either — `goals.services.get_subgoal(user, goal_id, subgoal_id)` (Task 8) requires both, so this function falls back to `get_owned_or_404_fs("sub_goals", ...)` directly when only `subgoal_id` is given, exactly matching the original's lack of a goal/subgoal cross-check in this one call site.
+Note: `calculate_overtime_projections`'s subgoal-without-goal_id branch is a direct port of the original's `get_owned_or_404(Subgoal, payload.subgoal_id, user)` call, which never required a `goal_id` either — `goals.services.get_subgoal(user, goal_id, subgoal_id)` (Task 8) requires both, so this function needs a by-ID-only fallback when only `subgoal_id` is given, exactly matching the original's lack of a goal/subgoal cross-check in this one call site. Until Task 8 converts `goals`, that fallback must use the **old Postgres ORM** lookup (`apps.common.permissions.get_owned_or_404` + `apps.goals.models.Subgoal`), not Firestore — subgoals aren't in Firestore yet at this point in the migration. Task 8 replaces this branch to call a new `goals.services.get_subgoal_by_id(user, subgoal_id)` Firestore-backed helper instead (see Task 8, Step 10a).
 
 - [ ] **Step 5: Delete migrations**
 
@@ -1483,10 +1489,11 @@ git commit -m "feat(income): migrate to Firestore"
 - No changes: `backend/apps/goals/api.py`, `backend/apps/goals/schemas.py`, `backend/apps/goals/tests/test_api.py`
 - Modify (cross-app FK retype — see Global Constraints, same pattern as Tasks 5/6): `backend/apps/allocations/models.py`
 - Create: one new migration in `backend/apps/allocations/migrations/`
+- Modify (replaces Task 7's temporary ORM fallback with a real Firestore helper — see Step 10): `backend/apps/income/services.py`
 
 **Interfaces:**
 - Consumes: `apps.common.firestore.get_client`, `apps.common.firestore_helpers.get_owned_or_404_fs`, `apps.common.money.{to_cents,from_cents}`, `apps.common.rollups.{recompute_subgoal_parent,recompute_goal_from_accounts}`.
-- Produces: `Goal`, `Subgoal`, `GoalAccount` dataclasses; `list_goals`, `create_goal`, `get_goal`, `update_goal`, `delete_goal`; `list_subgoals`, `create_subgoal`, `get_subgoal`, `update_subgoal`, `delete_subgoal`; `link_account`, `unlink_account` — same signatures as today. `get_goal`/`get_subgoal` are consumed directly by `income/services.py` (Task 7) and `suggestions/services.py` (Task 11).
+- Produces: `Goal`, `Subgoal`, `GoalAccount` dataclasses; `list_goals`, `create_goal`, `get_goal`, `update_goal`, `delete_goal`; `list_subgoals`, `create_subgoal`, `get_subgoal`, `update_subgoal`, `delete_subgoal`, `get_subgoal_by_id`; `link_account`, `unlink_account` — same signatures as today. `get_goal`/`get_subgoal` are consumed directly by `income/services.py` (Task 7) and `suggestions/services.py` (Task 11). `get_subgoal_by_id` (new, added in this task's Step 10) is consumed by `income/services.py::calculate_overtime_projections`'s subgoal-without-goal_id fallback, replacing a temporary Postgres ORM lookup Task 7 used as a stand-in before `goals` existed in Firestore.
 - `goal_accounts` documents use a **deterministic composite ID** `f"{goal_id}_{account_id}"` instead of a random UUID — this replaces Postgres's `UniqueConstraint(fields=["goal", "account"])`: writing the same link twice just overwrites the same document instead of creating a duplicate.
 
 - [ ] **Step 1: Confirm baseline passes**
@@ -1854,7 +1861,39 @@ def test_account_balance_change_propagates(u):
 Run: `uv run pytest apps/goals/tests/test_aggregation.py -v`
 Expected: PASS (4 passed).
 
-- [ ] **Step 10: Retype the cross-app FK fields that still point at `goals.Goal`/`goals.Subgoal`**
+- [ ] **Step 10: Add `get_subgoal_by_id` and fix up Task 7's temporary ORM fallback in `income/services.py`**
+
+Task 7 (`income`) needed a way to look up a subgoal by ID alone (no `goal_id`), for `calculate_overtime_projections`'s subgoal-without-goal_id request shape. At the time, `goals` wasn't converted yet, so Task 7 used a temporary Postgres ORM lookup (`apps.common.permissions.get_owned_or_404` + `apps.goals.models.Subgoal`) as a stand-in. Now that `goals.models.Subgoal` is a dataclass (Step 2 above), that ORM call is dead — replace it with a proper Firestore-backed helper.
+
+Add to `backend/apps/goals/services.py` (near `get_subgoal`):
+```python
+def get_subgoal_by_id(user, subgoal_id) -> Subgoal:
+    """Like get_subgoal, but without requiring the parent goal_id — used by
+    apps/income/services.py::calculate_overtime_projections, whose request
+    schema allows subgoal_id without goal_id."""
+    return _subgoal_from_doc(get_owned_or_404_fs(SUBGOALS_COLLECTION, subgoal_id, user))
+```
+
+Edit `backend/apps/income/services.py::calculate_overtime_projections`, replacing the temporary ORM fallback:
+```python
+        if subgoal is None:
+            from apps.common.permissions import get_owned_or_404
+            from apps.goals.models import Subgoal
+            sg = get_owned_or_404(Subgoal, payload.subgoal_id, user)
+            remaining_amount = sg.target_amount - sg.current_amount
+```
+with:
+```python
+        if subgoal is None:
+            from apps.goals.services import get_subgoal_by_id
+            sg = get_subgoal_by_id(user, payload.subgoal_id)
+            remaining_amount = sg.target_amount - sg.current_amount
+```
+(`get_subgoal_by_id` already returns `Decimal`-typed `target_amount`/`current_amount` via `_subgoal_from_doc`'s `from_cents` conversion, so no further change is needed in this block.)
+
+Run: `uv run pytest apps/income/tests/test_api.py -v` — expect the full suite passing now, including the subgoal-without-goal_id overtime-projection case that was a tracked, temporary regression since Task 7.
+
+- [ ] **Step 11: Retype the cross-app FK fields that still point at `goals.Goal`/`goals.Subgoal`**
 
 Same pattern as Tasks 5/6. `allocations.GoalAllocation.goal` and `.sub_goal` are still live `ForeignKey`s. Confirm with `uv run python manage.py check` (expect `fields.E300`/`E307` on both). Note: `allocations.GoalAllocation.account` was already retyped to `account_id` back in Task 5 — this step only touches `goal`/`sub_goal`.
 
@@ -1873,24 +1912,27 @@ uv run python manage.py makemigrations allocations --check --dry-run
 ```
 Expected: `No changes detected`. If it reports anything else, fix the mismatch before proceeding.
 
-- [ ] **Step 11: Confirm the global migration graph and unrelated apps are unblocked**
+- [ ] **Step 12: Confirm the global migration graph and unrelated apps are unblocked**
 
 Run: `uv run python manage.py check` — expect no more `fields.E300`/`E307` errors anywhere.
 Run: `uv run pytest apps/goals/tests/test_api.py apps/goals/tests/test_aggregation.py -v` — expect PASS.
-Run: `uv run pytest apps/accounts/tests/test_api.py apps/budget/tests/test_api.py -v` — expect PASS (confirms the graph is still healthy across all three retype rounds so far).
+Run: `uv run pytest apps/accounts/tests/test_api.py apps/budget/tests/test_api.py apps/income/tests/test_api.py -v` — expect PASS (confirms the graph is still healthy across all three retype rounds so far, and that Step 10's income fix stuck).
 
-- [ ] **Step 12: Commit**
+- [ ] **Step 13: Commit**
 
 ```bash
 git add apps/goals/models.py apps/goals/services.py apps/goals/apps.py apps/goals/tests/test_aggregation.py
 git rm apps/goals/signals.py
 git add -A apps/goals/migrations
 git add apps/allocations/models.py apps/allocations/migrations
+git add apps/income/services.py
 git commit -m "feat(goals): migrate to Firestore, port cascade delete and aggregation rollups
 
 Also retypes allocations.GoalAllocation's goal/sub_goal FK fields
 (ForeignKey -> UUIDField), for the same reason as the accounts/budget
-retypes in Tasks 5/6."
+retypes in Tasks 5/6, and fixes up income/services.py's temporary ORM
+fallback (from Task 7) to use the new goals.services.get_subgoal_by_id
+Firestore helper."
 ```
 
 ---
