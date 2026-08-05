@@ -162,7 +162,6 @@ GEMINI.md
 .gemini/
 
 # Agent context (private)
-agents.md
 .agents/
 AGENTS.md
 
