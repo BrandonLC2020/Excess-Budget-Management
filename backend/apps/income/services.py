@@ -272,9 +272,8 @@ def calculate_overtime_projections(user, payload) -> dict:
         # subgoal_id can be supplied without goal_id in the request schema; resolve via a
         # direct ownership check when goal_id isn't given.
         if subgoal is None:
-            from apps.common.permissions import get_owned_or_404
-            from apps.goals.models import Subgoal
-            sg = get_owned_or_404(Subgoal, payload.subgoal_id, user)
+            from apps.goals.services import get_subgoal_by_id
+            sg = get_subgoal_by_id(user, payload.subgoal_id)
             remaining_amount = sg.target_amount - sg.current_amount
         else:
             remaining_amount = subgoal.target_amount - subgoal.current_amount

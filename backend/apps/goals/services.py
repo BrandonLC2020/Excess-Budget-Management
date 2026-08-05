@@ -1,132 +1,204 @@
+import uuid
+from datetime import date, datetime, timezone
 from decimal import Decimal
-from django.db.models import Sum
-from .models import Goal, Subgoal, GoalAccount
-from apps.accounts.models import Account
-from apps.common.permissions import get_owned_or_404
+from apps.common.firestore import get_client
+from apps.common.firestore_helpers import get_owned_or_404_fs
+from apps.common.money import to_cents, from_cents
+from apps.common.rollups import recompute_subgoal_parent, recompute_goal_from_accounts
 from apps.common.exceptions import NotFoundError
+from .models import Goal, Subgoal, GoalAccount
+
+GOALS_COLLECTION = "goals"
+SUBGOALS_COLLECTION = "sub_goals"
+GOAL_ACCOUNTS_COLLECTION = "goal_accounts"
 
 
-# --- Aggregation helpers ---
-
-def recompute_parent_totals(goal_id) -> None:
-    qs = Subgoal.objects.filter(goal_id=goal_id)
-    if not qs.exists():
-        return
-    agg = qs.aggregate(t=Sum("target_amount"), c=Sum("current_amount"))
-    Goal.objects.filter(pk=goal_id).update(
-        target_amount=agg["t"] or Decimal("0"),
-        current_amount=agg["c"] or Decimal("0"),
+def _goal_from_doc(snapshot) -> Goal:
+    data = snapshot.to_dict()
+    return Goal(
+        id=uuid.UUID(snapshot.id),
+        user_id=data["user_id"],
+        name=data["name"],
+        target_amount=from_cents(data["target_amount"]),
+        current_amount=from_cents(data["current_amount"]),
+        target_date=date.fromisoformat(data["target_date"]) if data.get("target_date") else None,
+        type=data["type"],
+        category=data["category"],
+        created_at=data["created_at"],
     )
 
 
-def recompute_goal_from_accounts(goal_id) -> None:
-    total = (
-        Account.objects.filter(goal_accounts__goal_id=goal_id).aggregate(s=Sum("balance"))["s"]
-    ) or Decimal("0")
-    Goal.objects.filter(pk=goal_id).update(current_amount=total)
+def _subgoal_from_doc(snapshot) -> Subgoal:
+    data = snapshot.to_dict()
+    return Subgoal(
+        id=uuid.UUID(snapshot.id),
+        goal_id=uuid.UUID(data["goal_id"]),
+        user_id=data["user_id"],
+        name=data["name"],
+        target_amount=from_cents(data["target_amount"]),
+        current_amount=from_cents(data["current_amount"]),
+        created_at=data["created_at"],
+    )
 
 
 # --- Goal CRUD ---
 
 def list_goals(user):
-    return list(Goal.objects.filter(user=user))
+    docs = get_client().collection(GOALS_COLLECTION).where("user_id", "==", str(user.id)).stream()
+    return [_goal_from_doc(d) for d in docs]
 
 
 def create_goal(user, payload) -> Goal:
-    return Goal.objects.create(
-        user=user,
-        name=payload.name,
-        target_amount=payload.target_amount,
-        target_date=payload.target_date,
-        type=payload.type,
-        category=payload.category,
-    )
+    goal_id = uuid.uuid4()
+    now = datetime.now(timezone.utc)
+    get_client().collection(GOALS_COLLECTION).document(str(goal_id)).set({
+        "user_id": str(user.id),
+        "name": payload.name,
+        "target_amount": to_cents(payload.target_amount),
+        "current_amount": to_cents(Decimal("0.00")),
+        "target_date": payload.target_date.isoformat() if payload.target_date else None,
+        "type": payload.type,
+        "category": payload.category,
+        "created_at": now,
+    })
+    return Goal(id=goal_id, user_id=str(user.id), name=payload.name,
+               target_amount=payload.target_amount, current_amount=Decimal("0.00"),
+               target_date=payload.target_date, type=payload.type, category=payload.category,
+               created_at=now)
 
 
 def get_goal(user, goal_id) -> Goal:
-    return get_owned_or_404(Goal, goal_id, user)
+    return _goal_from_doc(get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user))
 
 
 def update_goal(user, goal_id, payload) -> Goal:
-    goal = get_owned_or_404(Goal, goal_id, user)
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    updates = {}
     if payload.name is not None:
-        goal.name = payload.name
+        updates["name"] = payload.name
     if payload.target_amount is not None:
-        goal.target_amount = payload.target_amount
+        updates["target_amount"] = to_cents(payload.target_amount)
     if payload.target_date is not None:
-        goal.target_date = payload.target_date
+        updates["target_date"] = payload.target_date.isoformat()
     if payload.type is not None:
-        goal.type = payload.type
+        updates["type"] = payload.type
     if payload.category is not None:
-        goal.category = payload.category
-    goal.save()
-    return goal
+        updates["category"] = payload.category
+
+    doc_ref = get_client().collection(GOALS_COLLECTION).document(str(goal_id))
+    if updates:
+        doc_ref.update(updates)
+    return _goal_from_doc(doc_ref.get())
 
 
 def delete_goal(user, goal_id) -> None:
-    goal = get_owned_or_404(Goal, goal_id, user)
-    goal.delete()
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    client = get_client()
+    batch = client.batch()
+
+    for sub in client.collection(SUBGOALS_COLLECTION).where("goal_id", "==", str(goal_id)).stream():
+        batch.delete(sub.reference)
+    for link in client.collection(GOAL_ACCOUNTS_COLLECTION).where("goal_id", "==", str(goal_id)).stream():
+        batch.delete(link.reference)
+    batch.delete(client.collection(GOALS_COLLECTION).document(str(goal_id)))
+
+    batch.commit()
 
 
 # --- Subgoal CRUD ---
 
 def list_subgoals(user, goal_id):
-    goal = get_owned_or_404(Goal, goal_id, user)
-    return list(Subgoal.objects.filter(goal=goal))
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    docs = get_client().collection(SUBGOALS_COLLECTION).where("goal_id", "==", str(goal_id)).stream()
+    return [_subgoal_from_doc(d) for d in docs]
 
 
 def create_subgoal(user, goal_id, payload) -> Subgoal:
-    goal = get_owned_or_404(Goal, goal_id, user)
-    return Subgoal.objects.create(
-        user=user,
-        goal=goal,
-        name=payload.name,
-        target_amount=payload.target_amount,
-        current_amount=payload.current_amount,
-    )
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    subgoal_id = uuid.uuid4()
+    now = datetime.now(timezone.utc)
+    get_client().collection(SUBGOALS_COLLECTION).document(str(subgoal_id)).set({
+        "user_id": str(user.id),
+        "goal_id": str(goal_id),
+        "name": payload.name,
+        "target_amount": to_cents(payload.target_amount),
+        "current_amount": to_cents(payload.current_amount),
+        "created_at": now,
+    })
+    recompute_subgoal_parent(str(goal_id))
+    return Subgoal(id=subgoal_id, goal_id=uuid.UUID(str(goal_id)), user_id=str(user.id),
+                   name=payload.name, target_amount=payload.target_amount,
+                   current_amount=payload.current_amount, created_at=now)
 
 
 def get_subgoal(user, goal_id, subgoal_id) -> Subgoal:
-    goal = get_owned_or_404(Goal, goal_id, user)
-    subgoal = get_owned_or_404(Subgoal, subgoal_id, user)
-    if subgoal.goal_id != goal.id:
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    snapshot = get_owned_or_404_fs(SUBGOALS_COLLECTION, subgoal_id, user)
+    if snapshot.get("goal_id") != str(goal_id):
         raise NotFoundError("Subgoal not found.")
-    return subgoal
+    return _subgoal_from_doc(snapshot)
+
+
+def get_subgoal_by_id(user, subgoal_id) -> Subgoal:
+    """Like get_subgoal, but without requiring the parent goal_id — used by
+    apps/income/services.py::calculate_overtime_projections, whose request
+    schema allows subgoal_id without goal_id."""
+    return _subgoal_from_doc(get_owned_or_404_fs(SUBGOALS_COLLECTION, subgoal_id, user))
 
 
 def update_subgoal(user, goal_id, subgoal_id, payload) -> Subgoal:
-    goal = get_owned_or_404(Goal, goal_id, user)
-    subgoal = get_owned_or_404(Subgoal, subgoal_id, user)
-    if subgoal.goal_id != goal.id:
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    snapshot = get_owned_or_404_fs(SUBGOALS_COLLECTION, subgoal_id, user)
+    if snapshot.get("goal_id") != str(goal_id):
         raise NotFoundError("Subgoal not found.")
+
+    updates = {}
     if payload.name is not None:
-        subgoal.name = payload.name
+        updates["name"] = payload.name
     if payload.target_amount is not None:
-        subgoal.target_amount = payload.target_amount
+        updates["target_amount"] = to_cents(payload.target_amount)
     if payload.current_amount is not None:
-        subgoal.current_amount = payload.current_amount
-    subgoal.save()
-    return subgoal
+        updates["current_amount"] = to_cents(payload.current_amount)
+
+    doc_ref = get_client().collection(SUBGOALS_COLLECTION).document(str(subgoal_id))
+    if updates:
+        doc_ref.update(updates)
+    recompute_subgoal_parent(str(goal_id))
+    return _subgoal_from_doc(doc_ref.get())
 
 
 def delete_subgoal(user, goal_id, subgoal_id) -> None:
-    goal = get_owned_or_404(Goal, goal_id, user)
-    subgoal = get_owned_or_404(Subgoal, subgoal_id, user)
-    if subgoal.goal_id != goal.id:
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    snapshot = get_owned_or_404_fs(SUBGOALS_COLLECTION, subgoal_id, user)
+    if snapshot.get("goal_id") != str(goal_id):
         raise NotFoundError("Subgoal not found.")
-    subgoal.delete()
+    get_client().collection(SUBGOALS_COLLECTION).document(str(subgoal_id)).delete()
+    recompute_subgoal_parent(str(goal_id))
 
 
 # --- GoalAccount (link/unlink) ---
 
 def link_account(user, goal_id, account_id) -> GoalAccount:
-    goal = get_owned_or_404(Goal, goal_id, user)
-    account = get_owned_or_404(Account, account_id, user)
-    ga, _ = GoalAccount.objects.get_or_create(user=user, goal=goal, account=account)
-    return ga
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    get_owned_or_404_fs("accounts", account_id, user)
+
+    now = datetime.now(timezone.utc)
+    link_doc_id = f"{goal_id}_{account_id}"
+    get_client().collection(GOAL_ACCOUNTS_COLLECTION).document(link_doc_id).set({
+        "user_id": str(user.id),
+        "goal_id": str(goal_id),
+        "account_id": str(account_id),
+        "created_at": now,
+    })
+    recompute_goal_from_accounts(str(goal_id))
+    return GoalAccount(goal_id=uuid.UUID(str(goal_id)), account_id=uuid.UUID(str(account_id)),
+                       user_id=str(user.id), created_at=now)
 
 
 def unlink_account(user, goal_id, account_id) -> None:
-    goal = get_owned_or_404(Goal, goal_id, user)
-    account = get_owned_or_404(Account, account_id, user)
-    GoalAccount.objects.filter(goal=goal, account=account).delete()
+    get_owned_or_404_fs(GOALS_COLLECTION, goal_id, user)
+    get_owned_or_404_fs("accounts", account_id, user)
+
+    link_doc_id = f"{goal_id}_{account_id}"
+    get_client().collection(GOAL_ACCOUNTS_COLLECTION).document(link_doc_id).delete()
+    recompute_goal_from_accounts(str(goal_id))

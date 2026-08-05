@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('goals', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -23,13 +22,13 @@ class Migration(migrations.Migration):
                 ('amount', models.DecimalField(decimal_places=2, max_digits=12)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('account_id', models.UUIDField(blank=True, null=True)),
-                ('goal', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='allocations', to='goals.goal')),
-                ('sub_goal', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='allocations', to='goals.subgoal')),
+                ('goal_id', models.UUIDField()),
+                ('sub_goal_id', models.UUIDField(blank=True, null=True)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['account_id'], name='allocations_account_74b6b0_idx'), models.Index(fields=['sub_goal'], name='allocations_sub_goa_2629dd_idx'), models.Index(fields=['user', 'created_at'], name='allocations_user_id_6829d0_idx')],
+                'indexes': [models.Index(fields=['account_id'], name='allocations_account_74b6b0_idx'), models.Index(fields=['sub_goal_id'], name='allocations_sub_goa_2629dd_idx'), models.Index(fields=['user', 'created_at'], name='allocations_user_id_6829d0_idx')],
             },
         ),
     ]
